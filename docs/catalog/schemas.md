@@ -1,0 +1,3518 @@
+# schemas/
+
+Opisy linia-po-linii (język: polski). Puste linie pominięte w wypunktowaniu, ale nie zmieniają numeracji `L`.
+
+<a id="schemas-sensei-config-schema-json"></a>
+## `schemas/sensei-config.schema.json`
+JSON Schema Draft 2020-12 dla manifestu SenseiConfig.
+
+Liczba linii: **132**.
+
+### Opis linia-po-linii
+
+- **L1:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L2:** Pole `$schema` = `"https://json-schema.org/draft/2020-12/schema"`.
+- **L3:** Pole `$id` = `"https://pja-sensei.local/schemas/sensei-config.schema.json"`.
+- **L4:** Pole `title` = `"SenseiConfig"`.
+- **L5:** Pole `description` = `"Validation schema for PJA-Sensei lab configuration manifests."`.
+- **L6:** Pole `type` = `"object"`.
+- **L7:** Pole `additionalProperties` = `false`.
+- **L8:** Pole `required`: `["learningContext", "agentBehavior"]`.
+- **L9:** Klucz `$defs` — początek zagnieżdżonego obiektu.
+- **L10:** Klucz `referenceMaterial` — początek zagnieżdżonego obiektu.
+- **L11:** Pole `type` = `"object"`.
+- **L12:** Pole `additionalProperties` = `false`.
+- **L13:** Pole `required`: `["type", "title", "url"]`.
+- **L14:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L15:** Klucz `type` — początek zagnieżdżonego obiektu.
+- **L16:** Pole `type` = `"string"`.
+- **L17:** Pole `enum`: `["doc", "pdf", "video_timestamp", "slide"]`.
+- **L18:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L19:** Pole `title`: `{ "type": "string", "minLength": 1 }`.
+- **L20:** Pole `url`: `{ "type": "string", "format": "uri" }`.
+- **L21:** Pole `timestamp`: `{ "type": ["string", "null"] }`.
+- **L22:** Pole `page`: `{ "type": ["integer", "null"], "minimum": 1 }`.
+- **L23:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L24:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L25:** Klucz `preLabQuestion` — początek zagnieżdżonego obiektu.
+- **L26:** Pole `type` = `"object"`.
+- **L27:** Pole `additionalProperties` = `false`.
+- **L28:** Pole `required`: `["id", "prompt"]`.
+- **L29:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L30:** Pole `id`: `{ "type": "string" }`.
+- **L31:** Pole `prompt`: `{ "type": "string", "minLength": 1 }`.
+- **L32:** Klucz `expected_keywords` — początek zagnieżdżonego obiektu.
+- **L33:** Pole `type` = `"array"`.
+- **L34:** Pole `items`: `{ "type": "string" }`.
+- **L35:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L36:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L37:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L38:** Klucz `checkpoint` — początek zagnieżdżonego obiektu.
+- **L39:** Pole `type` = `"object"`.
+- **L40:** Pole `additionalProperties` = `false`.
+- **L41:** Pole `required`: `["id"]`.
+- **L42:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L43:** Pole `id`: `{ "type": "string" }`.
+- **L44:** Pole `after_goal`: `{ "type": ["string", "null"] }`.
+- **L45:** Pole `hint`: `{ "type": ["string", "null"] }`.
+- **L46:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L47:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L48:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L49:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L50:** Klucz `learningContext` — początek zagnieżdżonego obiektu.
+- **L51:** Pole `type` = `"object"`.
+- **L52:** Pole `additionalProperties` = `false`.
+- **L53:** Pole `required`: `["goals", "referenceMaterials"]`.
+- **L54:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L55:** Klucz `goals` — początek zagnieżdżonego obiektu.
+- **L56:** Pole `type` = `"array"`.
+- **L57:** Pole `minItems` = `1`.
+- **L58:** Pole `items`: `{ "type": "string", "minLength": 1 }`.
+- **L59:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L60:** Klucz `referenceMaterials` — początek zagnieżdżonego obiektu.
+- **L61:** Pole `type` = `"array"`.
+- **L62:** Pole `items`: `{ "$ref": "#/$defs/referenceMaterial" }`.
+- **L63:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L64:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L65:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L66:** Klucz `agentBehavior` — początek zagnieżdżonego obiektu.
+- **L67:** Pole `type` = `"object"`.
+- **L68:** Pole `additionalProperties` = `false`.
+- **L69:** Pole `required`: `["persona", "strictRules"]`.
+- **L70:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L71:** Klucz `persona` — początek zagnieżdżonego obiektu.
+- **L72:** Pole `type` = `"object"`.
+- **L73:** Pole `additionalProperties` = `false`.
+- **L74:** Pole `required`: `["role", "tone"]`.
+- **L75:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L76:** Pole `role`: `{ "type": "string", "minLength": 1 }`.
+- **L77:** Pole `tone`: `{ "type": "string", "minLength": 1 }`.
+- **L78:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L79:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L80:** Pole `codeRevealFallback`: `{ "type": ["string", "null"] }`.
+- **L81:** Klucz `strictRules` — początek zagnieżdżonego obiektu.
+- **L82:** Pole `type` = `"array"`.
+- **L83:** Pole `items`: `{ "type": "string", "minLength": 1 }`.
+- **L84:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L85:** Pole `model`: `{ "type": ["string", "null"] }`.
+- **L86:** Klucz `mode` — początek zagnieżdżonego obiektu.
+- **L87:** Pole `type` = `"string"`.
+- **L88:** Pole `enum`: `["theory", "debug", "review"]`.
+- **L89:** Pole `default` = `"debug"`.
+- **L90:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L91:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L92:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L93:** Klucz `ideRestrictions` — początek zagnieżdżonego obiektu.
+- **L94:** Pole `type`: `["object", "null"]`.
+- **L95:** Pole `additionalProperties` = `false`.
+- **L96:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L97:** Pole `requireFileContextForChat`: `{ "type": "boolean", "default": false }`.
+- **L98:** Pole `disableCopyFromChat`: `{ "type": "boolean", "default": false }`.
+- **L99:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L100:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L101:** Klucz `language` — początek zagnieżdżonego obiektu.
+- **L102:** Pole `type` = `"string"`.
+- **L103:** Pole `enum`: `["pl", "en"]`.
+- **L104:** Pole `default` = `"pl"`.
+- **L105:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L106:** Klucz `evaluationCriteria` — początek zagnieżdżonego obiektu.
+- **L107:** Pole `type` = `"array"`.
+- **L108:** Pole `items`: `{ "type": "string" }`.
+- **L109:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L110:** Klucz `maxTokensPerSession` — początek zagnieżdżonego obiektu.
+- **L111:** Pole `type`: `["integer", "null"]`.
+- **L112:** Pole `minimum` = `1`.
+- **L113:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L114:** Klucz `checkpoints` — początek zagnieżdżonego obiektu.
+- **L115:** Pole `type` = `"array"`.
+- **L116:** Pole `items`: `{ "$ref": "#/$defs/checkpoint" }`.
+- **L117:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L118:** Klucz `preLab` — początek zagnieżdżonego obiektu.
+- **L119:** Pole `type`: `["object", "null"]`.
+- **L120:** Pole `additionalProperties` = `false`.
+- **L121:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L122:** Pole `enabled`: `{ "type": "boolean", "default": false }`.
+- **L123:** Pole `max_attempts`: `{ "type": ["integer", "null"], "minimum": 1 }`.
+- **L124:** Pole `hint_after_fail`: `{ "type": ["string", "null"] }`.
+- **L125:** Klucz `questions` — początek zagnieżdżonego obiektu.
+- **L126:** Pole `type` = `"array"`.
+- **L127:** Pole `items`: `{ "$ref": "#/$defs/preLabQuestion" }`.
+- **L128:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L129:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L130:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L131:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L132:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+
+<a id="schemas-openapi-json"></a>
+## `schemas/openapi.json`
+Zrzut OpenAPI 3 wygenerowany z aplikacji (kontrakt HTTP).
+
+Liczba linii: **1983**.
+
+### Opis linia-po-linii
+
+- **Przegląd L1–L1983:** Dokument OpenAPI 3 (JSON) — kontrakt HTTP mikroserwisu. Poniżej: mapa sekcji, potem opis każdej niepustej linii.
+- **Mapa:** `openapi` @ L2; `info`; `paths`; `components`.
+- **Mapa ścieżki:** `/` zaczyna się ok. L8.
+- **Mapa ścieżki:** `/health` zaczyna się ok. L24.
+- **Mapa ścieżki:** `/metrics` zaczyna się ok. L40.
+- **Mapa ścieżki:** `/metrics/prometheus` zaczyna się ok. L84.
+- **Mapa ścieżki:** `/validate-config` zaczyna się ok. L100.
+- **Mapa ścieżki:** `/analytics/correlations` zaczyna się ok. L141.
+- **Mapa ścieżki:** `/conversations` zaczyna się ok. L162.
+- **Mapa ścieżki:** `/conversations/{conversation_id}` zaczyna się ok. L203.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/messages` zaczyna się ok. L285.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/restrictions` zaczyna się ok. L379.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/export` zaczyna się ok. L421.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/checkpoints` zaczyna się ok. L463.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/goals/assess` zaczyna się ok. L505.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/review` zaczyna się ok. L547.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/events` zaczyna się ok. L599.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/prelab` zaczyna się ok. L651.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/prelab/generate` zaczyna się ok. L743.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/messages/stream` zaczyna się ok. L785.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/messages/{message_id}/regenerate` zaczyna się ok. L837.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/hints/reveal` zaczyna się ok. L890.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/messages/{message_id}/feedback` zaczyna się ok. L942.
+- **Mapa ścieżki:** `/conversations/{conversation_id}/summary` zaczyna się ok. L1003.
+- **Mapa schematu:** `AgentBehavior` ok. L1048.
+- **Mapa schematu:** `AgentPersona` ok. L1100.
+- **Mapa schematu:** `Checkpoint` ok. L1118.
+- **Mapa schematu:** `CodeContext` ok. L1153.
+- **Mapa schematu:** `CodeSelection` ok. L1217.
+- **Mapa schematu:** `DebugInfo` ok. L1246.
+- **Mapa schematu:** `DiagnosticItem` ok. L1269.
+- **Mapa schematu:** `FeedbackRequest` ok. L1326.
+- **Mapa schematu:** `GoalProgressItem` ok. L1350.
+- **Mapa schematu:** `HTTPValidationError` ok. L1373.
+- **Mapa schematu:** `IdeEventRequest` ok. L1386.
+- **Mapa schematu:** `IdeRestrictions` ok. L1409.
+- **Mapa schematu:** `LearningContext` ok. L1425.
+- **Mapa schematu:** `MessageRequest` ok. L1449.
+- **Mapa schematu:** `MessageResponse` ok. L1477.
+- **Mapa schematu:** `OpenFile` ok. L1565.
+- **Mapa schematu:** `PreLabAnswerItem` ok. L1594.
+- **Mapa schematu:** `PreLabConfig` ok. L1612.
+- **Mapa schematu:** `PreLabQuestion` ok. L1652.
+- **Mapa schematu:** `PreLabSubmitRequest` ok. L1677.
+- **Mapa schematu:** `ReferenceMaterial` ok. L1693.
+- **Mapa schematu:** `RevealHintRequest` ok. L1744.
+- **Mapa schematu:** `ReviewRequest` ok. L1771.
+- **Mapa schematu:** `SenseiConfig` ok. L1794.
+- **Mapa schematu:** `SourceRef` ok. L1864.
+- **Mapa schematu:** `StartRequest` ok. L1904.
+- **Mapa schematu:** `ValidateConfigRequest` ok. L1921.
+- **Mapa schematu:** `ValidationError` ok. L1935.
+
+#### Opis każdej niepustej linii
+
+- **L1:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L2:** Pole `openapi` = `"3.1.0"`.
+- **L3:** Klucz `info` — początek zagnieżdżonego obiektu.
+- **L4:** Pole `title` = `"PJA-Sensei AI Microservice"`.
+- **L5:** Pole `version` = `"0.1.0"`.
+- **L6:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L7:** Klucz `paths` — początek zagnieżdżonego obiektu.
+- **L8:** Klucz `/` — początek zagnieżdżonego obiektu.
+- **L9:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L10:** Pole `summary` = `"Serve Tester"`.
+- **L11:** Pole `operationId` = `"serve_tester__get"`.
+- **L12:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L13:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L14:** Pole `description` = `"Successful Response"`.
+- **L15:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L16:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L17:** Pole `schema`: `{}`.
+- **L18:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L19:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L20:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L21:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L22:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L23:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L24:** Klucz `/health` — początek zagnieżdżonego obiektu.
+- **L25:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L26:** Pole `summary` = `"Health"`.
+- **L27:** Pole `operationId` = `"health_health_get"`.
+- **L28:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L29:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L30:** Pole `description` = `"Successful Response"`.
+- **L31:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L32:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L33:** Pole `schema`: `{}`.
+- **L34:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L35:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L36:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L37:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L38:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L39:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L40:** Klucz `/metrics` — początek zagnieżdżonego obiektu.
+- **L41:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L42:** Pole `summary` = `"Get Metrics"`.
+- **L43:** Pole `operationId` = `"get_metrics_metrics_get"`.
+- **L44:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L45:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L46:** Pole `name` = `"format"`.
+- **L47:** Pole `in` = `"query"`.
+- **L48:** Pole `required` = `false`.
+- **L49:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L50:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L51:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L52:** Pole `type` = `"string"`.
+- **L53:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L54:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L55:** Pole `type` = `"null"`.
+- **L56:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L57:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L58:** Pole `title` = `"Format"`.
+- **L59:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L60:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L61:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L62:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L63:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L64:** Pole `description` = `"Successful Response"`.
+- **L65:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L66:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L67:** Pole `schema`: `{}`.
+- **L68:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L69:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L70:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L71:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L72:** Pole `description` = `"Validation Error"`.
+- **L73:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L74:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L75:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L76:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L77:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L78:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L79:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L80:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L81:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L82:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L83:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L84:** Klucz `/metrics/prometheus` — początek zagnieżdżonego obiektu.
+- **L85:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L86:** Pole `summary` = `"Get Metrics Prometheus"`.
+- **L87:** Pole `operationId` = `"get_metrics_prometheus_metrics_prometheus_get"`.
+- **L88:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L89:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L90:** Pole `description` = `"Successful Response"`.
+- **L91:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L92:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L93:** Pole `schema`: `{}`.
+- **L94:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L95:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L96:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L97:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L98:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L99:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L100:** Klucz `/validate-config` — początek zagnieżdżonego obiektu.
+- **L101:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L102:** Pole `summary` = `"Validate Config"`.
+- **L103:** Pole `operationId` = `"validate_config_validate_config_post"`.
+- **L104:** Klucz `requestBody` — początek zagnieżdżonego obiektu.
+- **L105:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L106:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L107:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L108:** Pole `$ref` = `"#/components/schemas/ValidateConfigRequest"`.
+- **L109:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L110:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L111:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L112:** Pole `required` = `true`.
+- **L113:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L114:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L115:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L116:** Pole `description` = `"Successful Response"`.
+- **L117:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L118:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L119:** Pole `schema`: `{}`.
+- **L120:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L121:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L122:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L123:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L124:** Pole `description` = `"Validation Error"`.
+- **L125:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L126:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L127:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L128:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L129:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L130:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L131:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L132:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L133:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L134:** Klucz `security` — początek zagnieżdżonego array.
+- **L135:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L136:** Pole `HTTPBearer`: `[]`.
+- **L137:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L138:** Struktura JSON (`]`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L139:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L140:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L141:** Klucz `/analytics/correlations` — początek zagnieżdżonego obiektu.
+- **L142:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L143:** Pole `summary` = `"Analytics Correlations"`.
+- **L144:** Pole `operationId` = `"analytics_correlations_analytics_correlations_get"`.
+- **L145:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L146:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L147:** Pole `description` = `"Successful Response"`.
+- **L148:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L149:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L150:** Pole `schema`: `{}`.
+- **L151:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L152:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L153:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L154:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L155:** Klucz `security` — początek zagnieżdżonego array.
+- **L156:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L157:** Pole `HTTPBearer`: `[]`.
+- **L158:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L159:** Struktura JSON (`]`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L160:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L161:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L162:** Klucz `/conversations` — początek zagnieżdżonego obiektu.
+- **L163:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L164:** Pole `summary` = `"Start Conversation"`.
+- **L165:** Pole `operationId` = `"start_conversation_conversations_post"`.
+- **L166:** Klucz `requestBody` — początek zagnieżdżonego obiektu.
+- **L167:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L168:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L169:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L170:** Pole `$ref` = `"#/components/schemas/StartRequest"`.
+- **L171:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L172:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L173:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L174:** Pole `required` = `true`.
+- **L175:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L176:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L177:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L178:** Pole `description` = `"Successful Response"`.
+- **L179:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L180:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L181:** Pole `schema`: `{}`.
+- **L182:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L183:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L184:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L185:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L186:** Pole `description` = `"Validation Error"`.
+- **L187:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L188:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L189:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L190:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L191:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L192:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L193:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L194:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L195:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L196:** Klucz `security` — początek zagnieżdżonego array.
+- **L197:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L198:** Pole `HTTPBearer`: `[]`.
+- **L199:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L200:** Struktura JSON (`]`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L201:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L202:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L203:** Klucz `/conversations/{conversation_id}` — początek zagnieżdżonego obiektu.
+- **L204:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L205:** Pole `summary` = `"Get Conversation"`.
+- **L206:** Pole `operationId` = `"get_conversation_conversations__conversation_id__get"`.
+- **L207:** Klucz `security` — początek zagnieżdżonego array.
+- **L208:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L209:** Pole `HTTPBearer`: `[]`.
+- **L210:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L211:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L212:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L213:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L214:** Pole `name` = `"conversation_id"`.
+- **L215:** Pole `in` = `"path"`.
+- **L216:** Pole `required` = `true`.
+- **L217:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L218:** Pole `type` = `"string"`.
+- **L219:** Pole `title` = `"Conversation Id"`.
+- **L220:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L221:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L222:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L223:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L224:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L225:** Pole `description` = `"Successful Response"`.
+- **L226:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L227:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L228:** Pole `schema`: `{}`.
+- **L229:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L230:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L231:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L232:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L233:** Pole `description` = `"Validation Error"`.
+- **L234:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L235:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L236:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L237:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L238:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L239:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L240:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L241:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L242:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L243:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L244:** Klucz `delete` — początek zagnieżdżonego obiektu.
+- **L245:** Pole `summary` = `"Delete Conversation"`.
+- **L246:** Pole `operationId` = `"delete_conversation_conversations__conversation_id__delete"`.
+- **L247:** Klucz `security` — początek zagnieżdżonego array.
+- **L248:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L249:** Pole `HTTPBearer`: `[]`.
+- **L250:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L251:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L252:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L253:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L254:** Pole `name` = `"conversation_id"`.
+- **L255:** Pole `in` = `"path"`.
+- **L256:** Pole `required` = `true`.
+- **L257:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L258:** Pole `type` = `"string"`.
+- **L259:** Pole `title` = `"Conversation Id"`.
+- **L260:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L261:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L262:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L263:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L264:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L265:** Pole `description` = `"Successful Response"`.
+- **L266:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L267:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L268:** Pole `schema`: `{}`.
+- **L269:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L270:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L271:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L272:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L273:** Pole `description` = `"Validation Error"`.
+- **L274:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L275:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L276:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L277:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L278:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L279:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L280:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L281:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L282:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L283:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L284:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L285:** Klucz `/conversations/{conversation_id}/messages` — początek zagnieżdżonego obiektu.
+- **L286:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L287:** Pole `summary` = `"List Messages"`.
+- **L288:** Pole `operationId` = `"list_messages_conversations__conversation_id__messages_get"`.
+- **L289:** Klucz `security` — początek zagnieżdżonego array.
+- **L290:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L291:** Pole `HTTPBearer`: `[]`.
+- **L292:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L293:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L294:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L295:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L296:** Pole `name` = `"conversation_id"`.
+- **L297:** Pole `in` = `"path"`.
+- **L298:** Pole `required` = `true`.
+- **L299:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L300:** Pole `type` = `"string"`.
+- **L301:** Pole `title` = `"Conversation Id"`.
+- **L302:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L303:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L304:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L305:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L306:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L307:** Pole `description` = `"Successful Response"`.
+- **L308:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L309:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L310:** Pole `schema`: `{}`.
+- **L311:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L312:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L313:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L314:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L315:** Pole `description` = `"Validation Error"`.
+- **L316:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L317:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L318:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L319:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L320:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L321:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L322:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L323:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L324:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L325:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L326:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L327:** Pole `summary` = `"Send Message"`.
+- **L328:** Pole `operationId` = `"send_message_conversations__conversation_id__messages_post"`.
+- **L329:** Klucz `security` — początek zagnieżdżonego array.
+- **L330:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L331:** Pole `HTTPBearer`: `[]`.
+- **L332:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L333:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L334:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L335:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L336:** Pole `name` = `"conversation_id"`.
+- **L337:** Pole `in` = `"path"`.
+- **L338:** Pole `required` = `true`.
+- **L339:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L340:** Pole `type` = `"string"`.
+- **L341:** Pole `title` = `"Conversation Id"`.
+- **L342:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L343:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L344:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L345:** Klucz `requestBody` — początek zagnieżdżonego obiektu.
+- **L346:** Pole `required` = `true`.
+- **L347:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L348:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L349:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L350:** Pole `$ref` = `"#/components/schemas/MessageRequest"`.
+- **L351:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L352:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L353:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L354:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L355:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L356:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L357:** Pole `description` = `"Successful Response"`.
+- **L358:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L359:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L360:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L361:** Pole `$ref` = `"#/components/schemas/MessageResponse"`.
+- **L362:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L363:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L364:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L365:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L366:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L367:** Pole `description` = `"Validation Error"`.
+- **L368:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L369:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L370:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L371:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L372:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L373:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L374:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L375:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L376:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L377:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L378:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L379:** Klucz `/conversations/{conversation_id}/restrictions` — początek zagnieżdżonego obiektu.
+- **L380:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L381:** Pole `summary` = `"Get Restrictions"`.
+- **L382:** Pole `operationId` = `"get_restrictions_conversations__conversation_id__restrictions_get"`.
+- **L383:** Klucz `security` — początek zagnieżdżonego array.
+- **L384:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L385:** Pole `HTTPBearer`: `[]`.
+- **L386:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L387:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L388:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L389:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L390:** Pole `name` = `"conversation_id"`.
+- **L391:** Pole `in` = `"path"`.
+- **L392:** Pole `required` = `true`.
+- **L393:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L394:** Pole `type` = `"string"`.
+- **L395:** Pole `title` = `"Conversation Id"`.
+- **L396:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L397:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L398:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L399:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L400:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L401:** Pole `description` = `"Successful Response"`.
+- **L402:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L403:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L404:** Pole `schema`: `{}`.
+- **L405:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L406:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L407:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L408:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L409:** Pole `description` = `"Validation Error"`.
+- **L410:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L411:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L412:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L413:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L414:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L415:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L416:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L417:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L418:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L419:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L420:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L421:** Klucz `/conversations/{conversation_id}/export` — początek zagnieżdżonego obiektu.
+- **L422:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L423:** Pole `summary` = `"Export Conversation"`.
+- **L424:** Pole `operationId` = `"export_conversation_conversations__conversation_id__export_get"`.
+- **L425:** Klucz `security` — początek zagnieżdżonego array.
+- **L426:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L427:** Pole `HTTPBearer`: `[]`.
+- **L428:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L429:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L430:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L431:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L432:** Pole `name` = `"conversation_id"`.
+- **L433:** Pole `in` = `"path"`.
+- **L434:** Pole `required` = `true`.
+- **L435:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L436:** Pole `type` = `"string"`.
+- **L437:** Pole `title` = `"Conversation Id"`.
+- **L438:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L439:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L440:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L441:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L442:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L443:** Pole `description` = `"Successful Response"`.
+- **L444:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L445:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L446:** Pole `schema`: `{}`.
+- **L447:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L448:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L449:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L450:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L451:** Pole `description` = `"Validation Error"`.
+- **L452:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L453:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L454:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L455:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L456:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L457:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L458:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L459:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L460:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L461:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L462:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L463:** Klucz `/conversations/{conversation_id}/checkpoints` — początek zagnieżdżonego obiektu.
+- **L464:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L465:** Pole `summary` = `"Get Checkpoints"`.
+- **L466:** Pole `operationId` = `"get_checkpoints_conversations__conversation_id__checkpoints_get"`.
+- **L467:** Klucz `security` — początek zagnieżdżonego array.
+- **L468:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L469:** Pole `HTTPBearer`: `[]`.
+- **L470:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L471:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L472:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L473:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L474:** Pole `name` = `"conversation_id"`.
+- **L475:** Pole `in` = `"path"`.
+- **L476:** Pole `required` = `true`.
+- **L477:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L478:** Pole `type` = `"string"`.
+- **L479:** Pole `title` = `"Conversation Id"`.
+- **L480:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L481:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L482:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L483:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L484:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L485:** Pole `description` = `"Successful Response"`.
+- **L486:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L487:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L488:** Pole `schema`: `{}`.
+- **L489:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L490:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L491:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L492:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L493:** Pole `description` = `"Validation Error"`.
+- **L494:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L495:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L496:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L497:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L498:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L499:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L500:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L501:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L502:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L503:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L504:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L505:** Klucz `/conversations/{conversation_id}/goals/assess` — początek zagnieżdżonego obiektu.
+- **L506:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L507:** Pole `summary` = `"Assess Goals"`.
+- **L508:** Pole `operationId` = `"assess_goals_conversations__conversation_id__goals_assess_post"`.
+- **L509:** Klucz `security` — początek zagnieżdżonego array.
+- **L510:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L511:** Pole `HTTPBearer`: `[]`.
+- **L512:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L513:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L514:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L515:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L516:** Pole `name` = `"conversation_id"`.
+- **L517:** Pole `in` = `"path"`.
+- **L518:** Pole `required` = `true`.
+- **L519:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L520:** Pole `type` = `"string"`.
+- **L521:** Pole `title` = `"Conversation Id"`.
+- **L522:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L523:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L524:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L525:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L526:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L527:** Pole `description` = `"Successful Response"`.
+- **L528:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L529:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L530:** Pole `schema`: `{}`.
+- **L531:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L532:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L533:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L534:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L535:** Pole `description` = `"Validation Error"`.
+- **L536:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L537:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L538:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L539:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L540:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L541:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L542:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L543:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L544:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L545:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L546:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L547:** Klucz `/conversations/{conversation_id}/review` — początek zagnieżdżonego obiektu.
+- **L548:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L549:** Pole `summary` = `"Review Code"`.
+- **L550:** Pole `operationId` = `"review_code_conversations__conversation_id__review_post"`.
+- **L551:** Klucz `security` — początek zagnieżdżonego array.
+- **L552:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L553:** Pole `HTTPBearer`: `[]`.
+- **L554:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L555:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L556:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L557:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L558:** Pole `name` = `"conversation_id"`.
+- **L559:** Pole `in` = `"path"`.
+- **L560:** Pole `required` = `true`.
+- **L561:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L562:** Pole `type` = `"string"`.
+- **L563:** Pole `title` = `"Conversation Id"`.
+- **L564:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L565:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L566:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L567:** Klucz `requestBody` — początek zagnieżdżonego obiektu.
+- **L568:** Pole `required` = `true`.
+- **L569:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L570:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L571:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L572:** Pole `$ref` = `"#/components/schemas/ReviewRequest"`.
+- **L573:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L574:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L575:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L576:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L577:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L578:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L579:** Pole `description` = `"Successful Response"`.
+- **L580:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L581:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L582:** Pole `schema`: `{}`.
+- **L583:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L584:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L585:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L586:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L587:** Pole `description` = `"Validation Error"`.
+- **L588:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L589:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L590:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L591:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L592:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L593:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L594:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L595:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L596:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L597:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L598:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L599:** Klucz `/conversations/{conversation_id}/events` — początek zagnieżdżonego obiektu.
+- **L600:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L601:** Pole `summary` = `"Post Ide Event"`.
+- **L602:** Pole `operationId` = `"post_ide_event_conversations__conversation_id__events_post"`.
+- **L603:** Klucz `security` — początek zagnieżdżonego array.
+- **L604:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L605:** Pole `HTTPBearer`: `[]`.
+- **L606:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L607:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L608:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L609:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L610:** Pole `name` = `"conversation_id"`.
+- **L611:** Pole `in` = `"path"`.
+- **L612:** Pole `required` = `true`.
+- **L613:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L614:** Pole `type` = `"string"`.
+- **L615:** Pole `title` = `"Conversation Id"`.
+- **L616:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L617:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L618:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L619:** Klucz `requestBody` — początek zagnieżdżonego obiektu.
+- **L620:** Pole `required` = `true`.
+- **L621:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L622:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L623:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L624:** Pole `$ref` = `"#/components/schemas/IdeEventRequest"`.
+- **L625:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L626:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L627:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L628:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L629:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L630:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L631:** Pole `description` = `"Successful Response"`.
+- **L632:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L633:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L634:** Pole `schema`: `{}`.
+- **L635:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L636:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L637:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L638:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L639:** Pole `description` = `"Validation Error"`.
+- **L640:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L641:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L642:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L643:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L644:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L645:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L646:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L647:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L648:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L649:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L650:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L651:** Klucz `/conversations/{conversation_id}/prelab` — początek zagnieżdżonego obiektu.
+- **L652:** Klucz `get` — początek zagnieżdżonego obiektu.
+- **L653:** Pole `summary` = `"Get Prelab"`.
+- **L654:** Pole `operationId` = `"get_prelab_conversations__conversation_id__prelab_get"`.
+- **L655:** Klucz `security` — początek zagnieżdżonego array.
+- **L656:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L657:** Pole `HTTPBearer`: `[]`.
+- **L658:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L659:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L660:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L661:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L662:** Pole `name` = `"conversation_id"`.
+- **L663:** Pole `in` = `"path"`.
+- **L664:** Pole `required` = `true`.
+- **L665:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L666:** Pole `type` = `"string"`.
+- **L667:** Pole `title` = `"Conversation Id"`.
+- **L668:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L669:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L670:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L671:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L672:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L673:** Pole `description` = `"Successful Response"`.
+- **L674:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L675:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L676:** Pole `schema`: `{}`.
+- **L677:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L678:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L679:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L680:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L681:** Pole `description` = `"Validation Error"`.
+- **L682:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L683:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L684:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L685:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L686:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L687:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L688:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L689:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L690:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L691:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L692:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L693:** Pole `summary` = `"Submit Prelab"`.
+- **L694:** Pole `operationId` = `"submit_prelab_conversations__conversation_id__prelab_post"`.
+- **L695:** Klucz `security` — początek zagnieżdżonego array.
+- **L696:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L697:** Pole `HTTPBearer`: `[]`.
+- **L698:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L699:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L700:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L701:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L702:** Pole `name` = `"conversation_id"`.
+- **L703:** Pole `in` = `"path"`.
+- **L704:** Pole `required` = `true`.
+- **L705:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L706:** Pole `type` = `"string"`.
+- **L707:** Pole `title` = `"Conversation Id"`.
+- **L708:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L709:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L710:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L711:** Klucz `requestBody` — początek zagnieżdżonego obiektu.
+- **L712:** Pole `required` = `true`.
+- **L713:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L714:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L715:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L716:** Pole `$ref` = `"#/components/schemas/PreLabSubmitRequest"`.
+- **L717:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L718:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L719:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L720:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L721:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L722:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L723:** Pole `description` = `"Successful Response"`.
+- **L724:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L725:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L726:** Pole `schema`: `{}`.
+- **L727:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L728:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L729:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L730:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L731:** Pole `description` = `"Validation Error"`.
+- **L732:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L733:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L734:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L735:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L736:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L737:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L738:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L739:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L740:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L741:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L742:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L743:** Klucz `/conversations/{conversation_id}/prelab/generate` — początek zagnieżdżonego obiektu.
+- **L744:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L745:** Pole `summary` = `"Generate Prelab"`.
+- **L746:** Pole `operationId` = `"generate_prelab_conversations__conversation_id__prelab_generate_post"`.
+- **L747:** Klucz `security` — początek zagnieżdżonego array.
+- **L748:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L749:** Pole `HTTPBearer`: `[]`.
+- **L750:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L751:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L752:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L753:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L754:** Pole `name` = `"conversation_id"`.
+- **L755:** Pole `in` = `"path"`.
+- **L756:** Pole `required` = `true`.
+- **L757:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L758:** Pole `type` = `"string"`.
+- **L759:** Pole `title` = `"Conversation Id"`.
+- **L760:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L761:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L762:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L763:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L764:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L765:** Pole `description` = `"Successful Response"`.
+- **L766:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L767:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L768:** Pole `schema`: `{}`.
+- **L769:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L770:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L771:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L772:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L773:** Pole `description` = `"Validation Error"`.
+- **L774:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L775:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L776:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L777:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L778:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L779:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L780:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L781:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L782:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L783:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L784:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L785:** Klucz `/conversations/{conversation_id}/messages/stream` — początek zagnieżdżonego obiektu.
+- **L786:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L787:** Pole `summary` = `"Send Message Stream"`.
+- **L788:** Pole `operationId` = `"send_message_stream_conversations__conversation_id__messages_stream_post"`.
+- **L789:** Klucz `security` — początek zagnieżdżonego array.
+- **L790:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L791:** Pole `HTTPBearer`: `[]`.
+- **L792:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L793:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L794:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L795:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L796:** Pole `name` = `"conversation_id"`.
+- **L797:** Pole `in` = `"path"`.
+- **L798:** Pole `required` = `true`.
+- **L799:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L800:** Pole `type` = `"string"`.
+- **L801:** Pole `title` = `"Conversation Id"`.
+- **L802:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L803:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L804:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L805:** Klucz `requestBody` — początek zagnieżdżonego obiektu.
+- **L806:** Pole `required` = `true`.
+- **L807:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L808:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L809:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L810:** Pole `$ref` = `"#/components/schemas/MessageRequest"`.
+- **L811:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L812:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L813:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L814:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L815:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L816:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L817:** Pole `description` = `"Successful Response"`.
+- **L818:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L819:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L820:** Pole `schema`: `{}`.
+- **L821:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L822:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L823:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L824:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L825:** Pole `description` = `"Validation Error"`.
+- **L826:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L827:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L828:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L829:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L830:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L831:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L832:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L833:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L834:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L835:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L836:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L837:** Klucz `/conversations/{conversation_id}/messages/{message_id}/regenerate` — początek zagnieżdżonego obiektu.
+- **L838:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L839:** Pole `summary` = `"Regenerate Message"`.
+- **L840:** Pole `operationId` = `"regenerate_message_conversations__conversation_id__messages__message_id__regen…`.
+- **L841:** Klucz `security` — początek zagnieżdżonego array.
+- **L842:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L843:** Pole `HTTPBearer`: `[]`.
+- **L844:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L845:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L846:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L847:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L848:** Pole `name` = `"conversation_id"`.
+- **L849:** Pole `in` = `"path"`.
+- **L850:** Pole `required` = `true`.
+- **L851:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L852:** Pole `type` = `"string"`.
+- **L853:** Pole `title` = `"Conversation Id"`.
+- **L854:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L855:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L856:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L857:** Pole `name` = `"message_id"`.
+- **L858:** Pole `in` = `"path"`.
+- **L859:** Pole `required` = `true`.
+- **L860:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L861:** Pole `type` = `"string"`.
+- **L862:** Pole `title` = `"Message Id"`.
+- **L863:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L864:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L865:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L866:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L867:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L868:** Pole `description` = `"Successful Response"`.
+- **L869:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L870:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L871:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L872:** Pole `$ref` = `"#/components/schemas/MessageResponse"`.
+- **L873:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L874:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L875:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L876:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L877:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L878:** Pole `description` = `"Validation Error"`.
+- **L879:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L880:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L881:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L882:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L883:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L884:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L885:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L886:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L887:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L888:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L889:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L890:** Klucz `/conversations/{conversation_id}/hints/reveal` — początek zagnieżdżonego obiektu.
+- **L891:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L892:** Pole `summary` = `"Reveal Hint"`.
+- **L893:** Pole `operationId` = `"reveal_hint_conversations__conversation_id__hints_reveal_post"`.
+- **L894:** Klucz `security` — początek zagnieżdżonego array.
+- **L895:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L896:** Pole `HTTPBearer`: `[]`.
+- **L897:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L898:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L899:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L900:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L901:** Pole `name` = `"conversation_id"`.
+- **L902:** Pole `in` = `"path"`.
+- **L903:** Pole `required` = `true`.
+- **L904:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L905:** Pole `type` = `"string"`.
+- **L906:** Pole `title` = `"Conversation Id"`.
+- **L907:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L908:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L909:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L910:** Klucz `requestBody` — początek zagnieżdżonego obiektu.
+- **L911:** Pole `required` = `true`.
+- **L912:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L913:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L914:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L915:** Pole `$ref` = `"#/components/schemas/RevealHintRequest"`.
+- **L916:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L917:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L918:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L919:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L920:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L921:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L922:** Pole `description` = `"Successful Response"`.
+- **L923:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L924:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L925:** Pole `schema`: `{}`.
+- **L926:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L927:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L928:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L929:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L930:** Pole `description` = `"Validation Error"`.
+- **L931:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L932:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L933:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L934:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L935:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L936:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L937:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L938:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L939:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L940:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L941:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L942:** Klucz `/conversations/{conversation_id}/messages/{message_id}/feedback` — początek zagnieżdżonego obiektu.
+- **L943:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L944:** Pole `summary` = `"Rate Message"`.
+- **L945:** Pole `operationId` = `"rate_message_conversations__conversation_id__messages__message_id__feedback_po…`.
+- **L946:** Klucz `security` — początek zagnieżdżonego array.
+- **L947:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L948:** Pole `HTTPBearer`: `[]`.
+- **L949:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L950:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L951:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L952:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L953:** Pole `name` = `"conversation_id"`.
+- **L954:** Pole `in` = `"path"`.
+- **L955:** Pole `required` = `true`.
+- **L956:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L957:** Pole `type` = `"string"`.
+- **L958:** Pole `title` = `"Conversation Id"`.
+- **L959:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L960:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L961:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L962:** Pole `name` = `"message_id"`.
+- **L963:** Pole `in` = `"path"`.
+- **L964:** Pole `required` = `true`.
+- **L965:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L966:** Pole `type` = `"string"`.
+- **L967:** Pole `title` = `"Message Id"`.
+- **L968:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L969:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L970:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L971:** Klucz `requestBody` — początek zagnieżdżonego obiektu.
+- **L972:** Pole `required` = `true`.
+- **L973:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L974:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L975:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L976:** Pole `$ref` = `"#/components/schemas/FeedbackRequest"`.
+- **L977:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L978:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L979:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L980:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L981:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L982:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L983:** Pole `description` = `"Successful Response"`.
+- **L984:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L985:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L986:** Pole `schema`: `{}`.
+- **L987:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L988:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L989:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L990:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L991:** Pole `description` = `"Validation Error"`.
+- **L992:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L993:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L994:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L995:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L996:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L997:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L998:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L999:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1000:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1001:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1002:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1003:** Klucz `/conversations/{conversation_id}/summary` — początek zagnieżdżonego obiektu.
+- **L1004:** Klucz `post` — początek zagnieżdżonego obiektu.
+- **L1005:** Pole `summary` = `"Get Summary"`.
+- **L1006:** Pole `operationId` = `"get_summary_conversations__conversation_id__summary_post"`.
+- **L1007:** Klucz `security` — początek zagnieżdżonego array.
+- **L1008:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1009:** Pole `HTTPBearer`: `[]`.
+- **L1010:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1011:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1012:** Klucz `parameters` — początek zagnieżdżonego array.
+- **L1013:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1014:** Pole `name` = `"conversation_id"`.
+- **L1015:** Pole `in` = `"path"`.
+- **L1016:** Pole `required` = `true`.
+- **L1017:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L1018:** Pole `type` = `"string"`.
+- **L1019:** Pole `title` = `"Conversation Id"`.
+- **L1020:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1021:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1022:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1023:** Klucz `responses` — początek zagnieżdżonego obiektu.
+- **L1024:** Klucz `200` — początek zagnieżdżonego obiektu.
+- **L1025:** Pole `description` = `"Successful Response"`.
+- **L1026:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L1027:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L1028:** Pole `schema`: `{}`.
+- **L1029:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1030:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1031:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1032:** Klucz `422` — początek zagnieżdżonego obiektu.
+- **L1033:** Pole `description` = `"Validation Error"`.
+- **L1034:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L1035:** Klucz `application/json` — początek zagnieżdżonego obiektu.
+- **L1036:** Klucz `schema` — początek zagnieżdżonego obiektu.
+- **L1037:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"`.
+- **L1038:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1039:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1040:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1041:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1042:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1043:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1044:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1045:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1046:** Klucz `components` — początek zagnieżdżonego obiektu.
+- **L1047:** Klucz `schemas` — początek zagnieżdżonego obiektu.
+- **L1048:** Klucz `AgentBehavior` — początek zagnieżdżonego obiektu.
+- **L1049:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1050:** Klucz `persona` — początek zagnieżdżonego obiektu.
+- **L1051:** Pole `$ref` = `"#/components/schemas/AgentPersona"`.
+- **L1052:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1053:** Klucz `codeRevealFallback` — początek zagnieżdżonego obiektu.
+- **L1054:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1055:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1056:** Pole `type` = `"string"`.
+- **L1057:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1058:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1059:** Pole `type` = `"null"`.
+- **L1060:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1061:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1062:** Pole `title` = `"Coderevealfallback"`.
+- **L1063:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1064:** Klucz `strictRules` — początek zagnieżdżonego obiektu.
+- **L1065:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1066:** Pole `type` = `"string"`.
+- **L1067:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1068:** Pole `type` = `"array"`.
+- **L1069:** Pole `title` = `"Strictrules"`.
+- **L1070:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1071:** Klucz `model` — początek zagnieżdżonego obiektu.
+- **L1072:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1073:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1074:** Pole `type` = `"string"`.
+- **L1075:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1076:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1077:** Pole `type` = `"null"`.
+- **L1078:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1079:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1080:** Pole `title` = `"Model"`.
+- **L1081:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1082:** Klucz `mode` — początek zagnieżdżonego obiektu.
+- **L1083:** Pole `type` = `"string"`.
+- **L1084:** Klucz `enum` — początek zagnieżdżonego array.
+- **L1085:** Wartość tekstowa / element tablicy: `"theory",`.
+- **L1086:** Wartość tekstowa / element tablicy: `"debug",`.
+- **L1087:** Wartość tekstowa / element tablicy: `"review"`.
+- **L1088:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1089:** Pole `title` = `"Mode"`.
+- **L1090:** Pole `default` = `"debug"`.
+- **L1091:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1092:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1093:** Pole `type` = `"object"`.
+- **L1094:** Klucz `required` — początek zagnieżdżonego array.
+- **L1095:** Wartość tekstowa / element tablicy: `"persona",`.
+- **L1096:** Wartość tekstowa / element tablicy: `"strictRules"`.
+- **L1097:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1098:** Pole `title` = `"AgentBehavior"`.
+- **L1099:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1100:** Klucz `AgentPersona` — początek zagnieżdżonego obiektu.
+- **L1101:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1102:** Klucz `role` — początek zagnieżdżonego obiektu.
+- **L1103:** Pole `type` = `"string"`.
+- **L1104:** Pole `title` = `"Role"`.
+- **L1105:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1106:** Klucz `tone` — początek zagnieżdżonego obiektu.
+- **L1107:** Pole `type` = `"string"`.
+- **L1108:** Pole `title` = `"Tone"`.
+- **L1109:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1110:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1111:** Pole `type` = `"object"`.
+- **L1112:** Klucz `required` — początek zagnieżdżonego array.
+- **L1113:** Wartość tekstowa / element tablicy: `"role",`.
+- **L1114:** Wartość tekstowa / element tablicy: `"tone"`.
+- **L1115:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1116:** Pole `title` = `"AgentPersona"`.
+- **L1117:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1118:** Klucz `Checkpoint` — początek zagnieżdżonego obiektu.
+- **L1119:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1120:** Klucz `id` — początek zagnieżdżonego obiektu.
+- **L1121:** Pole `type` = `"string"`.
+- **L1122:** Pole `title` = `"Id"`.
+- **L1123:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1124:** Klucz `after_goal` — początek zagnieżdżonego obiektu.
+- **L1125:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1126:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1127:** Pole `type` = `"string"`.
+- **L1128:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1129:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1130:** Pole `type` = `"null"`.
+- **L1131:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1132:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1133:** Pole `title` = `"After Goal"`.
+- **L1134:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1135:** Klucz `hint` — początek zagnieżdżonego obiektu.
+- **L1136:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1137:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1138:** Pole `type` = `"string"`.
+- **L1139:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1140:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1141:** Pole `type` = `"null"`.
+- **L1142:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1143:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1144:** Pole `title` = `"Hint"`.
+- **L1145:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1146:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1147:** Pole `type` = `"object"`.
+- **L1148:** Klucz `required` — początek zagnieżdżonego array.
+- **L1149:** Wartość tekstowa / element tablicy: `"id"`.
+- **L1150:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1151:** Pole `title` = `"Checkpoint"`.
+- **L1152:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1153:** Klucz `CodeContext` — początek zagnieżdżonego obiektu.
+- **L1154:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1155:** Klucz `current_file_name` — początek zagnieżdżonego obiektu.
+- **L1156:** Pole `type` = `"string"`.
+- **L1157:** Pole `title` = `"Current File Name"`.
+- **L1158:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1159:** Klucz `current_code` — początek zagnieżdżonego obiektu.
+- **L1160:** Pole `type` = `"string"`.
+- **L1161:** Pole `title` = `"Current Code"`.
+- **L1162:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1163:** Klucz `error_logs` — początek zagnieżdżonego obiektu.
+- **L1164:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1165:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1166:** Pole `type` = `"string"`.
+- **L1167:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1168:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1169:** Pole `type` = `"null"`.
+- **L1170:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1171:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1172:** Pole `title` = `"Error Logs"`.
+- **L1173:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1174:** Klucz `workspace_root` — początek zagnieżdżonego obiektu.
+- **L1175:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1176:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1177:** Pole `type` = `"string"`.
+- **L1178:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1179:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1180:** Pole `type` = `"null"`.
+- **L1181:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1182:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1183:** Pole `title` = `"Workspace Root"`.
+- **L1184:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1185:** Klucz `selection` — początek zagnieżdżonego obiektu.
+- **L1186:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1187:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1188:** Pole `$ref` = `"#/components/schemas/CodeSelection"`.
+- **L1189:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1190:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1191:** Pole `type` = `"null"`.
+- **L1192:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1193:** Struktura JSON (`]`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1194:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1195:** Klucz `diagnostics` — początek zagnieżdżonego obiektu.
+- **L1196:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1197:** Pole `$ref` = `"#/components/schemas/DiagnosticItem"`.
+- **L1198:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1199:** Pole `type` = `"array"`.
+- **L1200:** Pole `title` = `"Diagnostics"`.
+- **L1201:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1202:** Klucz `open_files` — początek zagnieżdżonego obiektu.
+- **L1203:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1204:** Pole `$ref` = `"#/components/schemas/OpenFile"`.
+- **L1205:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1206:** Pole `type` = `"array"`.
+- **L1207:** Pole `title` = `"Open Files"`.
+- **L1208:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1209:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1210:** Pole `type` = `"object"`.
+- **L1211:** Klucz `required` — początek zagnieżdżonego array.
+- **L1212:** Wartość tekstowa / element tablicy: `"current_file_name",`.
+- **L1213:** Wartość tekstowa / element tablicy: `"current_code"`.
+- **L1214:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1215:** Pole `title` = `"CodeContext"`.
+- **L1216:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1217:** Klucz `CodeSelection` — początek zagnieżdżonego obiektu.
+- **L1218:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1219:** Klucz `start_line` — początek zagnieżdżonego obiektu.
+- **L1220:** Pole `type` = `"integer"`.
+- **L1221:** Pole `title` = `"Start Line"`.
+- **L1222:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1223:** Klucz `end_line` — początek zagnieżdżonego obiektu.
+- **L1224:** Pole `type` = `"integer"`.
+- **L1225:** Pole `title` = `"End Line"`.
+- **L1226:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1227:** Klucz `text` — początek zagnieżdżonego obiektu.
+- **L1228:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1229:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1230:** Pole `type` = `"string"`.
+- **L1231:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1232:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1233:** Pole `type` = `"null"`.
+- **L1234:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1235:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1236:** Pole `title` = `"Text"`.
+- **L1237:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1238:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1239:** Pole `type` = `"object"`.
+- **L1240:** Klucz `required` — początek zagnieżdżonego array.
+- **L1241:** Wartość tekstowa / element tablicy: `"start_line",`.
+- **L1242:** Wartość tekstowa / element tablicy: `"end_line"`.
+- **L1243:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1244:** Pole `title` = `"CodeSelection"`.
+- **L1245:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1246:** Klucz `DebugInfo` — początek zagnieżdżonego obiektu.
+- **L1247:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1248:** Klucz `is_frustrated` — początek zagnieżdżonego obiektu.
+- **L1249:** Pole `type` = `"boolean"`.
+- **L1250:** Pole `title` = `"Is Frustrated"`.
+- **L1251:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1252:** Klucz `avg_score` — początek zagnieżdżonego obiektu.
+- **L1253:** Pole `type` = `"number"`.
+- **L1254:** Pole `title` = `"Avg Score"`.
+- **L1255:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1256:** Klucz `code_changed` — początek zagnieżdżonego obiektu.
+- **L1257:** Pole `type` = `"boolean"`.
+- **L1258:** Pole `title` = `"Code Changed"`.
+- **L1259:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1260:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1261:** Pole `type` = `"object"`.
+- **L1262:** Klucz `required` — początek zagnieżdżonego array.
+- **L1263:** Wartość tekstowa / element tablicy: `"is_frustrated",`.
+- **L1264:** Wartość tekstowa / element tablicy: `"avg_score",`.
+- **L1265:** Wartość tekstowa / element tablicy: `"code_changed"`.
+- **L1266:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1267:** Pole `title` = `"DebugInfo"`.
+- **L1268:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1269:** Klucz `DiagnosticItem` — początek zagnieżdżonego obiektu.
+- **L1270:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1271:** Klucz `file` — początek zagnieżdżonego obiektu.
+- **L1272:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1273:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1274:** Pole `type` = `"string"`.
+- **L1275:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1276:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1277:** Pole `type` = `"null"`.
+- **L1278:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1279:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1280:** Pole `title` = `"File"`.
+- **L1281:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1282:** Klucz `severity` — początek zagnieżdżonego obiektu.
+- **L1283:** Pole `type` = `"string"`.
+- **L1284:** Klucz `enum` — początek zagnieżdżonego array.
+- **L1285:** Wartość tekstowa / element tablicy: `"error",`.
+- **L1286:** Wartość tekstowa / element tablicy: `"warning",`.
+- **L1287:** Wartość tekstowa / element tablicy: `"info",`.
+- **L1288:** Wartość tekstowa / element tablicy: `"hint"`.
+- **L1289:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1290:** Pole `title` = `"Severity"`.
+- **L1291:** Pole `default` = `"error"`.
+- **L1292:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1293:** Klucz `message` — początek zagnieżdżonego obiektu.
+- **L1294:** Pole `type` = `"string"`.
+- **L1295:** Pole `title` = `"Message"`.
+- **L1296:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1297:** Klucz `line` — początek zagnieżdżonego obiektu.
+- **L1298:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1299:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1300:** Pole `type` = `"integer"`.
+- **L1301:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1302:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1303:** Pole `type` = `"null"`.
+- **L1304:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1305:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1306:** Pole `title` = `"Line"`.
+- **L1307:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1308:** Klucz `source` — początek zagnieżdżonego obiektu.
+- **L1309:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1310:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1311:** Pole `type` = `"string"`.
+- **L1312:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1313:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1314:** Pole `type` = `"null"`.
+- **L1315:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1316:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1317:** Pole `title` = `"Source"`.
+- **L1318:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1319:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1320:** Pole `type` = `"object"`.
+- **L1321:** Klucz `required` — początek zagnieżdżonego array.
+- **L1322:** Wartość tekstowa / element tablicy: `"message"`.
+- **L1323:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1324:** Pole `title` = `"DiagnosticItem"`.
+- **L1325:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1326:** Klucz `FeedbackRequest` — początek zagnieżdżonego obiektu.
+- **L1327:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1328:** Klucz `rating` — początek zagnieżdżonego obiektu.
+- **L1329:** Pole `type` = `"integer"`.
+- **L1330:** Pole `title` = `"Rating"`.
+- **L1331:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1332:** Klucz `comment` — początek zagnieżdżonego obiektu.
+- **L1333:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1334:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1335:** Pole `type` = `"string"`.
+- **L1336:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1337:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1338:** Pole `type` = `"null"`.
+- **L1339:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1340:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1341:** Pole `title` = `"Comment"`.
+- **L1342:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1343:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1344:** Pole `type` = `"object"`.
+- **L1345:** Klucz `required` — początek zagnieżdżonego array.
+- **L1346:** Wartość tekstowa / element tablicy: `"rating"`.
+- **L1347:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1348:** Pole `title` = `"FeedbackRequest"`.
+- **L1349:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1350:** Klucz `GoalProgressItem` — początek zagnieżdżonego obiektu.
+- **L1351:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1352:** Klucz `goal` — początek zagnieżdżonego obiektu.
+- **L1353:** Pole `type` = `"string"`.
+- **L1354:** Pole `title` = `"Goal"`.
+- **L1355:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1356:** Klucz `status` — początek zagnieżdżonego obiektu.
+- **L1357:** Pole `type` = `"string"`.
+- **L1358:** Klucz `enum` — początek zagnieżdżonego array.
+- **L1359:** Wartość tekstowa / element tablicy: `"not_started",`.
+- **L1360:** Wartość tekstowa / element tablicy: `"in_progress",`.
+- **L1361:** Wartość tekstowa / element tablicy: `"done"`.
+- **L1362:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1363:** Pole `title` = `"Status"`.
+- **L1364:** Pole `default` = `"not_started"`.
+- **L1365:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1366:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1367:** Pole `type` = `"object"`.
+- **L1368:** Klucz `required` — początek zagnieżdżonego array.
+- **L1369:** Wartość tekstowa / element tablicy: `"goal"`.
+- **L1370:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1371:** Pole `title` = `"GoalProgressItem"`.
+- **L1372:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1373:** Klucz `HTTPValidationError` — początek zagnieżdżonego obiektu.
+- **L1374:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1375:** Klucz `detail` — początek zagnieżdżonego obiektu.
+- **L1376:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1377:** Pole `$ref` = `"#/components/schemas/ValidationError"`.
+- **L1378:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1379:** Pole `type` = `"array"`.
+- **L1380:** Pole `title` = `"Detail"`.
+- **L1381:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1382:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1383:** Pole `type` = `"object"`.
+- **L1384:** Pole `title` = `"HTTPValidationError"`.
+- **L1385:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1386:** Klucz `IdeEventRequest` — początek zagnieżdżonego obiektu.
+- **L1387:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1388:** Klucz `type` — początek zagnieżdżonego obiektu.
+- **L1389:** Pole `type` = `"string"`.
+- **L1390:** Klucz `enum` — początek zagnieżdżonego array.
+- **L1391:** Wartość tekstowa / element tablicy: `"copy_blocked",`.
+- **L1392:** Wartość tekstowa / element tablicy: `"file_opened",`.
+- **L1393:** Wartość tekstowa / element tablicy: `"paste_attempt"`.
+- **L1394:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1395:** Pole `title` = `"Type"`.
+- **L1396:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1397:** Klucz `meta` — początek zagnieżdżonego obiektu.
+- **L1398:** Pole `additionalProperties` = `true`.
+- **L1399:** Pole `type` = `"object"`.
+- **L1400:** Pole `title` = `"Meta"`.
+- **L1401:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1402:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1403:** Pole `type` = `"object"`.
+- **L1404:** Klucz `required` — początek zagnieżdżonego array.
+- **L1405:** Wartość tekstowa / element tablicy: `"type"`.
+- **L1406:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1407:** Pole `title` = `"IdeEventRequest"`.
+- **L1408:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1409:** Klucz `IdeRestrictions` — początek zagnieżdżonego obiektu.
+- **L1410:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1411:** Klucz `requireFileContextForChat` — początek zagnieżdżonego obiektu.
+- **L1412:** Pole `type` = `"boolean"`.
+- **L1413:** Pole `title` = `"Requirefilecontextforchat"`.
+- **L1414:** Pole `default` = `false`.
+- **L1415:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1416:** Klucz `disableCopyFromChat` — początek zagnieżdżonego obiektu.
+- **L1417:** Pole `type` = `"boolean"`.
+- **L1418:** Pole `title` = `"Disablecopyfromchat"`.
+- **L1419:** Pole `default` = `false`.
+- **L1420:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1421:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1422:** Pole `type` = `"object"`.
+- **L1423:** Pole `title` = `"IdeRestrictions"`.
+- **L1424:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1425:** Klucz `LearningContext` — początek zagnieżdżonego obiektu.
+- **L1426:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1427:** Klucz `goals` — początek zagnieżdżonego obiektu.
+- **L1428:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1429:** Pole `type` = `"string"`.
+- **L1430:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1431:** Pole `type` = `"array"`.
+- **L1432:** Pole `title` = `"Goals"`.
+- **L1433:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1434:** Klucz `referenceMaterials` — początek zagnieżdżonego obiektu.
+- **L1435:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1436:** Pole `$ref` = `"#/components/schemas/ReferenceMaterial"`.
+- **L1437:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1438:** Pole `type` = `"array"`.
+- **L1439:** Pole `title` = `"Referencematerials"`.
+- **L1440:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1441:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1442:** Pole `type` = `"object"`.
+- **L1443:** Klucz `required` — początek zagnieżdżonego array.
+- **L1444:** Wartość tekstowa / element tablicy: `"goals",`.
+- **L1445:** Wartość tekstowa / element tablicy: `"referenceMaterials"`.
+- **L1446:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1447:** Pole `title` = `"LearningContext"`.
+- **L1448:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1449:** Klucz `MessageRequest` — początek zagnieżdżonego obiektu.
+- **L1450:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1451:** Klucz `question` — początek zagnieżdżonego obiektu.
+- **L1452:** Pole `type` = `"string"`.
+- **L1453:** Pole `title` = `"Question"`.
+- **L1454:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1455:** Klucz `code_context` — początek zagnieżdżonego obiektu.
+- **L1456:** Pole `$ref` = `"#/components/schemas/CodeContext"`.
+- **L1457:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1458:** Klucz `client_message_id` — początek zagnieżdżonego obiektu.
+- **L1459:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1460:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1461:** Pole `type` = `"string"`.
+- **L1462:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1463:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1464:** Pole `type` = `"null"`.
+- **L1465:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1466:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1467:** Pole `title` = `"Client Message Id"`.
+- **L1468:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1469:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1470:** Pole `type` = `"object"`.
+- **L1471:** Klucz `required` — początek zagnieżdżonego array.
+- **L1472:** Wartość tekstowa / element tablicy: `"question",`.
+- **L1473:** Wartość tekstowa / element tablicy: `"code_context"`.
+- **L1474:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1475:** Pole `title` = `"MessageRequest"`.
+- **L1476:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1477:** Klucz `MessageResponse` — początek zagnieżdżonego obiektu.
+- **L1478:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1479:** Klucz `message_id` — początek zagnieżdżonego obiektu.
+- **L1480:** Pole `type` = `"string"`.
+- **L1481:** Pole `title` = `"Message Id"`.
+- **L1482:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1483:** Klucz `answer` — początek zagnieżdżonego obiektu.
+- **L1484:** Pole `type` = `"string"`.
+- **L1485:** Pole `title` = `"Answer"`.
+- **L1486:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1487:** Klucz `prompt_score` — początek zagnieżdżonego obiektu.
+- **L1488:** Pole `type` = `"integer"`.
+- **L1489:** Pole `title` = `"Prompt Score"`.
+- **L1490:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1491:** Klucz `prompt_feedback` — początek zagnieżdżonego obiektu.
+- **L1492:** Pole `type` = `"string"`.
+- **L1493:** Pole `title` = `"Prompt Feedback"`.
+- **L1494:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1495:** Klucz `tokens_used` — początek zagnieżdżonego obiektu.
+- **L1496:** Pole `type` = `"integer"`.
+- **L1497:** Pole `title` = `"Tokens Used"`.
+- **L1498:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1499:** Klucz `is_cached` — początek zagnieżdżonego obiektu.
+- **L1500:** Pole `type` = `"boolean"`.
+- **L1501:** Pole `title` = `"Is Cached"`.
+- **L1502:** Pole `default` = `false`.
+- **L1503:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1504:** Klucz `penalty_applied` — początek zagnieżdżonego obiektu.
+- **L1505:** Pole `type` = `"boolean"`.
+- **L1506:** Pole `title` = `"Penalty Applied"`.
+- **L1507:** Pole `default` = `false`.
+- **L1508:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1509:** Klucz `sources` — początek zagnieżdżonego obiektu.
+- **L1510:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1511:** Pole `$ref` = `"#/components/schemas/SourceRef"`.
+- **L1512:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1513:** Pole `type` = `"array"`.
+- **L1514:** Pole `title` = `"Sources"`.
+- **L1515:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1516:** Klucz `suggested_next_step` — początek zagnieżdżonego obiektu.
+- **L1517:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1518:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1519:** Pole `type` = `"string"`.
+- **L1520:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1521:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1522:** Pole `type` = `"null"`.
+- **L1523:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1524:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1525:** Pole `title` = `"Suggested Next Step"`.
+- **L1526:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1527:** Klucz `goal_progress` — początek zagnieżdżonego obiektu.
+- **L1528:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1529:** Pole `$ref` = `"#/components/schemas/GoalProgressItem"`.
+- **L1530:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1531:** Pole `type` = `"array"`.
+- **L1532:** Pole `title` = `"Goal Progress"`.
+- **L1533:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1534:** Klucz `debug_info` — początek zagnieżdżonego obiektu.
+- **L1535:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1536:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1537:** Pole `$ref` = `"#/components/schemas/DebugInfo"`.
+- **L1538:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1539:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1540:** Pole `type` = `"null"`.
+- **L1541:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1542:** Struktura JSON (`]`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1543:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1544:** Klucz `client_message_id` — początek zagnieżdżonego obiektu.
+- **L1545:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1546:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1547:** Pole `type` = `"string"`.
+- **L1548:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1549:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1550:** Pole `type` = `"null"`.
+- **L1551:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1552:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1553:** Pole `title` = `"Client Message Id"`.
+- **L1554:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1555:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1556:** Pole `type` = `"object"`.
+- **L1557:** Klucz `required` — początek zagnieżdżonego array.
+- **L1558:** Wartość tekstowa / element tablicy: `"answer",`.
+- **L1559:** Wartość tekstowa / element tablicy: `"prompt_score",`.
+- **L1560:** Wartość tekstowa / element tablicy: `"prompt_feedback",`.
+- **L1561:** Wartość tekstowa / element tablicy: `"tokens_used"`.
+- **L1562:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1563:** Pole `title` = `"MessageResponse"`.
+- **L1564:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1565:** Klucz `OpenFile` — początek zagnieżdżonego obiektu.
+- **L1566:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1567:** Klucz `path` — początek zagnieżdżonego obiektu.
+- **L1568:** Pole `type` = `"string"`.
+- **L1569:** Pole `title` = `"Path"`.
+- **L1570:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1571:** Klucz `content` — początek zagnieżdżonego obiektu.
+- **L1572:** Pole `type` = `"string"`.
+- **L1573:** Pole `title` = `"Content"`.
+- **L1574:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1575:** Klucz `language` — początek zagnieżdżonego obiektu.
+- **L1576:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1577:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1578:** Pole `type` = `"string"`.
+- **L1579:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1580:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1581:** Pole `type` = `"null"`.
+- **L1582:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1583:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1584:** Pole `title` = `"Language"`.
+- **L1585:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1586:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1587:** Pole `type` = `"object"`.
+- **L1588:** Klucz `required` — początek zagnieżdżonego array.
+- **L1589:** Wartość tekstowa / element tablicy: `"path",`.
+- **L1590:** Wartość tekstowa / element tablicy: `"content"`.
+- **L1591:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1592:** Pole `title` = `"OpenFile"`.
+- **L1593:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1594:** Klucz `PreLabAnswerItem` — początek zagnieżdżonego obiektu.
+- **L1595:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1596:** Klucz `id` — początek zagnieżdżonego obiektu.
+- **L1597:** Pole `type` = `"string"`.
+- **L1598:** Pole `title` = `"Id"`.
+- **L1599:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1600:** Klucz `answer` — początek zagnieżdżonego obiektu.
+- **L1601:** Pole `type` = `"string"`.
+- **L1602:** Pole `title` = `"Answer"`.
+- **L1603:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1604:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1605:** Pole `type` = `"object"`.
+- **L1606:** Klucz `required` — początek zagnieżdżonego array.
+- **L1607:** Wartość tekstowa / element tablicy: `"id",`.
+- **L1608:** Wartość tekstowa / element tablicy: `"answer"`.
+- **L1609:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1610:** Pole `title` = `"PreLabAnswerItem"`.
+- **L1611:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1612:** Klucz `PreLabConfig` — początek zagnieżdżonego obiektu.
+- **L1613:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1614:** Klucz `enabled` — początek zagnieżdżonego obiektu.
+- **L1615:** Pole `type` = `"boolean"`.
+- **L1616:** Pole `title` = `"Enabled"`.
+- **L1617:** Pole `default` = `false`.
+- **L1618:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1619:** Klucz `questions` — początek zagnieżdżonego obiektu.
+- **L1620:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1621:** Pole `$ref` = `"#/components/schemas/PreLabQuestion"`.
+- **L1622:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1623:** Pole `type` = `"array"`.
+- **L1624:** Pole `title` = `"Questions"`.
+- **L1625:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1626:** Klucz `max_attempts` — początek zagnieżdżonego obiektu.
+- **L1627:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1628:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1629:** Pole `type` = `"integer"`.
+- **L1630:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1631:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1632:** Pole `type` = `"null"`.
+- **L1633:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1634:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1635:** Pole `title` = `"Max Attempts"`.
+- **L1636:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1637:** Klucz `hint_after_fail` — początek zagnieżdżonego obiektu.
+- **L1638:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1639:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1640:** Pole `type` = `"string"`.
+- **L1641:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1642:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1643:** Pole `type` = `"null"`.
+- **L1644:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1645:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1646:** Pole `title` = `"Hint After Fail"`.
+- **L1647:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1648:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1649:** Pole `type` = `"object"`.
+- **L1650:** Pole `title` = `"PreLabConfig"`.
+- **L1651:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1652:** Klucz `PreLabQuestion` — początek zagnieżdżonego obiektu.
+- **L1653:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1654:** Klucz `id` — początek zagnieżdżonego obiektu.
+- **L1655:** Pole `type` = `"string"`.
+- **L1656:** Pole `title` = `"Id"`.
+- **L1657:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1658:** Klucz `prompt` — początek zagnieżdżonego obiektu.
+- **L1659:** Pole `type` = `"string"`.
+- **L1660:** Pole `title` = `"Prompt"`.
+- **L1661:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1662:** Klucz `expected_keywords` — początek zagnieżdżonego obiektu.
+- **L1663:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1664:** Pole `type` = `"string"`.
+- **L1665:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1666:** Pole `type` = `"array"`.
+- **L1667:** Pole `title` = `"Expected Keywords"`.
+- **L1668:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1669:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1670:** Pole `type` = `"object"`.
+- **L1671:** Klucz `required` — początek zagnieżdżonego array.
+- **L1672:** Wartość tekstowa / element tablicy: `"id",`.
+- **L1673:** Wartość tekstowa / element tablicy: `"prompt"`.
+- **L1674:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1675:** Pole `title` = `"PreLabQuestion"`.
+- **L1676:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1677:** Klucz `PreLabSubmitRequest` — początek zagnieżdżonego obiektu.
+- **L1678:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1679:** Klucz `answers` — początek zagnieżdżonego obiektu.
+- **L1680:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1681:** Pole `$ref` = `"#/components/schemas/PreLabAnswerItem"`.
+- **L1682:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1683:** Pole `type` = `"array"`.
+- **L1684:** Pole `title` = `"Answers"`.
+- **L1685:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1686:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1687:** Pole `type` = `"object"`.
+- **L1688:** Klucz `required` — początek zagnieżdżonego array.
+- **L1689:** Wartość tekstowa / element tablicy: `"answers"`.
+- **L1690:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1691:** Pole `title` = `"PreLabSubmitRequest"`.
+- **L1692:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1693:** Klucz `ReferenceMaterial` — początek zagnieżdżonego obiektu.
+- **L1694:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1695:** Klucz `type` — początek zagnieżdżonego obiektu.
+- **L1696:** Pole `type` = `"string"`.
+- **L1697:** Klucz `enum` — początek zagnieżdżonego array.
+- **L1698:** Wartość tekstowa / element tablicy: `"doc",`.
+- **L1699:** Wartość tekstowa / element tablicy: `"pdf",`.
+- **L1700:** Wartość tekstowa / element tablicy: `"video_timestamp",`.
+- **L1701:** Wartość tekstowa / element tablicy: `"slide"`.
+- **L1702:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1703:** Pole `title` = `"Type"`.
+- **L1704:** Pole `default` = `"doc"`.
+- **L1705:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1706:** Klucz `title` — początek zagnieżdżonego obiektu.
+- **L1707:** Pole `type` = `"string"`.
+- **L1708:** Pole `title` = `"Title"`.
+- **L1709:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1710:** Klucz `url` — początek zagnieżdżonego obiektu.
+- **L1711:** Pole `type` = `"string"`.
+- **L1712:** Pole `title` = `"Url"`.
+- **L1713:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1714:** Klucz `timestamp` — początek zagnieżdżonego obiektu.
+- **L1715:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1716:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1717:** Pole `type` = `"string"`.
+- **L1718:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1719:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1720:** Pole `type` = `"null"`.
+- **L1721:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1722:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1723:** Pole `title` = `"Timestamp"`.
+- **L1724:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1725:** Klucz `page` — początek zagnieżdżonego obiektu.
+- **L1726:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1727:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1728:** Pole `type` = `"integer"`.
+- **L1729:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1730:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1731:** Pole `type` = `"null"`.
+- **L1732:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1733:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1734:** Pole `title` = `"Page"`.
+- **L1735:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1736:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1737:** Pole `type` = `"object"`.
+- **L1738:** Klucz `required` — początek zagnieżdżonego array.
+- **L1739:** Wartość tekstowa / element tablicy: `"title",`.
+- **L1740:** Wartość tekstowa / element tablicy: `"url"`.
+- **L1741:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1742:** Pole `title` = `"ReferenceMaterial"`.
+- **L1743:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1744:** Klucz `RevealHintRequest` — początek zagnieżdżonego obiektu.
+- **L1745:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1746:** Klucz `code_context` — początek zagnieżdżonego obiektu.
+- **L1747:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1748:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1749:** Pole `$ref` = `"#/components/schemas/CodeContext"`.
+- **L1750:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1751:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1752:** Pole `type` = `"null"`.
+- **L1753:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1754:** Struktura JSON (`]`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1755:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1756:** Klucz `focus` — początek zagnieżdżonego obiektu.
+- **L1757:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1758:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1759:** Pole `type` = `"string"`.
+- **L1760:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1761:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1762:** Pole `type` = `"null"`.
+- **L1763:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1764:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1765:** Pole `title` = `"Focus"`.
+- **L1766:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1767:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1768:** Pole `type` = `"object"`.
+- **L1769:** Pole `title` = `"RevealHintRequest"`.
+- **L1770:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1771:** Klucz `ReviewRequest` — początek zagnieżdżonego obiektu.
+- **L1772:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1773:** Klucz `code_context` — początek zagnieżdżonego obiektu.
+- **L1774:** Pole `$ref` = `"#/components/schemas/CodeContext"`.
+- **L1775:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1776:** Klucz `focus` — początek zagnieżdżonego obiektu.
+- **L1777:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1778:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1779:** Pole `type` = `"string"`.
+- **L1780:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1781:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1782:** Pole `type` = `"null"`.
+- **L1783:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1784:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1785:** Pole `title` = `"Focus"`.
+- **L1786:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1787:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1788:** Pole `type` = `"object"`.
+- **L1789:** Klucz `required` — początek zagnieżdżonego array.
+- **L1790:** Wartość tekstowa / element tablicy: `"code_context"`.
+- **L1791:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1792:** Pole `title` = `"ReviewRequest"`.
+- **L1793:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1794:** Klucz `SenseiConfig` — początek zagnieżdżonego obiektu.
+- **L1795:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1796:** Klucz `learningContext` — początek zagnieżdżonego obiektu.
+- **L1797:** Pole `$ref` = `"#/components/schemas/LearningContext"`.
+- **L1798:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1799:** Klucz `agentBehavior` — początek zagnieżdżonego obiektu.
+- **L1800:** Pole `$ref` = `"#/components/schemas/AgentBehavior"`.
+- **L1801:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1802:** Klucz `ideRestrictions` — początek zagnieżdżonego obiektu.
+- **L1803:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1804:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1805:** Pole `$ref` = `"#/components/schemas/IdeRestrictions"`.
+- **L1806:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1807:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1808:** Pole `type` = `"null"`.
+- **L1809:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1810:** Struktura JSON (`]`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1811:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1812:** Klucz `language` — początek zagnieżdżonego obiektu.
+- **L1813:** Pole `type` = `"string"`.
+- **L1814:** Klucz `enum` — początek zagnieżdżonego array.
+- **L1815:** Wartość tekstowa / element tablicy: `"pl",`.
+- **L1816:** Wartość tekstowa / element tablicy: `"en"`.
+- **L1817:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1818:** Pole `title` = `"Language"`.
+- **L1819:** Pole `default` = `"pl"`.
+- **L1820:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1821:** Klucz `preLab` — początek zagnieżdżonego obiektu.
+- **L1822:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1823:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1824:** Pole `$ref` = `"#/components/schemas/PreLabConfig"`.
+- **L1825:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1826:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1827:** Pole `type` = `"null"`.
+- **L1828:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1829:** Struktura JSON (`]`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1830:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1831:** Klucz `evaluationCriteria` — początek zagnieżdżonego obiektu.
+- **L1832:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1833:** Pole `type` = `"string"`.
+- **L1834:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1835:** Pole `type` = `"array"`.
+- **L1836:** Pole `title` = `"Evaluationcriteria"`.
+- **L1837:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1838:** Klucz `maxTokensPerSession` — początek zagnieżdżonego obiektu.
+- **L1839:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1840:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1841:** Pole `type` = `"integer"`.
+- **L1842:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1843:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1844:** Pole `type` = `"null"`.
+- **L1845:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1846:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1847:** Pole `title` = `"Maxtokenspersession"`.
+- **L1848:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1849:** Klucz `checkpoints` — początek zagnieżdżonego obiektu.
+- **L1850:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1851:** Pole `$ref` = `"#/components/schemas/Checkpoint"`.
+- **L1852:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1853:** Pole `type` = `"array"`.
+- **L1854:** Pole `title` = `"Checkpoints"`.
+- **L1855:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1856:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1857:** Pole `type` = `"object"`.
+- **L1858:** Klucz `required` — początek zagnieżdżonego array.
+- **L1859:** Wartość tekstowa / element tablicy: `"learningContext",`.
+- **L1860:** Wartość tekstowa / element tablicy: `"agentBehavior"`.
+- **L1861:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1862:** Pole `title` = `"SenseiConfig"`.
+- **L1863:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1864:** Klucz `SourceRef` — początek zagnieżdżonego obiektu.
+- **L1865:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1866:** Klucz `title` — początek zagnieżdżonego obiektu.
+- **L1867:** Pole `type` = `"string"`.
+- **L1868:** Pole `title` = `"Title"`.
+- **L1869:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1870:** Klucz `url` — początek zagnieżdżonego obiektu.
+- **L1871:** Pole `type` = `"string"`.
+- **L1872:** Pole `title` = `"Url"`.
+- **L1873:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1874:** Klucz `timestamp` — początek zagnieżdżonego obiektu.
+- **L1875:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1876:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1877:** Pole `type` = `"string"`.
+- **L1878:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1879:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1880:** Pole `type` = `"null"`.
+- **L1881:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1882:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1883:** Pole `title` = `"Timestamp"`.
+- **L1884:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1885:** Klucz `page` — początek zagnieżdżonego obiektu.
+- **L1886:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1887:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1888:** Pole `type` = `"integer"`.
+- **L1889:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1890:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1891:** Pole `type` = `"null"`.
+- **L1892:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1893:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1894:** Pole `title` = `"Page"`.
+- **L1895:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1896:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1897:** Pole `type` = `"object"`.
+- **L1898:** Klucz `required` — początek zagnieżdżonego array.
+- **L1899:** Wartość tekstowa / element tablicy: `"title",`.
+- **L1900:** Wartość tekstowa / element tablicy: `"url"`.
+- **L1901:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1902:** Pole `title` = `"SourceRef"`.
+- **L1903:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1904:** Klucz `StartRequest` — początek zagnieżdżonego obiektu.
+- **L1905:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1906:** Klucz `problem_description` — początek zagnieżdżonego obiektu.
+- **L1907:** Pole `type` = `"string"`.
+- **L1908:** Pole `title` = `"Problem Description"`.
+- **L1909:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1910:** Klucz `config` — początek zagnieżdżonego obiektu.
+- **L1911:** Pole `$ref` = `"#/components/schemas/SenseiConfig"`.
+- **L1912:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1913:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1914:** Pole `type` = `"object"`.
+- **L1915:** Klucz `required` — początek zagnieżdżonego array.
+- **L1916:** Wartość tekstowa / element tablicy: `"problem_description",`.
+- **L1917:** Wartość tekstowa / element tablicy: `"config"`.
+- **L1918:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1919:** Pole `title` = `"StartRequest"`.
+- **L1920:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1921:** Klucz `ValidateConfigRequest` — początek zagnieżdżonego obiektu.
+- **L1922:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1923:** Klucz `config` — początek zagnieżdżonego obiektu.
+- **L1924:** Pole `additionalProperties` = `true`.
+- **L1925:** Pole `type` = `"object"`.
+- **L1926:** Pole `title` = `"Config"`.
+- **L1927:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1928:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1929:** Pole `type` = `"object"`.
+- **L1930:** Klucz `required` — początek zagnieżdżonego array.
+- **L1931:** Wartość tekstowa / element tablicy: `"config"`.
+- **L1932:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1933:** Pole `title` = `"ValidateConfigRequest"`.
+- **L1934:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1935:** Klucz `ValidationError` — początek zagnieżdżonego obiektu.
+- **L1936:** Klucz `properties` — początek zagnieżdżonego obiektu.
+- **L1937:** Klucz `loc` — początek zagnieżdżonego obiektu.
+- **L1938:** Klucz `items` — początek zagnieżdżonego obiektu.
+- **L1939:** Klucz `anyOf` — początek zagnieżdżonego array.
+- **L1940:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1941:** Pole `type` = `"string"`.
+- **L1942:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1943:** Struktura JSON (`{`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1944:** Pole `type` = `"integer"`.
+- **L1945:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1946:** Struktura JSON (`]`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1947:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1948:** Pole `type` = `"array"`.
+- **L1949:** Pole `title` = `"Location"`.
+- **L1950:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1951:** Klucz `msg` — początek zagnieżdżonego obiektu.
+- **L1952:** Pole `type` = `"string"`.
+- **L1953:** Pole `title` = `"Message"`.
+- **L1954:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1955:** Klucz `type` — początek zagnieżdżonego obiektu.
+- **L1956:** Pole `type` = `"string"`.
+- **L1957:** Pole `title` = `"Error Type"`.
+- **L1958:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1959:** Klucz `input` — początek zagnieżdżonego obiektu.
+- **L1960:** Pole `title` = `"Input"`.
+- **L1961:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1962:** Klucz `ctx` — początek zagnieżdżonego obiektu.
+- **L1963:** Pole `type` = `"object"`.
+- **L1964:** Pole `title` = `"Context"`.
+- **L1965:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1966:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1967:** Pole `type` = `"object"`.
+- **L1968:** Klucz `required` — początek zagnieżdżonego array.
+- **L1969:** Wartość tekstowa / element tablicy: `"loc",`.
+- **L1970:** Wartość tekstowa / element tablicy: `"msg",`.
+- **L1971:** Wartość tekstowa / element tablicy: `"type"`.
+- **L1972:** Struktura JSON (`],`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1973:** Pole `title` = `"ValidationError"`.
+- **L1974:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1975:** Struktura JSON (`},`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1976:** Klucz `securitySchemes` — początek zagnieżdżonego obiektu.
+- **L1977:** Klucz `HTTPBearer` — początek zagnieżdżonego obiektu.
+- **L1978:** Pole `type` = `"http"`.
+- **L1979:** Pole `scheme` = `"bearer"`.
+- **L1980:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1981:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1982:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+- **L1983:** Struktura JSON (`}`) — otwarcie/zamknięcie obiektu lub tablicy.
+
+<a id="schemas-openapi-yaml"></a>
+## `schemas/openapi.yaml`
+YAML-owa wersja OpenAPI (bez PyYAML, przez skrypt dump).
+
+Liczba linii: **1358**.
+
+### Opis linia-po-linii
+
+- **Przegląd L1–L1358:** YAML odpowiadający `openapi.json` (wygenerowany przez `scripts/dump_openapi_yaml.py`).
+
+#### Opis każdej niepustej linii
+
+- **L1:** Pole `openapi` = `"3.1.0"` (sekcja `?`).
+- **L2:** Klucz główny OpenAPI YAML `info`.
+- **L3:** Pole `title` = `"PJA-Sensei AI Microservice"` (sekcja `info`).
+- **L4:** Pole `version` = `"0.1.0"` (sekcja `info`).
+- **L5:** Klucz główny OpenAPI YAML `paths`.
+- **L6:** Definicja ścieżki HTTP `/`.
+- **L7:** Operacja HTTP `GET`.
+- **L8:** Pole `summary` = `"Serve Tester"` (sekcja `paths`).
+- **L9:** Pole `operationId` = `"serve_tester__get"` (sekcja `paths`).
+- **L10:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L11:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L12:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L13:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L14:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L15:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L17:** Definicja ścieżki HTTP `/health`.
+- **L18:** Operacja HTTP `GET`.
+- **L19:** Pole `summary` = `"Health"` (sekcja `paths`).
+- **L20:** Pole `operationId` = `"health_health_get"` (sekcja `paths`).
+- **L21:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L22:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L23:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L24:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L25:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L26:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L28:** Definicja ścieżki HTTP `/metrics`.
+- **L29:** Operacja HTTP `GET`.
+- **L30:** Pole `summary` = `"Get Metrics"` (sekcja `paths`).
+- **L31:** Pole `operationId` = `"get_metrics_metrics_get"` (sekcja `paths`).
+- **L32:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L33:** Wpis YAML: `-`.
+- **L34:** Pole `name` = `"format"` (sekcja `paths`).
+- **L35:** Pole `in` = `"query"` (sekcja `paths`).
+- **L36:** Pole `required` = `false` (sekcja `paths`).
+- **L37:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L38:** Zagnieżdżony klucz `anyOf` (sekcja `paths`).
+- **L39:** Wpis YAML: `-`.
+- **L40:** Pole `type` = `"string"` (sekcja `paths`).
+- **L41:** Wpis YAML: `-`.
+- **L42:** Pole `type` = `"null"` (sekcja `paths`).
+- **L43:** Pole `title` = `"Format"` (sekcja `paths`).
+- **L44:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L45:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L46:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L47:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L48:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L49:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L51:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L52:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L53:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L54:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L55:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L56:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L57:** Definicja ścieżki HTTP `/metrics/prometheus`.
+- **L58:** Operacja HTTP `GET`.
+- **L59:** Pole `summary` = `"Get Metrics Prometheus"` (sekcja `paths`).
+- **L60:** Pole `operationId` = `"get_metrics_prometheus_metrics_prometheus_get"` (sekcja `paths`).
+- **L61:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L62:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L63:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L64:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L65:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L66:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L68:** Definicja ścieżki HTTP `/validate-config`.
+- **L69:** Operacja HTTP `POST`.
+- **L70:** Pole `summary` = `"Validate Config"` (sekcja `paths`).
+- **L71:** Pole `operationId` = `"validate_config_validate_config_post"` (sekcja `paths`).
+- **L72:** Zagnieżdżony klucz `requestBody` (sekcja `paths`).
+- **L73:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L74:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L75:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L76:** Pole `$ref` = `"#/components/schemas/ValidateConfigRequest"` (sekcja `paths`).
+- **L77:** Pole `required` = `true` (sekcja `paths`).
+- **L78:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L79:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L80:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L81:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L82:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L83:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L85:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L86:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L87:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L88:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L89:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L90:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L91:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L92:** Wpis YAML: `-`.
+- **L93:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L95:** Definicja ścieżki HTTP `/analytics/correlations`.
+- **L96:** Operacja HTTP `GET`.
+- **L97:** Pole `summary` = `"Analytics Correlations"` (sekcja `paths`).
+- **L98:** Pole `operationId` = `"analytics_correlations_analytics_correlations_get"` (sekcja `paths`).
+- **L99:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L100:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L101:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L102:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L103:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L104:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L106:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L107:** Wpis YAML: `-`.
+- **L108:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L110:** Definicja ścieżki HTTP `/conversations`.
+- **L111:** Operacja HTTP `POST`.
+- **L112:** Pole `summary` = `"Start Conversation"` (sekcja `paths`).
+- **L113:** Pole `operationId` = `"start_conversation_conversations_post"` (sekcja `paths`).
+- **L114:** Zagnieżdżony klucz `requestBody` (sekcja `paths`).
+- **L115:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L116:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L117:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L118:** Pole `$ref` = `"#/components/schemas/StartRequest"` (sekcja `paths`).
+- **L119:** Pole `required` = `true` (sekcja `paths`).
+- **L120:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L121:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L122:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L123:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L124:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L125:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L127:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L128:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L129:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L130:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L131:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L132:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L133:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L134:** Wpis YAML: `-`.
+- **L135:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L137:** Definicja ścieżki HTTP `/conversations/{conversation_id}`.
+- **L138:** Operacja HTTP `GET`.
+- **L139:** Pole `summary` = `"Get Conversation"` (sekcja `paths`).
+- **L140:** Pole `operationId` = `"get_conversation_conversations__conversation_id__get"` (sekcja `paths`).
+- **L141:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L142:** Wpis YAML: `-`.
+- **L143:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L145:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L146:** Wpis YAML: `-`.
+- **L147:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L148:** Pole `in` = `"path"` (sekcja `paths`).
+- **L149:** Pole `required` = `true` (sekcja `paths`).
+- **L150:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L151:** Pole `type` = `"string"` (sekcja `paths`).
+- **L152:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L153:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L154:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L155:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L156:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L157:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L158:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L160:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L161:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L162:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L163:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L164:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L165:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L166:** Operacja HTTP `DELETE`.
+- **L167:** Pole `summary` = `"Delete Conversation"` (sekcja `paths`).
+- **L168:** Pole `operationId` = `"delete_conversation_conversations__conversation_id__delete"` (sekcja `paths`).
+- **L169:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L170:** Wpis YAML: `-`.
+- **L171:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L173:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L174:** Wpis YAML: `-`.
+- **L175:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L176:** Pole `in` = `"path"` (sekcja `paths`).
+- **L177:** Pole `required` = `true` (sekcja `paths`).
+- **L178:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L179:** Pole `type` = `"string"` (sekcja `paths`).
+- **L180:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L181:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L182:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L183:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L184:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L185:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L186:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L188:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L189:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L190:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L191:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L192:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L193:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L194:** Definicja ścieżki HTTP `/conversations/{conversation_id}/messages`.
+- **L195:** Operacja HTTP `GET`.
+- **L196:** Pole `summary` = `"List Messages"` (sekcja `paths`).
+- **L197:** Pole `operationId` = `"list_messages_conversations__conversation_id__messages_get"` (sekcja `paths`).
+- **L198:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L199:** Wpis YAML: `-`.
+- **L200:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L202:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L203:** Wpis YAML: `-`.
+- **L204:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L205:** Pole `in` = `"path"` (sekcja `paths`).
+- **L206:** Pole `required` = `true` (sekcja `paths`).
+- **L207:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L208:** Pole `type` = `"string"` (sekcja `paths`).
+- **L209:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L210:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L211:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L212:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L213:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L214:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L215:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L217:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L218:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L219:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L220:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L221:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L222:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L223:** Operacja HTTP `POST`.
+- **L224:** Pole `summary` = `"Send Message"` (sekcja `paths`).
+- **L225:** Pole `operationId` = `"send_message_conversations__conversation_id__messages_post"` (sekcja `paths`).
+- **L226:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L227:** Wpis YAML: `-`.
+- **L228:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L230:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L231:** Wpis YAML: `-`.
+- **L232:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L233:** Pole `in` = `"path"` (sekcja `paths`).
+- **L234:** Pole `required` = `true` (sekcja `paths`).
+- **L235:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L236:** Pole `type` = `"string"` (sekcja `paths`).
+- **L237:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L238:** Zagnieżdżony klucz `requestBody` (sekcja `paths`).
+- **L239:** Pole `required` = `true` (sekcja `paths`).
+- **L240:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L241:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L242:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L243:** Pole `$ref` = `"#/components/schemas/MessageRequest"` (sekcja `paths`).
+- **L244:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L245:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L246:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L247:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L248:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L249:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L250:** Pole `$ref` = `"#/components/schemas/MessageResponse"` (sekcja `paths`).
+- **L251:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L252:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L253:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L254:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L255:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L256:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L257:** Definicja ścieżki HTTP `/conversations/{conversation_id}/restrictions`.
+- **L258:** Operacja HTTP `GET`.
+- **L259:** Pole `summary` = `"Get Restrictions"` (sekcja `paths`).
+- **L260:** Pole `operationId` = `"get_restrictions_conversations__conversation_id__restrictions_get"` (sekcja `paths`).
+- **L261:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L262:** Wpis YAML: `-`.
+- **L263:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L265:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L266:** Wpis YAML: `-`.
+- **L267:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L268:** Pole `in` = `"path"` (sekcja `paths`).
+- **L269:** Pole `required` = `true` (sekcja `paths`).
+- **L270:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L271:** Pole `type` = `"string"` (sekcja `paths`).
+- **L272:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L273:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L274:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L275:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L276:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L277:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L278:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L280:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L281:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L282:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L283:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L284:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L285:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L286:** Definicja ścieżki HTTP `/conversations/{conversation_id}/export`.
+- **L287:** Operacja HTTP `GET`.
+- **L288:** Pole `summary` = `"Export Conversation"` (sekcja `paths`).
+- **L289:** Pole `operationId` = `"export_conversation_conversations__conversation_id__export_get"` (sekcja `paths`).
+- **L290:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L291:** Wpis YAML: `-`.
+- **L292:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L294:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L295:** Wpis YAML: `-`.
+- **L296:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L297:** Pole `in` = `"path"` (sekcja `paths`).
+- **L298:** Pole `required` = `true` (sekcja `paths`).
+- **L299:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L300:** Pole `type` = `"string"` (sekcja `paths`).
+- **L301:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L302:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L303:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L304:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L305:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L306:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L307:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L309:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L310:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L311:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L312:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L313:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L314:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L315:** Definicja ścieżki HTTP `/conversations/{conversation_id}/checkpoints`.
+- **L316:** Operacja HTTP `GET`.
+- **L317:** Pole `summary` = `"Get Checkpoints"` (sekcja `paths`).
+- **L318:** Pole `operationId` = `"get_checkpoints_conversations__conversation_id__checkpoints_get"` (sekcja `paths`).
+- **L319:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L320:** Wpis YAML: `-`.
+- **L321:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L323:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L324:** Wpis YAML: `-`.
+- **L325:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L326:** Pole `in` = `"path"` (sekcja `paths`).
+- **L327:** Pole `required` = `true` (sekcja `paths`).
+- **L328:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L329:** Pole `type` = `"string"` (sekcja `paths`).
+- **L330:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L331:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L332:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L333:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L334:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L335:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L336:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L338:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L339:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L340:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L341:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L342:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L343:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L344:** Definicja ścieżki HTTP `/conversations/{conversation_id}/goals/assess`.
+- **L345:** Operacja HTTP `POST`.
+- **L346:** Pole `summary` = `"Assess Goals"` (sekcja `paths`).
+- **L347:** Pole `operationId` = `"assess_goals_conversations__conversation_id__goals_assess_post"` (sekcja `paths`).
+- **L348:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L349:** Wpis YAML: `-`.
+- **L350:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L352:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L353:** Wpis YAML: `-`.
+- **L354:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L355:** Pole `in` = `"path"` (sekcja `paths`).
+- **L356:** Pole `required` = `true` (sekcja `paths`).
+- **L357:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L358:** Pole `type` = `"string"` (sekcja `paths`).
+- **L359:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L360:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L361:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L362:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L363:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L364:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L365:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L367:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L368:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L369:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L370:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L371:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L372:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L373:** Definicja ścieżki HTTP `/conversations/{conversation_id}/review`.
+- **L374:** Operacja HTTP `POST`.
+- **L375:** Pole `summary` = `"Review Code"` (sekcja `paths`).
+- **L376:** Pole `operationId` = `"review_code_conversations__conversation_id__review_post"` (sekcja `paths`).
+- **L377:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L378:** Wpis YAML: `-`.
+- **L379:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L381:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L382:** Wpis YAML: `-`.
+- **L383:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L384:** Pole `in` = `"path"` (sekcja `paths`).
+- **L385:** Pole `required` = `true` (sekcja `paths`).
+- **L386:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L387:** Pole `type` = `"string"` (sekcja `paths`).
+- **L388:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L389:** Zagnieżdżony klucz `requestBody` (sekcja `paths`).
+- **L390:** Pole `required` = `true` (sekcja `paths`).
+- **L391:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L392:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L393:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L394:** Pole `$ref` = `"#/components/schemas/ReviewRequest"` (sekcja `paths`).
+- **L395:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L396:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L397:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L398:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L399:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L400:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L402:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L403:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L404:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L405:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L406:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L407:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L408:** Definicja ścieżki HTTP `/conversations/{conversation_id}/events`.
+- **L409:** Operacja HTTP `POST`.
+- **L410:** Pole `summary` = `"Post Ide Event"` (sekcja `paths`).
+- **L411:** Pole `operationId` = `"post_ide_event_conversations__conversation_id__events_post"` (sekcja `paths`).
+- **L412:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L413:** Wpis YAML: `-`.
+- **L414:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L416:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L417:** Wpis YAML: `-`.
+- **L418:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L419:** Pole `in` = `"path"` (sekcja `paths`).
+- **L420:** Pole `required` = `true` (sekcja `paths`).
+- **L421:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L422:** Pole `type` = `"string"` (sekcja `paths`).
+- **L423:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L424:** Zagnieżdżony klucz `requestBody` (sekcja `paths`).
+- **L425:** Pole `required` = `true` (sekcja `paths`).
+- **L426:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L427:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L428:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L429:** Pole `$ref` = `"#/components/schemas/IdeEventRequest"` (sekcja `paths`).
+- **L430:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L431:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L432:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L433:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L434:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L435:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L437:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L438:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L439:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L440:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L441:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L442:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L443:** Definicja ścieżki HTTP `/conversations/{conversation_id}/prelab`.
+- **L444:** Operacja HTTP `GET`.
+- **L445:** Pole `summary` = `"Get Prelab"` (sekcja `paths`).
+- **L446:** Pole `operationId` = `"get_prelab_conversations__conversation_id__prelab_get"` (sekcja `paths`).
+- **L447:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L448:** Wpis YAML: `-`.
+- **L449:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L451:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L452:** Wpis YAML: `-`.
+- **L453:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L454:** Pole `in` = `"path"` (sekcja `paths`).
+- **L455:** Pole `required` = `true` (sekcja `paths`).
+- **L456:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L457:** Pole `type` = `"string"` (sekcja `paths`).
+- **L458:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L459:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L460:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L461:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L462:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L463:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L464:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L466:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L467:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L468:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L469:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L470:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L471:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L472:** Operacja HTTP `POST`.
+- **L473:** Pole `summary` = `"Submit Prelab"` (sekcja `paths`).
+- **L474:** Pole `operationId` = `"submit_prelab_conversations__conversation_id__prelab_post"` (sekcja `paths`).
+- **L475:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L476:** Wpis YAML: `-`.
+- **L477:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L479:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L480:** Wpis YAML: `-`.
+- **L481:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L482:** Pole `in` = `"path"` (sekcja `paths`).
+- **L483:** Pole `required` = `true` (sekcja `paths`).
+- **L484:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L485:** Pole `type` = `"string"` (sekcja `paths`).
+- **L486:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L487:** Zagnieżdżony klucz `requestBody` (sekcja `paths`).
+- **L488:** Pole `required` = `true` (sekcja `paths`).
+- **L489:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L490:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L491:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L492:** Pole `$ref` = `"#/components/schemas/PreLabSubmitRequest"` (sekcja `paths`).
+- **L493:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L494:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L495:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L496:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L497:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L498:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L500:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L501:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L502:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L503:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L504:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L505:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L506:** Definicja ścieżki HTTP `/conversations/{conversation_id}/prelab/generate`.
+- **L507:** Operacja HTTP `POST`.
+- **L508:** Pole `summary` = `"Generate Prelab"` (sekcja `paths`).
+- **L509:** Pole `operationId` = `"generate_prelab_conversations__conversation_id__prelab_generate_post"` (sekcja `paths`).
+- **L510:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L511:** Wpis YAML: `-`.
+- **L512:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L514:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L515:** Wpis YAML: `-`.
+- **L516:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L517:** Pole `in` = `"path"` (sekcja `paths`).
+- **L518:** Pole `required` = `true` (sekcja `paths`).
+- **L519:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L520:** Pole `type` = `"string"` (sekcja `paths`).
+- **L521:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L522:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L523:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L524:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L525:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L526:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L527:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L529:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L530:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L531:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L532:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L533:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L534:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L535:** Definicja ścieżki HTTP `/conversations/{conversation_id}/messages/stream`.
+- **L536:** Operacja HTTP `POST`.
+- **L537:** Pole `summary` = `"Send Message Stream"` (sekcja `paths`).
+- **L538:** Pole `operationId` = `"send_message_stream_conversations__conversation_id__messages_stream_…` (sekcja `paths`).
+- **L539:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L540:** Wpis YAML: `-`.
+- **L541:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L543:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L544:** Wpis YAML: `-`.
+- **L545:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L546:** Pole `in` = `"path"` (sekcja `paths`).
+- **L547:** Pole `required` = `true` (sekcja `paths`).
+- **L548:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L549:** Pole `type` = `"string"` (sekcja `paths`).
+- **L550:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L551:** Zagnieżdżony klucz `requestBody` (sekcja `paths`).
+- **L552:** Pole `required` = `true` (sekcja `paths`).
+- **L553:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L554:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L555:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L556:** Pole `$ref` = `"#/components/schemas/MessageRequest"` (sekcja `paths`).
+- **L557:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L558:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L559:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L560:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L561:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L562:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L564:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L565:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L566:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L567:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L568:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L569:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L570:** Definicja ścieżki HTTP `/conversations/{conversation_id}/messages/{message_id}/regenerate`.
+- **L571:** Operacja HTTP `POST`.
+- **L572:** Pole `summary` = `"Regenerate Message"` (sekcja `paths`).
+- **L573:** Pole `operationId` = `"regenerate_message_conversations__conversation_id__messages__message…` (sekcja `paths`).
+- **L574:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L575:** Wpis YAML: `-`.
+- **L576:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L578:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L579:** Wpis YAML: `-`.
+- **L580:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L581:** Pole `in` = `"path"` (sekcja `paths`).
+- **L582:** Pole `required` = `true` (sekcja `paths`).
+- **L583:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L584:** Pole `type` = `"string"` (sekcja `paths`).
+- **L585:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L586:** Wpis YAML: `-`.
+- **L587:** Pole `name` = `"message_id"` (sekcja `paths`).
+- **L588:** Pole `in` = `"path"` (sekcja `paths`).
+- **L589:** Pole `required` = `true` (sekcja `paths`).
+- **L590:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L591:** Pole `type` = `"string"` (sekcja `paths`).
+- **L592:** Pole `title` = `"Message Id"` (sekcja `paths`).
+- **L593:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L594:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L595:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L596:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L597:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L598:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L599:** Pole `$ref` = `"#/components/schemas/MessageResponse"` (sekcja `paths`).
+- **L600:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L601:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L602:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L603:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L604:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L605:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L606:** Definicja ścieżki HTTP `/conversations/{conversation_id}/hints/reveal`.
+- **L607:** Operacja HTTP `POST`.
+- **L608:** Pole `summary` = `"Reveal Hint"` (sekcja `paths`).
+- **L609:** Pole `operationId` = `"reveal_hint_conversations__conversation_id__hints_reveal_post"` (sekcja `paths`).
+- **L610:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L611:** Wpis YAML: `-`.
+- **L612:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L614:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L615:** Wpis YAML: `-`.
+- **L616:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L617:** Pole `in` = `"path"` (sekcja `paths`).
+- **L618:** Pole `required` = `true` (sekcja `paths`).
+- **L619:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L620:** Pole `type` = `"string"` (sekcja `paths`).
+- **L621:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L622:** Zagnieżdżony klucz `requestBody` (sekcja `paths`).
+- **L623:** Pole `required` = `true` (sekcja `paths`).
+- **L624:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L625:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L626:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L627:** Pole `$ref` = `"#/components/schemas/RevealHintRequest"` (sekcja `paths`).
+- **L628:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L629:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L630:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L631:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L632:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L633:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L635:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L636:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L637:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L638:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L639:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L640:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L641:** Definicja ścieżki HTTP `/conversations/{conversation_id}/messages/{message_id}/feedback`.
+- **L642:** Operacja HTTP `POST`.
+- **L643:** Pole `summary` = `"Rate Message"` (sekcja `paths`).
+- **L644:** Pole `operationId` = `"rate_message_conversations__conversation_id__messages__message_id__f…` (sekcja `paths`).
+- **L645:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L646:** Wpis YAML: `-`.
+- **L647:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L649:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L650:** Wpis YAML: `-`.
+- **L651:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L652:** Pole `in` = `"path"` (sekcja `paths`).
+- **L653:** Pole `required` = `true` (sekcja `paths`).
+- **L654:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L655:** Pole `type` = `"string"` (sekcja `paths`).
+- **L656:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L657:** Wpis YAML: `-`.
+- **L658:** Pole `name` = `"message_id"` (sekcja `paths`).
+- **L659:** Pole `in` = `"path"` (sekcja `paths`).
+- **L660:** Pole `required` = `true` (sekcja `paths`).
+- **L661:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L662:** Pole `type` = `"string"` (sekcja `paths`).
+- **L663:** Pole `title` = `"Message Id"` (sekcja `paths`).
+- **L664:** Zagnieżdżony klucz `requestBody` (sekcja `paths`).
+- **L665:** Pole `required` = `true` (sekcja `paths`).
+- **L666:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L667:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L668:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L669:** Pole `$ref` = `"#/components/schemas/FeedbackRequest"` (sekcja `paths`).
+- **L670:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L671:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L672:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L673:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L674:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L675:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L677:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L678:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L679:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L680:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L681:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L682:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L683:** Definicja ścieżki HTTP `/conversations/{conversation_id}/summary`.
+- **L684:** Operacja HTTP `POST`.
+- **L685:** Pole `summary` = `"Get Summary"` (sekcja `paths`).
+- **L686:** Pole `operationId` = `"get_summary_conversations__conversation_id__summary_post"` (sekcja `paths`).
+- **L687:** Zagnieżdżony klucz `security` (sekcja `paths`).
+- **L688:** Wpis YAML: `-`.
+- **L689:** Zagnieżdżony klucz `HTTPBearer` (sekcja `paths`).
+- **L691:** Zagnieżdżony klucz `parameters` (sekcja `paths`).
+- **L692:** Wpis YAML: `-`.
+- **L693:** Pole `name` = `"conversation_id"` (sekcja `paths`).
+- **L694:** Pole `in` = `"path"` (sekcja `paths`).
+- **L695:** Pole `required` = `true` (sekcja `paths`).
+- **L696:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L697:** Pole `type` = `"string"` (sekcja `paths`).
+- **L698:** Pole `title` = `"Conversation Id"` (sekcja `paths`).
+- **L699:** Zagnieżdżony klucz `responses` (sekcja `paths`).
+- **L700:** Zagnieżdżony klucz `200` (sekcja `paths`).
+- **L701:** Pole `description` = `"Successful Response"` (sekcja `paths`).
+- **L702:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L703:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L704:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L706:** Zagnieżdżony klucz `422` (sekcja `paths`).
+- **L707:** Pole `description` = `"Validation Error"` (sekcja `paths`).
+- **L708:** Zagnieżdżony klucz `content` (sekcja `paths`).
+- **L709:** Zagnieżdżony klucz `application/json` (sekcja `paths`).
+- **L710:** Zagnieżdżony klucz `schema` (sekcja `paths`).
+- **L711:** Pole `$ref` = `"#/components/schemas/HTTPValidationError"` (sekcja `paths`).
+- **L712:** Klucz główny OpenAPI YAML `components`.
+- **L713:** Sekcja `components.schemas`.
+- **L714:** Zagnieżdżony klucz `AgentBehavior` (sekcja `components`).
+- **L715:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L716:** Zagnieżdżony klucz `persona` (sekcja `components`).
+- **L717:** Pole `$ref` = `"#/components/schemas/AgentPersona"` (sekcja `components`).
+- **L718:** Zagnieżdżony klucz `codeRevealFallback` (sekcja `components`).
+- **L719:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L720:** Wpis YAML: `-`.
+- **L721:** Pole `type` = `"string"` (sekcja `components`).
+- **L722:** Wpis YAML: `-`.
+- **L723:** Pole `type` = `"null"` (sekcja `components`).
+- **L724:** Pole `title` = `"Coderevealfallback"` (sekcja `components`).
+- **L725:** Zagnieżdżony klucz `strictRules` (sekcja `components`).
+- **L726:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L727:** Pole `type` = `"string"` (sekcja `components`).
+- **L728:** Pole `type` = `"array"` (sekcja `components`).
+- **L729:** Pole `title` = `"Strictrules"` (sekcja `components`).
+- **L730:** Zagnieżdżony klucz `model` (sekcja `components`).
+- **L731:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L732:** Wpis YAML: `-`.
+- **L733:** Pole `type` = `"string"` (sekcja `components`).
+- **L734:** Wpis YAML: `-`.
+- **L735:** Pole `type` = `"null"` (sekcja `components`).
+- **L736:** Pole `title` = `"Model"` (sekcja `components`).
+- **L737:** Zagnieżdżony klucz `mode` (sekcja `components`).
+- **L738:** Pole `type` = `"string"` (sekcja `components`).
+- **L739:** Zagnieżdżony klucz `enum` (sekcja `components`).
+- **L740:** Element listy: `- "theory"`.
+- **L741:** Element listy: `- "debug"`.
+- **L742:** Element listy: `- "review"`.
+- **L743:** Pole `title` = `"Mode"` (sekcja `components`).
+- **L744:** Pole `default` = `"debug"` (sekcja `components`).
+- **L745:** Pole `type` = `"object"` (sekcja `components`).
+- **L746:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L747:** Element listy: `- "persona"`.
+- **L748:** Element listy: `- "strictRules"`.
+- **L749:** Pole `title` = `"AgentBehavior"` (sekcja `components`).
+- **L750:** Zagnieżdżony klucz `AgentPersona` (sekcja `components`).
+- **L751:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L752:** Zagnieżdżony klucz `role` (sekcja `components`).
+- **L753:** Pole `type` = `"string"` (sekcja `components`).
+- **L754:** Pole `title` = `"Role"` (sekcja `components`).
+- **L755:** Zagnieżdżony klucz `tone` (sekcja `components`).
+- **L756:** Pole `type` = `"string"` (sekcja `components`).
+- **L757:** Pole `title` = `"Tone"` (sekcja `components`).
+- **L758:** Pole `type` = `"object"` (sekcja `components`).
+- **L759:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L760:** Element listy: `- "role"`.
+- **L761:** Element listy: `- "tone"`.
+- **L762:** Pole `title` = `"AgentPersona"` (sekcja `components`).
+- **L763:** Zagnieżdżony klucz `Checkpoint` (sekcja `components`).
+- **L764:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L765:** Zagnieżdżony klucz `id` (sekcja `components`).
+- **L766:** Pole `type` = `"string"` (sekcja `components`).
+- **L767:** Pole `title` = `"Id"` (sekcja `components`).
+- **L768:** Zagnieżdżony klucz `after_goal` (sekcja `components`).
+- **L769:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L770:** Wpis YAML: `-`.
+- **L771:** Pole `type` = `"string"` (sekcja `components`).
+- **L772:** Wpis YAML: `-`.
+- **L773:** Pole `type` = `"null"` (sekcja `components`).
+- **L774:** Pole `title` = `"After Goal"` (sekcja `components`).
+- **L775:** Zagnieżdżony klucz `hint` (sekcja `components`).
+- **L776:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L777:** Wpis YAML: `-`.
+- **L778:** Pole `type` = `"string"` (sekcja `components`).
+- **L779:** Wpis YAML: `-`.
+- **L780:** Pole `type` = `"null"` (sekcja `components`).
+- **L781:** Pole `title` = `"Hint"` (sekcja `components`).
+- **L782:** Pole `type` = `"object"` (sekcja `components`).
+- **L783:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L784:** Element listy: `- "id"`.
+- **L785:** Pole `title` = `"Checkpoint"` (sekcja `components`).
+- **L786:** Zagnieżdżony klucz `CodeContext` (sekcja `components`).
+- **L787:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L788:** Zagnieżdżony klucz `current_file_name` (sekcja `components`).
+- **L789:** Pole `type` = `"string"` (sekcja `components`).
+- **L790:** Pole `title` = `"Current File Name"` (sekcja `components`).
+- **L791:** Zagnieżdżony klucz `current_code` (sekcja `components`).
+- **L792:** Pole `type` = `"string"` (sekcja `components`).
+- **L793:** Pole `title` = `"Current Code"` (sekcja `components`).
+- **L794:** Zagnieżdżony klucz `error_logs` (sekcja `components`).
+- **L795:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L796:** Wpis YAML: `-`.
+- **L797:** Pole `type` = `"string"` (sekcja `components`).
+- **L798:** Wpis YAML: `-`.
+- **L799:** Pole `type` = `"null"` (sekcja `components`).
+- **L800:** Pole `title` = `"Error Logs"` (sekcja `components`).
+- **L801:** Zagnieżdżony klucz `workspace_root` (sekcja `components`).
+- **L802:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L803:** Wpis YAML: `-`.
+- **L804:** Pole `type` = `"string"` (sekcja `components`).
+- **L805:** Wpis YAML: `-`.
+- **L806:** Pole `type` = `"null"` (sekcja `components`).
+- **L807:** Pole `title` = `"Workspace Root"` (sekcja `components`).
+- **L808:** Zagnieżdżony klucz `selection` (sekcja `components`).
+- **L809:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L810:** Wpis YAML: `-`.
+- **L811:** Pole `$ref` = `"#/components/schemas/CodeSelection"` (sekcja `components`).
+- **L812:** Wpis YAML: `-`.
+- **L813:** Pole `type` = `"null"` (sekcja `components`).
+- **L814:** Zagnieżdżony klucz `diagnostics` (sekcja `components`).
+- **L815:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L816:** Pole `$ref` = `"#/components/schemas/DiagnosticItem"` (sekcja `components`).
+- **L817:** Pole `type` = `"array"` (sekcja `components`).
+- **L818:** Pole `title` = `"Diagnostics"` (sekcja `components`).
+- **L819:** Zagnieżdżony klucz `open_files` (sekcja `components`).
+- **L820:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L821:** Pole `$ref` = `"#/components/schemas/OpenFile"` (sekcja `components`).
+- **L822:** Pole `type` = `"array"` (sekcja `components`).
+- **L823:** Pole `title` = `"Open Files"` (sekcja `components`).
+- **L824:** Pole `type` = `"object"` (sekcja `components`).
+- **L825:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L826:** Element listy: `- "current_file_name"`.
+- **L827:** Element listy: `- "current_code"`.
+- **L828:** Pole `title` = `"CodeContext"` (sekcja `components`).
+- **L829:** Zagnieżdżony klucz `CodeSelection` (sekcja `components`).
+- **L830:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L831:** Zagnieżdżony klucz `start_line` (sekcja `components`).
+- **L832:** Pole `type` = `"integer"` (sekcja `components`).
+- **L833:** Pole `title` = `"Start Line"` (sekcja `components`).
+- **L834:** Zagnieżdżony klucz `end_line` (sekcja `components`).
+- **L835:** Pole `type` = `"integer"` (sekcja `components`).
+- **L836:** Pole `title` = `"End Line"` (sekcja `components`).
+- **L837:** Zagnieżdżony klucz `text` (sekcja `components`).
+- **L838:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L839:** Wpis YAML: `-`.
+- **L840:** Pole `type` = `"string"` (sekcja `components`).
+- **L841:** Wpis YAML: `-`.
+- **L842:** Pole `type` = `"null"` (sekcja `components`).
+- **L843:** Pole `title` = `"Text"` (sekcja `components`).
+- **L844:** Pole `type` = `"object"` (sekcja `components`).
+- **L845:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L846:** Element listy: `- "start_line"`.
+- **L847:** Element listy: `- "end_line"`.
+- **L848:** Pole `title` = `"CodeSelection"` (sekcja `components`).
+- **L849:** Zagnieżdżony klucz `DebugInfo` (sekcja `components`).
+- **L850:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L851:** Zagnieżdżony klucz `is_frustrated` (sekcja `components`).
+- **L852:** Pole `type` = `"boolean"` (sekcja `components`).
+- **L853:** Pole `title` = `"Is Frustrated"` (sekcja `components`).
+- **L854:** Zagnieżdżony klucz `avg_score` (sekcja `components`).
+- **L855:** Pole `type` = `"number"` (sekcja `components`).
+- **L856:** Pole `title` = `"Avg Score"` (sekcja `components`).
+- **L857:** Zagnieżdżony klucz `code_changed` (sekcja `components`).
+- **L858:** Pole `type` = `"boolean"` (sekcja `components`).
+- **L859:** Pole `title` = `"Code Changed"` (sekcja `components`).
+- **L860:** Pole `type` = `"object"` (sekcja `components`).
+- **L861:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L862:** Element listy: `- "is_frustrated"`.
+- **L863:** Element listy: `- "avg_score"`.
+- **L864:** Element listy: `- "code_changed"`.
+- **L865:** Pole `title` = `"DebugInfo"` (sekcja `components`).
+- **L866:** Zagnieżdżony klucz `DiagnosticItem` (sekcja `components`).
+- **L867:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L868:** Zagnieżdżony klucz `file` (sekcja `components`).
+- **L869:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L870:** Wpis YAML: `-`.
+- **L871:** Pole `type` = `"string"` (sekcja `components`).
+- **L872:** Wpis YAML: `-`.
+- **L873:** Pole `type` = `"null"` (sekcja `components`).
+- **L874:** Pole `title` = `"File"` (sekcja `components`).
+- **L875:** Zagnieżdżony klucz `severity` (sekcja `components`).
+- **L876:** Pole `type` = `"string"` (sekcja `components`).
+- **L877:** Zagnieżdżony klucz `enum` (sekcja `components`).
+- **L878:** Element listy: `- "error"`.
+- **L879:** Element listy: `- "warning"`.
+- **L880:** Element listy: `- "info"`.
+- **L881:** Element listy: `- "hint"`.
+- **L882:** Pole `title` = `"Severity"` (sekcja `components`).
+- **L883:** Pole `default` = `"error"` (sekcja `components`).
+- **L884:** Zagnieżdżony klucz `message` (sekcja `components`).
+- **L885:** Pole `type` = `"string"` (sekcja `components`).
+- **L886:** Pole `title` = `"Message"` (sekcja `components`).
+- **L887:** Zagnieżdżony klucz `line` (sekcja `components`).
+- **L888:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L889:** Wpis YAML: `-`.
+- **L890:** Pole `type` = `"integer"` (sekcja `components`).
+- **L891:** Wpis YAML: `-`.
+- **L892:** Pole `type` = `"null"` (sekcja `components`).
+- **L893:** Pole `title` = `"Line"` (sekcja `components`).
+- **L894:** Zagnieżdżony klucz `source` (sekcja `components`).
+- **L895:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L896:** Wpis YAML: `-`.
+- **L897:** Pole `type` = `"string"` (sekcja `components`).
+- **L898:** Wpis YAML: `-`.
+- **L899:** Pole `type` = `"null"` (sekcja `components`).
+- **L900:** Pole `title` = `"Source"` (sekcja `components`).
+- **L901:** Pole `type` = `"object"` (sekcja `components`).
+- **L902:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L903:** Element listy: `- "message"`.
+- **L904:** Pole `title` = `"DiagnosticItem"` (sekcja `components`).
+- **L905:** Zagnieżdżony klucz `FeedbackRequest` (sekcja `components`).
+- **L906:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L907:** Zagnieżdżony klucz `rating` (sekcja `components`).
+- **L908:** Pole `type` = `"integer"` (sekcja `components`).
+- **L909:** Pole `title` = `"Rating"` (sekcja `components`).
+- **L910:** Zagnieżdżony klucz `comment` (sekcja `components`).
+- **L911:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L912:** Wpis YAML: `-`.
+- **L913:** Pole `type` = `"string"` (sekcja `components`).
+- **L914:** Wpis YAML: `-`.
+- **L915:** Pole `type` = `"null"` (sekcja `components`).
+- **L916:** Pole `title` = `"Comment"` (sekcja `components`).
+- **L917:** Pole `type` = `"object"` (sekcja `components`).
+- **L918:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L919:** Element listy: `- "rating"`.
+- **L920:** Pole `title` = `"FeedbackRequest"` (sekcja `components`).
+- **L921:** Zagnieżdżony klucz `GoalProgressItem` (sekcja `components`).
+- **L922:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L923:** Zagnieżdżony klucz `goal` (sekcja `components`).
+- **L924:** Pole `type` = `"string"` (sekcja `components`).
+- **L925:** Pole `title` = `"Goal"` (sekcja `components`).
+- **L926:** Zagnieżdżony klucz `status` (sekcja `components`).
+- **L927:** Pole `type` = `"string"` (sekcja `components`).
+- **L928:** Zagnieżdżony klucz `enum` (sekcja `components`).
+- **L929:** Element listy: `- "not_started"`.
+- **L930:** Element listy: `- "in_progress"`.
+- **L931:** Element listy: `- "done"`.
+- **L932:** Pole `title` = `"Status"` (sekcja `components`).
+- **L933:** Pole `default` = `"not_started"` (sekcja `components`).
+- **L934:** Pole `type` = `"object"` (sekcja `components`).
+- **L935:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L936:** Element listy: `- "goal"`.
+- **L937:** Pole `title` = `"GoalProgressItem"` (sekcja `components`).
+- **L938:** Zagnieżdżony klucz `HTTPValidationError` (sekcja `components`).
+- **L939:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L940:** Zagnieżdżony klucz `detail` (sekcja `components`).
+- **L941:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L942:** Pole `$ref` = `"#/components/schemas/ValidationError"` (sekcja `components`).
+- **L943:** Pole `type` = `"array"` (sekcja `components`).
+- **L944:** Pole `title` = `"Detail"` (sekcja `components`).
+- **L945:** Pole `type` = `"object"` (sekcja `components`).
+- **L946:** Pole `title` = `"HTTPValidationError"` (sekcja `components`).
+- **L947:** Zagnieżdżony klucz `IdeEventRequest` (sekcja `components`).
+- **L948:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L949:** Zagnieżdżony klucz `type` (sekcja `components`).
+- **L950:** Pole `type` = `"string"` (sekcja `components`).
+- **L951:** Zagnieżdżony klucz `enum` (sekcja `components`).
+- **L952:** Element listy: `- "copy_blocked"`.
+- **L953:** Element listy: `- "file_opened"`.
+- **L954:** Element listy: `- "paste_attempt"`.
+- **L955:** Pole `title` = `"Type"` (sekcja `components`).
+- **L956:** Zagnieżdżony klucz `meta` (sekcja `components`).
+- **L957:** Pole `additionalProperties` = `true` (sekcja `components`).
+- **L958:** Pole `type` = `"object"` (sekcja `components`).
+- **L959:** Pole `title` = `"Meta"` (sekcja `components`).
+- **L960:** Pole `type` = `"object"` (sekcja `components`).
+- **L961:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L962:** Element listy: `- "type"`.
+- **L963:** Pole `title` = `"IdeEventRequest"` (sekcja `components`).
+- **L964:** Zagnieżdżony klucz `IdeRestrictions` (sekcja `components`).
+- **L965:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L966:** Zagnieżdżony klucz `requireFileContextForChat` (sekcja `components`).
+- **L967:** Pole `type` = `"boolean"` (sekcja `components`).
+- **L968:** Pole `title` = `"Requirefilecontextforchat"` (sekcja `components`).
+- **L969:** Pole `default` = `false` (sekcja `components`).
+- **L970:** Zagnieżdżony klucz `disableCopyFromChat` (sekcja `components`).
+- **L971:** Pole `type` = `"boolean"` (sekcja `components`).
+- **L972:** Pole `title` = `"Disablecopyfromchat"` (sekcja `components`).
+- **L973:** Pole `default` = `false` (sekcja `components`).
+- **L974:** Pole `type` = `"object"` (sekcja `components`).
+- **L975:** Pole `title` = `"IdeRestrictions"` (sekcja `components`).
+- **L976:** Zagnieżdżony klucz `LearningContext` (sekcja `components`).
+- **L977:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L978:** Zagnieżdżony klucz `goals` (sekcja `components`).
+- **L979:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L980:** Pole `type` = `"string"` (sekcja `components`).
+- **L981:** Pole `type` = `"array"` (sekcja `components`).
+- **L982:** Pole `title` = `"Goals"` (sekcja `components`).
+- **L983:** Zagnieżdżony klucz `referenceMaterials` (sekcja `components`).
+- **L984:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L985:** Pole `$ref` = `"#/components/schemas/ReferenceMaterial"` (sekcja `components`).
+- **L986:** Pole `type` = `"array"` (sekcja `components`).
+- **L987:** Pole `title` = `"Referencematerials"` (sekcja `components`).
+- **L988:** Pole `type` = `"object"` (sekcja `components`).
+- **L989:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L990:** Element listy: `- "goals"`.
+- **L991:** Element listy: `- "referenceMaterials"`.
+- **L992:** Pole `title` = `"LearningContext"` (sekcja `components`).
+- **L993:** Zagnieżdżony klucz `MessageRequest` (sekcja `components`).
+- **L994:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L995:** Zagnieżdżony klucz `question` (sekcja `components`).
+- **L996:** Pole `type` = `"string"` (sekcja `components`).
+- **L997:** Pole `title` = `"Question"` (sekcja `components`).
+- **L998:** Zagnieżdżony klucz `code_context` (sekcja `components`).
+- **L999:** Pole `$ref` = `"#/components/schemas/CodeContext"` (sekcja `components`).
+- **L1000:** Zagnieżdżony klucz `client_message_id` (sekcja `components`).
+- **L1001:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1002:** Wpis YAML: `-`.
+- **L1003:** Pole `type` = `"string"` (sekcja `components`).
+- **L1004:** Wpis YAML: `-`.
+- **L1005:** Pole `type` = `"null"` (sekcja `components`).
+- **L1006:** Pole `title` = `"Client Message Id"` (sekcja `components`).
+- **L1007:** Pole `type` = `"object"` (sekcja `components`).
+- **L1008:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1009:** Element listy: `- "question"`.
+- **L1010:** Element listy: `- "code_context"`.
+- **L1011:** Pole `title` = `"MessageRequest"` (sekcja `components`).
+- **L1012:** Zagnieżdżony klucz `MessageResponse` (sekcja `components`).
+- **L1013:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1014:** Zagnieżdżony klucz `message_id` (sekcja `components`).
+- **L1015:** Pole `type` = `"string"` (sekcja `components`).
+- **L1016:** Pole `title` = `"Message Id"` (sekcja `components`).
+- **L1017:** Zagnieżdżony klucz `answer` (sekcja `components`).
+- **L1018:** Pole `type` = `"string"` (sekcja `components`).
+- **L1019:** Pole `title` = `"Answer"` (sekcja `components`).
+- **L1020:** Zagnieżdżony klucz `prompt_score` (sekcja `components`).
+- **L1021:** Pole `type` = `"integer"` (sekcja `components`).
+- **L1022:** Pole `title` = `"Prompt Score"` (sekcja `components`).
+- **L1023:** Zagnieżdżony klucz `prompt_feedback` (sekcja `components`).
+- **L1024:** Pole `type` = `"string"` (sekcja `components`).
+- **L1025:** Pole `title` = `"Prompt Feedback"` (sekcja `components`).
+- **L1026:** Zagnieżdżony klucz `tokens_used` (sekcja `components`).
+- **L1027:** Pole `type` = `"integer"` (sekcja `components`).
+- **L1028:** Pole `title` = `"Tokens Used"` (sekcja `components`).
+- **L1029:** Zagnieżdżony klucz `is_cached` (sekcja `components`).
+- **L1030:** Pole `type` = `"boolean"` (sekcja `components`).
+- **L1031:** Pole `title` = `"Is Cached"` (sekcja `components`).
+- **L1032:** Pole `default` = `false` (sekcja `components`).
+- **L1033:** Zagnieżdżony klucz `penalty_applied` (sekcja `components`).
+- **L1034:** Pole `type` = `"boolean"` (sekcja `components`).
+- **L1035:** Pole `title` = `"Penalty Applied"` (sekcja `components`).
+- **L1036:** Pole `default` = `false` (sekcja `components`).
+- **L1037:** Zagnieżdżony klucz `sources` (sekcja `components`).
+- **L1038:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L1039:** Pole `$ref` = `"#/components/schemas/SourceRef"` (sekcja `components`).
+- **L1040:** Pole `type` = `"array"` (sekcja `components`).
+- **L1041:** Pole `title` = `"Sources"` (sekcja `components`).
+- **L1042:** Zagnieżdżony klucz `suggested_next_step` (sekcja `components`).
+- **L1043:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1044:** Wpis YAML: `-`.
+- **L1045:** Pole `type` = `"string"` (sekcja `components`).
+- **L1046:** Wpis YAML: `-`.
+- **L1047:** Pole `type` = `"null"` (sekcja `components`).
+- **L1048:** Pole `title` = `"Suggested Next Step"` (sekcja `components`).
+- **L1049:** Zagnieżdżony klucz `goal_progress` (sekcja `components`).
+- **L1050:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L1051:** Pole `$ref` = `"#/components/schemas/GoalProgressItem"` (sekcja `components`).
+- **L1052:** Pole `type` = `"array"` (sekcja `components`).
+- **L1053:** Pole `title` = `"Goal Progress"` (sekcja `components`).
+- **L1054:** Zagnieżdżony klucz `debug_info` (sekcja `components`).
+- **L1055:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1056:** Wpis YAML: `-`.
+- **L1057:** Pole `$ref` = `"#/components/schemas/DebugInfo"` (sekcja `components`).
+- **L1058:** Wpis YAML: `-`.
+- **L1059:** Pole `type` = `"null"` (sekcja `components`).
+- **L1060:** Zagnieżdżony klucz `client_message_id` (sekcja `components`).
+- **L1061:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1062:** Wpis YAML: `-`.
+- **L1063:** Pole `type` = `"string"` (sekcja `components`).
+- **L1064:** Wpis YAML: `-`.
+- **L1065:** Pole `type` = `"null"` (sekcja `components`).
+- **L1066:** Pole `title` = `"Client Message Id"` (sekcja `components`).
+- **L1067:** Pole `type` = `"object"` (sekcja `components`).
+- **L1068:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1069:** Element listy: `- "answer"`.
+- **L1070:** Element listy: `- "prompt_score"`.
+- **L1071:** Element listy: `- "prompt_feedback"`.
+- **L1072:** Element listy: `- "tokens_used"`.
+- **L1073:** Pole `title` = `"MessageResponse"` (sekcja `components`).
+- **L1074:** Zagnieżdżony klucz `OpenFile` (sekcja `components`).
+- **L1075:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1076:** Zagnieżdżony klucz `path` (sekcja `components`).
+- **L1077:** Pole `type` = `"string"` (sekcja `components`).
+- **L1078:** Pole `title` = `"Path"` (sekcja `components`).
+- **L1079:** Zagnieżdżony klucz `content` (sekcja `components`).
+- **L1080:** Pole `type` = `"string"` (sekcja `components`).
+- **L1081:** Pole `title` = `"Content"` (sekcja `components`).
+- **L1082:** Zagnieżdżony klucz `language` (sekcja `components`).
+- **L1083:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1084:** Wpis YAML: `-`.
+- **L1085:** Pole `type` = `"string"` (sekcja `components`).
+- **L1086:** Wpis YAML: `-`.
+- **L1087:** Pole `type` = `"null"` (sekcja `components`).
+- **L1088:** Pole `title` = `"Language"` (sekcja `components`).
+- **L1089:** Pole `type` = `"object"` (sekcja `components`).
+- **L1090:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1091:** Element listy: `- "path"`.
+- **L1092:** Element listy: `- "content"`.
+- **L1093:** Pole `title` = `"OpenFile"` (sekcja `components`).
+- **L1094:** Zagnieżdżony klucz `PreLabAnswerItem` (sekcja `components`).
+- **L1095:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1096:** Zagnieżdżony klucz `id` (sekcja `components`).
+- **L1097:** Pole `type` = `"string"` (sekcja `components`).
+- **L1098:** Pole `title` = `"Id"` (sekcja `components`).
+- **L1099:** Zagnieżdżony klucz `answer` (sekcja `components`).
+- **L1100:** Pole `type` = `"string"` (sekcja `components`).
+- **L1101:** Pole `title` = `"Answer"` (sekcja `components`).
+- **L1102:** Pole `type` = `"object"` (sekcja `components`).
+- **L1103:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1104:** Element listy: `- "id"`.
+- **L1105:** Element listy: `- "answer"`.
+- **L1106:** Pole `title` = `"PreLabAnswerItem"` (sekcja `components`).
+- **L1107:** Zagnieżdżony klucz `PreLabConfig` (sekcja `components`).
+- **L1108:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1109:** Zagnieżdżony klucz `enabled` (sekcja `components`).
+- **L1110:** Pole `type` = `"boolean"` (sekcja `components`).
+- **L1111:** Pole `title` = `"Enabled"` (sekcja `components`).
+- **L1112:** Pole `default` = `false` (sekcja `components`).
+- **L1113:** Zagnieżdżony klucz `questions` (sekcja `components`).
+- **L1114:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L1115:** Pole `$ref` = `"#/components/schemas/PreLabQuestion"` (sekcja `components`).
+- **L1116:** Pole `type` = `"array"` (sekcja `components`).
+- **L1117:** Pole `title` = `"Questions"` (sekcja `components`).
+- **L1118:** Zagnieżdżony klucz `max_attempts` (sekcja `components`).
+- **L1119:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1120:** Wpis YAML: `-`.
+- **L1121:** Pole `type` = `"integer"` (sekcja `components`).
+- **L1122:** Wpis YAML: `-`.
+- **L1123:** Pole `type` = `"null"` (sekcja `components`).
+- **L1124:** Pole `title` = `"Max Attempts"` (sekcja `components`).
+- **L1125:** Zagnieżdżony klucz `hint_after_fail` (sekcja `components`).
+- **L1126:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1127:** Wpis YAML: `-`.
+- **L1128:** Pole `type` = `"string"` (sekcja `components`).
+- **L1129:** Wpis YAML: `-`.
+- **L1130:** Pole `type` = `"null"` (sekcja `components`).
+- **L1131:** Pole `title` = `"Hint After Fail"` (sekcja `components`).
+- **L1132:** Pole `type` = `"object"` (sekcja `components`).
+- **L1133:** Pole `title` = `"PreLabConfig"` (sekcja `components`).
+- **L1134:** Zagnieżdżony klucz `PreLabQuestion` (sekcja `components`).
+- **L1135:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1136:** Zagnieżdżony klucz `id` (sekcja `components`).
+- **L1137:** Pole `type` = `"string"` (sekcja `components`).
+- **L1138:** Pole `title` = `"Id"` (sekcja `components`).
+- **L1139:** Zagnieżdżony klucz `prompt` (sekcja `components`).
+- **L1140:** Pole `type` = `"string"` (sekcja `components`).
+- **L1141:** Pole `title` = `"Prompt"` (sekcja `components`).
+- **L1142:** Zagnieżdżony klucz `expected_keywords` (sekcja `components`).
+- **L1143:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L1144:** Pole `type` = `"string"` (sekcja `components`).
+- **L1145:** Pole `type` = `"array"` (sekcja `components`).
+- **L1146:** Pole `title` = `"Expected Keywords"` (sekcja `components`).
+- **L1147:** Pole `type` = `"object"` (sekcja `components`).
+- **L1148:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1149:** Element listy: `- "id"`.
+- **L1150:** Element listy: `- "prompt"`.
+- **L1151:** Pole `title` = `"PreLabQuestion"` (sekcja `components`).
+- **L1152:** Zagnieżdżony klucz `PreLabSubmitRequest` (sekcja `components`).
+- **L1153:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1154:** Zagnieżdżony klucz `answers` (sekcja `components`).
+- **L1155:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L1156:** Pole `$ref` = `"#/components/schemas/PreLabAnswerItem"` (sekcja `components`).
+- **L1157:** Pole `type` = `"array"` (sekcja `components`).
+- **L1158:** Pole `title` = `"Answers"` (sekcja `components`).
+- **L1159:** Pole `type` = `"object"` (sekcja `components`).
+- **L1160:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1161:** Element listy: `- "answers"`.
+- **L1162:** Pole `title` = `"PreLabSubmitRequest"` (sekcja `components`).
+- **L1163:** Zagnieżdżony klucz `ReferenceMaterial` (sekcja `components`).
+- **L1164:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1165:** Zagnieżdżony klucz `type` (sekcja `components`).
+- **L1166:** Pole `type` = `"string"` (sekcja `components`).
+- **L1167:** Zagnieżdżony klucz `enum` (sekcja `components`).
+- **L1168:** Element listy: `- "doc"`.
+- **L1169:** Element listy: `- "pdf"`.
+- **L1170:** Element listy: `- "video_timestamp"`.
+- **L1171:** Element listy: `- "slide"`.
+- **L1172:** Pole `title` = `"Type"` (sekcja `components`).
+- **L1173:** Pole `default` = `"doc"` (sekcja `components`).
+- **L1174:** Zagnieżdżony klucz `title` (sekcja `components`).
+- **L1175:** Pole `type` = `"string"` (sekcja `components`).
+- **L1176:** Pole `title` = `"Title"` (sekcja `components`).
+- **L1177:** Zagnieżdżony klucz `url` (sekcja `components`).
+- **L1178:** Pole `type` = `"string"` (sekcja `components`).
+- **L1179:** Pole `title` = `"Url"` (sekcja `components`).
+- **L1180:** Zagnieżdżony klucz `timestamp` (sekcja `components`).
+- **L1181:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1182:** Wpis YAML: `-`.
+- **L1183:** Pole `type` = `"string"` (sekcja `components`).
+- **L1184:** Wpis YAML: `-`.
+- **L1185:** Pole `type` = `"null"` (sekcja `components`).
+- **L1186:** Pole `title` = `"Timestamp"` (sekcja `components`).
+- **L1187:** Zagnieżdżony klucz `page` (sekcja `components`).
+- **L1188:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1189:** Wpis YAML: `-`.
+- **L1190:** Pole `type` = `"integer"` (sekcja `components`).
+- **L1191:** Wpis YAML: `-`.
+- **L1192:** Pole `type` = `"null"` (sekcja `components`).
+- **L1193:** Pole `title` = `"Page"` (sekcja `components`).
+- **L1194:** Pole `type` = `"object"` (sekcja `components`).
+- **L1195:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1196:** Element listy: `- "title"`.
+- **L1197:** Element listy: `- "url"`.
+- **L1198:** Pole `title` = `"ReferenceMaterial"` (sekcja `components`).
+- **L1199:** Zagnieżdżony klucz `RevealHintRequest` (sekcja `components`).
+- **L1200:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1201:** Zagnieżdżony klucz `code_context` (sekcja `components`).
+- **L1202:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1203:** Wpis YAML: `-`.
+- **L1204:** Pole `$ref` = `"#/components/schemas/CodeContext"` (sekcja `components`).
+- **L1205:** Wpis YAML: `-`.
+- **L1206:** Pole `type` = `"null"` (sekcja `components`).
+- **L1207:** Zagnieżdżony klucz `focus` (sekcja `components`).
+- **L1208:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1209:** Wpis YAML: `-`.
+- **L1210:** Pole `type` = `"string"` (sekcja `components`).
+- **L1211:** Wpis YAML: `-`.
+- **L1212:** Pole `type` = `"null"` (sekcja `components`).
+- **L1213:** Pole `title` = `"Focus"` (sekcja `components`).
+- **L1214:** Pole `type` = `"object"` (sekcja `components`).
+- **L1215:** Pole `title` = `"RevealHintRequest"` (sekcja `components`).
+- **L1216:** Zagnieżdżony klucz `ReviewRequest` (sekcja `components`).
+- **L1217:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1218:** Zagnieżdżony klucz `code_context` (sekcja `components`).
+- **L1219:** Pole `$ref` = `"#/components/schemas/CodeContext"` (sekcja `components`).
+- **L1220:** Zagnieżdżony klucz `focus` (sekcja `components`).
+- **L1221:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1222:** Wpis YAML: `-`.
+- **L1223:** Pole `type` = `"string"` (sekcja `components`).
+- **L1224:** Wpis YAML: `-`.
+- **L1225:** Pole `type` = `"null"` (sekcja `components`).
+- **L1226:** Pole `title` = `"Focus"` (sekcja `components`).
+- **L1227:** Pole `type` = `"object"` (sekcja `components`).
+- **L1228:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1229:** Element listy: `- "code_context"`.
+- **L1230:** Pole `title` = `"ReviewRequest"` (sekcja `components`).
+- **L1231:** Zagnieżdżony klucz `SenseiConfig` (sekcja `components`).
+- **L1232:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1233:** Zagnieżdżony klucz `learningContext` (sekcja `components`).
+- **L1234:** Pole `$ref` = `"#/components/schemas/LearningContext"` (sekcja `components`).
+- **L1235:** Zagnieżdżony klucz `agentBehavior` (sekcja `components`).
+- **L1236:** Pole `$ref` = `"#/components/schemas/AgentBehavior"` (sekcja `components`).
+- **L1237:** Zagnieżdżony klucz `ideRestrictions` (sekcja `components`).
+- **L1238:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1239:** Wpis YAML: `-`.
+- **L1240:** Pole `$ref` = `"#/components/schemas/IdeRestrictions"` (sekcja `components`).
+- **L1241:** Wpis YAML: `-`.
+- **L1242:** Pole `type` = `"null"` (sekcja `components`).
+- **L1243:** Zagnieżdżony klucz `language` (sekcja `components`).
+- **L1244:** Pole `type` = `"string"` (sekcja `components`).
+- **L1245:** Zagnieżdżony klucz `enum` (sekcja `components`).
+- **L1246:** Element listy: `- "pl"`.
+- **L1247:** Element listy: `- "en"`.
+- **L1248:** Pole `title` = `"Language"` (sekcja `components`).
+- **L1249:** Pole `default` = `"pl"` (sekcja `components`).
+- **L1250:** Zagnieżdżony klucz `preLab` (sekcja `components`).
+- **L1251:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1252:** Wpis YAML: `-`.
+- **L1253:** Pole `$ref` = `"#/components/schemas/PreLabConfig"` (sekcja `components`).
+- **L1254:** Wpis YAML: `-`.
+- **L1255:** Pole `type` = `"null"` (sekcja `components`).
+- **L1256:** Zagnieżdżony klucz `evaluationCriteria` (sekcja `components`).
+- **L1257:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L1258:** Pole `type` = `"string"` (sekcja `components`).
+- **L1259:** Pole `type` = `"array"` (sekcja `components`).
+- **L1260:** Pole `title` = `"Evaluationcriteria"` (sekcja `components`).
+- **L1261:** Zagnieżdżony klucz `maxTokensPerSession` (sekcja `components`).
+- **L1262:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1263:** Wpis YAML: `-`.
+- **L1264:** Pole `type` = `"integer"` (sekcja `components`).
+- **L1265:** Wpis YAML: `-`.
+- **L1266:** Pole `type` = `"null"` (sekcja `components`).
+- **L1267:** Pole `title` = `"Maxtokenspersession"` (sekcja `components`).
+- **L1268:** Zagnieżdżony klucz `checkpoints` (sekcja `components`).
+- **L1269:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L1270:** Pole `$ref` = `"#/components/schemas/Checkpoint"` (sekcja `components`).
+- **L1271:** Pole `type` = `"array"` (sekcja `components`).
+- **L1272:** Pole `title` = `"Checkpoints"` (sekcja `components`).
+- **L1273:** Pole `type` = `"object"` (sekcja `components`).
+- **L1274:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1275:** Element listy: `- "learningContext"`.
+- **L1276:** Element listy: `- "agentBehavior"`.
+- **L1277:** Pole `title` = `"SenseiConfig"` (sekcja `components`).
+- **L1278:** Zagnieżdżony klucz `SourceRef` (sekcja `components`).
+- **L1279:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1280:** Zagnieżdżony klucz `title` (sekcja `components`).
+- **L1281:** Pole `type` = `"string"` (sekcja `components`).
+- **L1282:** Pole `title` = `"Title"` (sekcja `components`).
+- **L1283:** Zagnieżdżony klucz `url` (sekcja `components`).
+- **L1284:** Pole `type` = `"string"` (sekcja `components`).
+- **L1285:** Pole `title` = `"Url"` (sekcja `components`).
+- **L1286:** Zagnieżdżony klucz `timestamp` (sekcja `components`).
+- **L1287:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1288:** Wpis YAML: `-`.
+- **L1289:** Pole `type` = `"string"` (sekcja `components`).
+- **L1290:** Wpis YAML: `-`.
+- **L1291:** Pole `type` = `"null"` (sekcja `components`).
+- **L1292:** Pole `title` = `"Timestamp"` (sekcja `components`).
+- **L1293:** Zagnieżdżony klucz `page` (sekcja `components`).
+- **L1294:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1295:** Wpis YAML: `-`.
+- **L1296:** Pole `type` = `"integer"` (sekcja `components`).
+- **L1297:** Wpis YAML: `-`.
+- **L1298:** Pole `type` = `"null"` (sekcja `components`).
+- **L1299:** Pole `title` = `"Page"` (sekcja `components`).
+- **L1300:** Pole `type` = `"object"` (sekcja `components`).
+- **L1301:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1302:** Element listy: `- "title"`.
+- **L1303:** Element listy: `- "url"`.
+- **L1304:** Pole `title` = `"SourceRef"` (sekcja `components`).
+- **L1305:** Zagnieżdżony klucz `StartRequest` (sekcja `components`).
+- **L1306:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1307:** Zagnieżdżony klucz `problem_description` (sekcja `components`).
+- **L1308:** Pole `type` = `"string"` (sekcja `components`).
+- **L1309:** Pole `title` = `"Problem Description"` (sekcja `components`).
+- **L1310:** Zagnieżdżony klucz `config` (sekcja `components`).
+- **L1311:** Pole `$ref` = `"#/components/schemas/SenseiConfig"` (sekcja `components`).
+- **L1312:** Pole `type` = `"object"` (sekcja `components`).
+- **L1313:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1314:** Element listy: `- "problem_description"`.
+- **L1315:** Element listy: `- "config"`.
+- **L1316:** Pole `title` = `"StartRequest"` (sekcja `components`).
+- **L1317:** Zagnieżdżony klucz `ValidateConfigRequest` (sekcja `components`).
+- **L1318:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1319:** Zagnieżdżony klucz `config` (sekcja `components`).
+- **L1320:** Pole `additionalProperties` = `true` (sekcja `components`).
+- **L1321:** Pole `type` = `"object"` (sekcja `components`).
+- **L1322:** Pole `title` = `"Config"` (sekcja `components`).
+- **L1323:** Pole `type` = `"object"` (sekcja `components`).
+- **L1324:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1325:** Element listy: `- "config"`.
+- **L1326:** Pole `title` = `"ValidateConfigRequest"` (sekcja `components`).
+- **L1327:** Zagnieżdżony klucz `ValidationError` (sekcja `components`).
+- **L1328:** Zagnieżdżony klucz `properties` (sekcja `components`).
+- **L1329:** Zagnieżdżony klucz `loc` (sekcja `components`).
+- **L1330:** Zagnieżdżony klucz `items` (sekcja `components`).
+- **L1331:** Zagnieżdżony klucz `anyOf` (sekcja `components`).
+- **L1332:** Wpis YAML: `-`.
+- **L1333:** Pole `type` = `"string"` (sekcja `components`).
+- **L1334:** Wpis YAML: `-`.
+- **L1335:** Pole `type` = `"integer"` (sekcja `components`).
+- **L1336:** Pole `type` = `"array"` (sekcja `components`).
+- **L1337:** Pole `title` = `"Location"` (sekcja `components`).
+- **L1338:** Zagnieżdżony klucz `msg` (sekcja `components`).
+- **L1339:** Pole `type` = `"string"` (sekcja `components`).
+- **L1340:** Pole `title` = `"Message"` (sekcja `components`).
+- **L1341:** Zagnieżdżony klucz `type` (sekcja `components`).
+- **L1342:** Pole `type` = `"string"` (sekcja `components`).
+- **L1343:** Pole `title` = `"Error Type"` (sekcja `components`).
+- **L1344:** Zagnieżdżony klucz `input` (sekcja `components`).
+- **L1345:** Pole `title` = `"Input"` (sekcja `components`).
+- **L1346:** Zagnieżdżony klucz `ctx` (sekcja `components`).
+- **L1347:** Pole `type` = `"object"` (sekcja `components`).
+- **L1348:** Pole `title` = `"Context"` (sekcja `components`).
+- **L1349:** Pole `type` = `"object"` (sekcja `components`).
+- **L1350:** Zagnieżdżony klucz `required` (sekcja `components`).
+- **L1351:** Element listy: `- "loc"`.
+- **L1352:** Element listy: `- "msg"`.
+- **L1353:** Element listy: `- "type"`.
+- **L1354:** Pole `title` = `"ValidationError"` (sekcja `components`).
+- **L1355:** Sekcja `components.securitySchemes`.
+- **L1356:** Zagnieżdżony klucz `HTTPBearer` (sekcja `components`).
+- **L1357:** Pole `type` = `"http"` (sekcja `components`).
+- **L1358:** Pole `scheme` = `"bearer"` (sekcja `components`).

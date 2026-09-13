@@ -1,0 +1,19 @@
+# Core API Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# AI & Data Validation
+openai>=1.12.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.1
+PyJWT>=2.8.0
+
+# HTTP, RAG, HTML parsing
+httpx>=0.27.0
+chromadb>=0.4.22
+beautifulsoup4>=4.12.0
+jsonschema>=4.21.0
+
+# Tests
+pytest>=8.0.0

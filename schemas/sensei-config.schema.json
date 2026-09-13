@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pja-sensei.local/schemas/sensei-config.schema.json",
+  "title": "SenseiConfig",
+  "description": "Validation schema for PJA-Sensei lab configuration manifests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["learningContext", "agentBehavior"],
+  "$defs": {
+    "referenceMaterial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "title", "url"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["doc", "pdf", "video_timestamp", "slide"]
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" },
+        "timestamp": { "type": ["string", "null"] },
+        "page": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "preLabQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "prompt"],
+      "properties": {
+        "id": { "type": "string" },
+        "prompt": { "type": "string", "minLength": 1 },
+        "expected_keywords": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "after_goal": { "type": ["string", "null"] },
+        "hint": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "properties": {
+    "learningContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["goals", "referenceMaterials"],
+      "properties": {
+        "goals": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "referenceMaterials": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/referenceMaterial" }
+        }
+      }
+    },
+    "agentBehavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["persona", "strictRules"],
+      "properties": {
+        "persona": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "tone"],
+          "properties": {
+            "role": { "type": "string", "minLength": 1 },
+            "tone": { "type": "string", "minLength": 1 }
+          }
+        },
+        "codeRevealFallback": { "type": ["string", "null"] },
+        "strictRules": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "model": { "type": ["string", "null"] },
+        "mode": {
+          "type": "string",
+          "enum": ["theory", "debug", "review"],
+          "default": "debug"
+        }
+      }
+    },
+    "ideRestrictions": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "requireFileContextForChat": { "type": "boolean", "default": false },
+        "disableCopyFromChat": { "type": "boolean", "default": false }
+      }
+    },
+    "language": {
+      "type": "string",
+      "enum": ["pl", "en"],
+      "default": "pl"
+    },
+    "evaluationCriteria": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "maxTokensPerSession": {
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/checkpoint" }
+    },
+    "preLab": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "max_attempts": { "type": ["integer", "null"], "minimum": 1 },
+        "hint_after_fail": { "type": ["string", "null"] },
+        "questions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preLabQuestion" }
+        }
+      }
+    }
+  }
+}

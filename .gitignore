@@ -1,0 +1,31 @@
+# Secrets & local env
+.env
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# IDE / editor
+.idea/
+.vscode/
+.cursor/
+*.swp
+*~
+
+# App runtime / local data
+.chroma/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini

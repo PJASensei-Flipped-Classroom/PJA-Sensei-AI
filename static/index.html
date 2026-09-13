@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>PJA-Sensei Tester</title>
+    <style>
+        body { font-family: system-ui; margin: 20px; background: #f4f4f9; display: flex; gap: 20px; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; }
+        input, select, textarea, button { width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; padding: 10px; border-radius: 4px; transition: 0.2s; }
+        button:hover:not(:disabled) { background: #0056b3; }
+        button:disabled { background: #cccccc; cursor: not-allowed; }
+
+        .chat-box { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #fafafa; border-radius: 4px; }
+        .msg { margin-bottom: 15px; padding: 10px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .msg.user { background: #e3f2fd; text-align: right; border-right: 4px solid #2196f3; }
+        .msg.ai { background: #e8f5e9; border-left: 4px solid #4caf50; }
+
+        .msg.system-gray { background: #eeeeee; color: #666; text-align: center; font-style: italic; border: 1px solid #ddd; }
+        .msg.system-red { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; font-weight: bold; }
+
+        .badge { font-size: 0.75em; padding: 3px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 5px; display: inline-block; }
+        .badge-cache { background-color: #ffe082; color: #ff8f00; border: 1px solid #ffca28; }
+        .badge-penalty { background-color: #ffcdd2; color: #c62828; border: 1px solid #ef9a9a; }
+
+        .metrics { font-size: 0.85em; color: #555; background: #fdfdfd; padding: 10px; border-radius: 4px; border: 1px dashed #ccc; margin-top: 8px; display: block; }
+        .hidden { display: none; }
+        #loading { text-align: center; color: #666; font-style: italic; margin-top: 10px; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-right: 5px; vertical-align: middle; }
+        .spinner-dark { border: 2px solid #666; border-top-color: transparent; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .score-bar-bg { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; margin-top: 4px; overflow: hidden; }
+        .score-bar-fill { height: 100%; transition: width 0.5s ease-in-out, background-color 0.5s ease; }
+
+        .feedback-box { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 0.9em; display: flex; gap: 10px; align-items: center; }
+        .feedback-box select { width: auto; margin: 0; padding: 4px; }
+        .feedback-box button { width: auto; margin: 0; padding: 5px 10px; background: #28a745; font-size: 0.9em; }
+        .feedback-box button:hover:not(:disabled) { background: #218838; }
+
+        .blinking-cursor { display: inline-block; width: 8px; height: 15px; background-color: #333; animation: blink 1s step-end infinite; vertical-align: middle; margin-left: 2px;}
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div class="panel" id="prof-panel">
+        <h2>🛠️ Panel Wykładowcy</h2>
+        <label>Zadanie:</label>
+        <textarea id="problem" rows="2">Napisz kontroler REST zwracający dane użytkownika w JSON.</textarea>
+
+        <label>Materiały RAG (URL - ChromaDB potnie to na kawałki):</label>
+        <input type="text" id="rag-url" value="https://spring.io/guides/gs/rest-service/">
+
+        <label>Zasady (strictRules):</label>
+        <select id="rule-preset">
+            <option value="Nie podawaj gotowego kodu. Pytaj o teorię.">Standardowy Sokratyk</option>
+            <option value="custom">Własna reguła...</option>
+        </select>
+        <input type="text" id="custom-rule" class="hidden" placeholder="Wpisz własną regułę...">
+
+        <button onclick="startSession()">Rozpocznij Sesję i ładuj wektory</button>
+    </div>
+
+    <div class="panel hidden" id="student-panel">
+        <h2>👨‍💻 Widok Studenta</h2>
+        <p><small style="color: #888;">Konwersacja ID: <span id="conv-id"></span></small></p>
+
+        <div class="chat-box" id="chat"></div>
+        <div id="loading" class="hidden"><span class="spinner spinner-dark"></span> Sensei odbiera strumień danych...</div>
+
+        <label>Nazwa pliku:</label>
+        <input type="text" id="filename" value="MyController.java" placeholder="np. Main.java, App.py...">
+
+        <label>Twój kod (IDE):</label>
+        <textarea id="code" rows="4" style="font-family: monospace;">@Controller
+public class MyController {
+}</textarea>
+
+        <label>Pytanie:</label>
+        <input type="text" id="question" placeholder="Zadaj pytanie (np. Dlaczego to nie działa?)" onkeypress="if(event.key === 'Enter') sendMessage()">
+
+        <button id="send-btn" onclick="sendMessage()">Wyślij Pytanie</button>
+        <button id="summary-btn" style="background: #6f42c1; margin-top: 10px;" onclick="getSummary()">Zakończ i pokaż Raport (Summary)</button>
+    </div>
+
+    <div class="panel hidden" id="dashboard-panel">
+        <h2>📊 Dashboard Wyników</h2>
+        <h3 id="mastery"></h3>
+        <p><strong>Działania studenta z kodem:</strong> <span id="student-actions"></span></p>
+        <p><strong>Ewolucja pytań (Okiem Agenta):</strong> <span id="agent-eval"></span></p>
+        <p><strong>Opinia Studenta (Okiem Studenta):</strong> <span id="student-eval"></span></p>
+        <p><strong>Wnioski dydaktyczne:</strong> <span id="summary"></span></p>
+        <button onclick="location.reload()">Rozpocznij Nową Sesję</button>
+    </div>
+
+    <script>
+        let convId = "";
+        const apiUrl = "http://localhost:8000";
+
+        document.getElementById('rule-preset').addEventListener('change', (e) => {
+            document.getElementById('custom-rule').classList.toggle('hidden', e.target.value !== 'custom');
+        });
+
+        async function startSession() {
+            const ruleSelect = document.getElementById('rule-preset').value;
+            const rule = ruleSelect === 'custom' ? document.getElementById('custom-rule').value : ruleSelect;
+
+            const payload = {
+                problem_description: document.getElementById('problem').value,
+                config: {
+                    learningContext: { goals: ["Rozwiązanie zadania"], referenceMaterials: [{ type: "doc", title: "Materiały", url: document.getElementById('rag-url').value }] },
+                    agentBehavior: { persona: { role: "Sokratyczny Nauczyciel", tone: "Cierpliwy" }, strictRules: [rule], codeRevealFallback: "🚨 [SYSTEM] Asystent próbował podać Ci gotowe rozwiązanie. Przypominam: na tych laboratoriach piszemy kod samodzielnie. Od czego zaczniesz?" },
+                    ideRestrictions: { requireFileContextForChat: false },
+                    language: "pl"
+                }
+            };
+
+            const res = await fetch(`${apiUrl}/conversations`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            convId = data.conversation_id;
+
+            document.getElementById('prof-panel').classList.add('hidden');
+            document.getElementById('student-panel').classList.remove('hidden');
+            document.getElementById('conv-id').innerText = convId;
+            document.getElementById('code').value = "";
+        }
+
+        async function sendMessage() {
+            const startTime = performance.now();
+
+            const questionInput = document.getElementById('question');
+            const codeInput = document.getElementById('code');
+            const chat = document.getElementById('chat');
+            const loading = document.getElementById('loading');
+            const sendBtn = document.getElementById('send-btn');
+
+            const filenameInput = document.getElementById('filename').value || "Nieznany_Plik";
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            chat.innerHTML += `<div class="msg user"><strong>Ty:</strong> ${question}</div>`;
+            questionInput.value = "";
+            chat.scrollTop = chat.scrollHeight;
+
+            loading.classList.remove('hidden');
+            sendBtn.disabled = true;
+
+            const payload = {
+                question: question,
+                code_context: { current_file_name: filenameInput, current_code: codeInput.value, error_logs: "" }
+            };
+
+            try {
+                const res = await fetch(`${apiUrl}/conversations/${convId}/messages/stream`, {
+                    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+                });
+
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const data = await res.json();
+                    if (data.message_id === "rejected") {
+                        chat.innerHTML += `<div class="msg system-gray">To zadanie wymaga analizy kodu. Otwórz odpowiedni plik w edytorze VS Code zanim zadasz pytanie.</div>`;
+                    } else if (data.tokens_used === 0) {
+                        chat.innerHTML += `<div class="msg system-red">🚨 ALERT: ${data.answer.replace(/\n/g, '<br>')}</div>`;
+                    }
+                    loading.classList.add('hidden');
+                    sendBtn.disabled = false;
+                    chat.scrollTop = chat.scrollHeight;
+                    return;
+                }
+
+                const backendMsgId = res.headers.get("X-Message-Id") || ("msg-" + Date.now());
+
+                const msgDomId = "msg-" + Date.now();
+                chat.innerHTML += `
+                    <div class="msg ai" id="${msgDomId}">
+                        <strong>Sensei:</strong> <span class="stream-content"></span><span class="blinking-cursor"></span>
+                        <div class="final-metrics"></div>
+                    </div>`;
+                const streamContentSpan = document.getElementById(msgDomId).querySelector('.stream-content');
+                const finalMetricsDiv = document.getElementById(msgDomId).querySelector('.final-metrics');
+                const cursor = document.getElementById(msgDomId).querySelector('.blinking-cursor');
+                chat.scrollTop = chat.scrollHeight;
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+                let finalData = null;
+                let displayAnswer = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split("\n");
+                    buffer = lines.pop() || "";
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        try {
+                            const evt = JSON.parse(line);
+                            if (evt.type === "token" && evt.text) {
+                                displayAnswer += evt.text;
+                                streamContentSpan.innerHTML = displayAnswer
+                                    .replace(/\n/g, '<br>');
+                            } else if (evt.type === "final") {
+                                finalData = evt;
+                                if (evt.answer) {
+                                    displayAnswer = evt.answer;
+                                    streamContentSpan.innerHTML = displayAnswer
+                                        .replace(/\n/g, '<br>');
+                                }
+                            }
+                        } catch (parseErr) {
+                            // fallback: ignore bad line
+                        }
+                    }
+                    chat.scrollTop = chat.scrollHeight;
+                }
+
+                cursor.remove();
+
+                const endTime = performance.now();
+                const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+                try {
+                    const data = finalData || {};
+
+                    if (!streamContentSpan.innerText.trim() && data.answer) {
+                        streamContentSpan.innerHTML = String(data.answer).replace(/\n/g, '<br>');
+                    }
+
+                    const score = data.prompt_score || 5;
+                    const hue = ((score - 1) / 9) * 120;
+                    const scorePercentage = (score / 10) * 100;
+
+                    const isCached = data.is_cached === true;
+                    const isPenalty = data.penalty_applied === true;
+
+                    let badgesHtml = "";
+                    if (isCached) badgesHtml += `<div class="badge badge-cache">Cache</div><br>`;
+                    if (isPenalty) badgesHtml += `<div class="badge badge-penalty">Kara / penalty</div><br>`;
+                    if (data.sources && data.sources.length) {
+                        badgesHtml += `<div class="badge">Sources: ${data.sources.map(s => s.title || s.url).join(", ")}</div><br>`;
+                    }
+                    if (data.suggested_next_step) {
+                        badgesHtml += `<div class="badge">Next: ${data.suggested_next_step}</div><br>`;
+                    }
+
+                    if (badgesHtml) {
+                        streamContentSpan.insertAdjacentHTML('beforebegin', badgesHtml);
+                    }
+
+                    finalMetricsDiv.innerHTML = `
+                        <div class="metrics">
+                            <div><strong>Ocena Twojego pytania (Prompt Score): ${score}/10</strong></div>
+                            <div class="score-bar-bg">
+                                <div class="score-bar-fill" style="width: ${scorePercentage}%; background-color: hsl(${hue}, 100%, 40%);"></div>
+                            </div>
+                            <div style="margin-top: 5px;">Czas odpowiedzi: <strong>${duration} s</strong></div>
+                        </div>
+                        <div class="feedback-box" id="fb-box-${backendMsgId}">
+                            <span>Oceń poradę:</span>
+                            <select id="rating-${backendMsgId}">
+                                <option value="5">5</option>
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                                <option value="1">1</option>
+                            </select>
+                            <button onclick="submitFeedback('${backendMsgId}')">Wyślij opinię</button>
+                        </div>
+                    `;
+                } catch (e) {
+                    if (!streamContentSpan.innerText.trim()) {
+                        streamContentSpan.innerText = displayAnswer || buffer;
+                    }
+                }
+
+            } catch (error) {
+                chat.innerHTML += `<div class="msg ai" style="color: red;"><strong>Błąd sieci:</strong> Brak połączenia API.</div>`;
+            } finally {
+                loading.classList.add('hidden');
+                sendBtn.disabled = false;
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+
+        async function submitFeedback(msgId) {
+            const ratingVal = parseInt(document.getElementById(`rating-${msgId}`).value);
+            const box = document.getElementById(`fb-box-${msgId}`);
+            box.innerHTML = `<span style="color: #28a745;"><i>Wysyłanie...</i></span>`;
+            try {
+                await fetch(`${apiUrl}/conversations/${convId}/messages/${msgId}/feedback`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ rating: ratingVal, comment: "Ocena ze strumienia UI" })
+                });
+                box.innerHTML = `<span style="color: #28a745;"><strong>Dziękujemy! Oceniono na ${ratingVal}/5 ⭐</strong></span>`;
+            } catch (e) {
+                box.innerHTML = `<span style="color: red;">Błąd wysyłania opinii.</span>`;
+            }
+        }
+
+        async function getSummary() {
+            const sumBtn = document.getElementById('summary-btn');
+            sumBtn.disabled = true;
+            sumBtn.innerHTML = '<span class="spinner"></span> Generowanie szczegółowego raportu...';
+            try {
+                const res = await fetch(`${apiUrl}/conversations/${convId}/summary`, { method: "POST" });
+                const data = await res.json();
+                document.getElementById('student-panel').classList.add('hidden');
+                document.getElementById('dashboard-panel').classList.remove('hidden');
+                document.getElementById('mastery').innerText = `Ocena opanowania materiału: ${data.mastery_score || 'Brak'}/10`;
+                document.getElementById('student-actions').innerText = data.student_actions || 'Brak danych';
+                document.getElementById('agent-eval').innerText = data.agent_evaluation_of_student || 'Brak danych';
+                document.getElementById('student-eval').innerText = data.student_evaluation_of_agent || 'Brak danych';
+                document.getElementById('summary').innerText = data.professors_summary || data.summary || 'Brak danych';
+            } catch (e) {
+                alert("Błąd podczas generowania podsumowania!");
+                sumBtn.disabled = false;
+                sumBtn.innerHTML = 'Zakończ i pokaż Raport (Summary)';
+            }
+        }
+    </script>
+</body>
+</html>

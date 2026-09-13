@@ -1,0 +1,12 @@
+.venv/
+.env
+.idea/
+.vscode/
+.cursor/
+__pycache__/
+*.py[cod]
+.git/
+*.log
+.pytest_cache/
+.mypy_cache/
+.chroma/
