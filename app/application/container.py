@@ -6,7 +6,7 @@ import logging
 
 from app.adapters.cache_memory import ExactMatchCache
 from app.adapters.conversations_memory import InMemoryConversationRepository
-from app.adapters.llm_openrouter import OpenRouterClient
+from app.adapters.llm_openai import OpenAICompatibleClient
 from app.adapters.rag_chroma import RagService
 from app.adapters.security import SecurityService
 from app.application.chat import ChatService
@@ -25,14 +25,14 @@ class AppContainer:
         self,
         *,
         conversations_repo: InMemoryConversationRepository | None = None,
-        llm_client: OpenRouterClient | None = None,
+        llm_client: OpenAICompatibleClient | None = None,
         rag_service: RagService | None = None,
         cache_service: ExactMatchCache | None = None,
         security_service: SecurityService | None = None,
     ) -> None:
         # 1. Adaptery infrastrukturalne (umożliwiają łatwe podstawienie mocków w testach)
         self.conversations = conversations_repo or InMemoryConversationRepository()
-        self.llm = llm_client or OpenRouterClient()
+        self.llm = llm_client or OpenAICompatibleClient()
         self.rag = rag_service or RagService()
         self.cache = cache_service or ExactMatchCache()
         self.security = security_service or SecurityService()

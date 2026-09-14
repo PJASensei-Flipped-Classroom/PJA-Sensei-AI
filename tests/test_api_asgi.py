@@ -1,4 +1,4 @@
-"""ASGI tests without a live OpenRouter — gates, contract, metrics."""
+"""ASGI tests without a live LLM — gates, contract, metrics."""
 
 
 

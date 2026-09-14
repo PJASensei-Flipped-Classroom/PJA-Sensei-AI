@@ -1,4 +1,4 @@
-"""ASGI edge / gate tests — no live OpenRouter required."""
+"""ASGI edge / gate tests — no live LLM required."""
 
 from __future__ import annotations
 

@@ -20,7 +20,7 @@ Propaguj `X-Request-Id` (korelacja z telemetrią Spring).
 |--------|---------|------|---------|---------------------|-------|----------|--------------|
 | GET | `/` | — | — | `static/index.html` | 404 jeśli brak pliku | — | — |
 | GET | `/healthz` | — | — | `{ status: ok }` | — | liveness | — |
-| GET | `/health` | — | — | `status`, `conversations`, `cache_size`, `chroma_ok`, klucz OR | 503 gdy degraded | readiness | **bez** purge TTL |
+| GET | `/health` | — | — | `status`, `conversations`, `cache_size`, `chroma_ok`, `llm_configured` | 503 gdy degraded | readiness | **bez** purge TTL |
 | GET | `/metrics` | — | — | JSON counters + conv/cache | — | `metrics` | — |
 | GET | `/metrics/prometheus` | — | — | text/plain Prometheus | — | `metrics` | — |
 | POST | `/validate-config` | JWT+RL | `{ config }` SenseiConfig | `valid`, `errors` | 401/429 | jsonschema | — |

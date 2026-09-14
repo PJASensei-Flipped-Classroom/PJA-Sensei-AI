@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 
 from app.api.deps import get_container
 from app.application.container import AppContainer
-from app.core.config import openrouter_key_is_configured
+from app.core.config import llm_is_configured
 from app.core.metrics import metrics
 
 logger = logging.getLogger(__name__)
@@ -44,13 +44,13 @@ async def liveness() -> dict[str, str]:
 async def readiness(container: AppContainer = Depends(get_container)) -> dict[str, Any]:
     """Weryfikacja gotowości serwisu do przyjmowania ruchu."""
     chroma_ready = container.rag.chroma_ok()
-    has_api_key = openrouter_key_is_configured()
+    has_llm = llm_is_configured()
 
-    system_healthy = chroma_ready and has_api_key
+    system_healthy = chroma_ready and has_llm
 
     response_payload = {
         "status": "ok" if system_healthy else "degraded",
-        "openrouter_key_configured": has_api_key,
+        "llm_configured": has_llm,
         "conversations": container.sessions.conversation_count(),
         "cache_size": container.cache.size,
         "chroma_ok": chroma_ready,

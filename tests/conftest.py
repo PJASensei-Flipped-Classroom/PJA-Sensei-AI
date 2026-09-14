@@ -45,7 +45,7 @@ def client(monkeypatch: pytest.MonkeyPatch, container: AppContainer):
 
     monkeypatch.setattr(SecurityService, "is_prompt_safe", always_safe)
     monkeypatch.setattr(
-        "app.api.routers.health.openrouter_key_is_configured", lambda: True
+        "app.api.routers.health.llm_is_configured", lambda: True
     )
 
     app = create_app(container=container)
@@ -57,7 +57,7 @@ def client(monkeypatch: pytest.MonkeyPatch, container: AppContainer):
 def client_secure(monkeypatch: pytest.MonkeyPatch, container: AppContainer):
     """TestClient that keeps SecurityService heuristics (no always-safe bypass)."""
     monkeypatch.setattr(
-        "app.api.routers.health.openrouter_key_is_configured", lambda: True
+        "app.api.routers.health.llm_is_configured", lambda: True
     )
     app = create_app(container=container)
     with TestClient(app) as test_client:

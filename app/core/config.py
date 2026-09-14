@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import timedelta
 from functools import lru_cache
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,13 +19,22 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    openrouter_api_key: str | None = None
-    openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    # Free models (zero OpenRouter credits). Shared-pool 429 possible; avoid openrouter/free lottery.
-    main_model: str = "google/gemma-4-31b-it:free"
-    security_model: str = "liquid/lfm-2.5-2.6b:free"
-    # Different provider than MAIN (not Google) so fallback survives Google shared-pool 429.
-    main_model_fallback: str = "nex-agi/nex-n2.5-mini:free"
+    # OpenAI-compatible endpoint (Ollama / LM Studio).
+    llm_base_url: str = Field(
+        default="http://127.0.0.1:11434/v1",
+        validation_alias=AliasChoices("LLM_BASE_URL", "BASE_URL"),
+    )
+    llm_api_key: str = Field(
+        default="ollama",
+        validation_alias=AliasChoices("LLM_API_KEY", "API_KEY"),
+    )
+    main_model: str = Field(
+        default="qwen2.5-coder:7b",
+        validation_alias=AliasChoices("MAIN_MODEL", "MODEL"),
+    )
+    security_model: str = "qwen2.5-coder:7b"
+    # Optional second model after provider 429 (usually empty for local Ollama).
+    main_model_fallback: str = ""
 
     telemetry_url: str = ""
     summary_webhook_url: str | None = None
@@ -64,11 +74,11 @@ def get_settings() -> Settings:
     return Settings()
 
 
-# Eksporty modułowe dla kodu legacy / adapterów — wartości z chwili importu.
+# Eksporty modułowe — wartości z chwili importu.
 _settings = get_settings()
 
-OPENROUTER_API_KEY = _settings.openrouter_api_key
-OPENROUTER_BASE_URL = _settings.openrouter_base_url
+LLM_BASE_URL = _settings.llm_base_url
+LLM_API_KEY = _settings.llm_api_key
 MAIN_MODEL = _settings.main_model
 SECURITY_MODEL = _settings.security_model
 MAIN_MODEL_FALLBACK = _settings.main_model_fallback
@@ -85,21 +95,19 @@ CONVERSATION_TTL = _settings.conversation_ttl
 MAX_CONVERSATIONS = _settings.max_conversations
 SECURITY_FAIL_CLOSED = _settings.security_fail_closed
 
-# Reveal hint quota (session-scoped; not SenseiConfig — avoids IDE camelCase sync).
 MAX_REVEALS_PER_SESSION = 3
 
 _PLACEHOLDER_API_KEYS = frozenset(
     {
         "",
-        "your_openrouter_api_key_here",
         "changeme",
         "replace_me",
     }
 )
 
 
-def openrouter_key_is_configured(api_key: str | None = None) -> bool:
-    """True when a non-placeholder OpenRouter key is set."""
-    key = (OPENROUTER_API_KEY if api_key is None else api_key) or ""
+def llm_is_configured(api_key: str | None = None) -> bool:
+    """True when LLM API key is set (``ollama`` / ``lm-studio`` count as configured)."""
+    key = (LLM_API_KEY if api_key is None else api_key) or ""
     key = key.strip()
     return bool(key) and key not in _PLACEHOLDER_API_KEYS

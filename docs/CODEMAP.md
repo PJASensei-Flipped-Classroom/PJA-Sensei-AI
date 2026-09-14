@@ -9,7 +9,7 @@ Warstwy: [ARCHITECTURE.md](ARCHITECTURE.md). API: [API.md](API.md). Testy: [TEST
 | `app/core` | Settings/env, JWT, metryki, rate limit (stałe zamrożone przy imporcie) |
 | `app/domain` | `SenseiConfig` / `Conversation` / wyjątki domenowe (bez FastAPI/LLM) |
 | `app/ports` | Protocoly: LLM, RAG, cache, security, summary, ConversationRepository |
-| `app/adapters` | OpenRouter, Chroma, cache RAM, security (jailbreak), webhooki, sesje RAM |
+| `app/adapters` | LLM (OpenAI-compatible / Ollama), Chroma, cache RAM, security (jailbreak), webhooki, sesje RAM |
 | `app/application` | Use-case’y (sessions, chat, stream, prelab, summary), `dto`, `AppContainer`, pedagogy gates, prompts, response pipeline |
 | `app/api` | Cienkie routery, deps/guards, schematy HTTP, telemetry helper, mapowanie błędów |
 | `static/` | Lokalny tester UI (Wykładowca / Student + Ops) |

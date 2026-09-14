@@ -1,6 +1,6 @@
 # PJA-Sensei AI Module
 
-FastAPI microservice: Socratic coding mentor for Flipped Classroom labs (OpenRouter + in-memory sessions + Chroma RAG).
+FastAPI microservice: Socratic coding mentor for Flipped Classroom labs (local Ollama / OpenAI-compatible LLM + in-memory sessions + Chroma RAG).
 
 ## Layout
 
@@ -10,7 +10,7 @@ app/
   api/                 # routers, schemas, deps, middleware
   application/         # use-cases + composition root (container)
   ports/               # Protocols for LLM/RAG/cache/security
-  adapters/            # OpenRouter, Chroma, cache, webhooks
+  adapters/            # LLM (OpenAI-compatible), Chroma, cache, webhooks
   domain/              # Conversation, SenseiConfig, exceptions
   core/                # settings, auth, metrics, rate limit
 static/                # tester UI
@@ -26,11 +26,14 @@ python -m venv .venv
 # Windows
 .\.venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env   # set OPENROUTER_API_KEY
+copy .env.example .env
+# Ollama (lokalnie):
+ollama pull qwen2.5-coder:7b
+ollama serve
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Domyślne modele (`:free`, bez kredytu): `MAIN_MODEL=google/gemma-4-31b-it:free`, `SECURITY_MODEL=liquid/lfm-2.5-2.6b:free`. Przy 429: retry, potem `MAIN_MODEL_FALLBACK=nex-agi/nex-n2.5-mini:free` (inny provider niż Google). Unikaj `openrouter/free`. Po zmianie `.env` **zrestartuj uvicorn**.
+Domyślnie LLM to lokalne **Ollama** (`LLM_BASE_URL=http://127.0.0.1:11434/v1`, `MAIN_MODEL=qwen2.5-coder:7b`). Alternatywa: LM Studio (`:1234`) — patrz [`.env.example`](.env.example). Po zmianie `.env` **zrestartuj uvicorn**.
 
 `TELEMETRY_URL` domyślnie puste (webhook wyłączony). Log `Telemetry POST … :8080 … 404` oznacza brak odbiorcy Springa — **nie** jest błędem czatu; ustaw URL platformy albo zostaw puste.
 
@@ -52,7 +55,8 @@ Domyślne modele (`:free`, bez kredytu): `MAIN_MODEL=google/gemma-4-31b-it:free`
 
 ## Docker Compose
 
-Najpierw `copy .env.example .env` i ustaw `OPENROUTER_API_KEY` (compose ładuje `env_file: .env`).
+Najpierw `copy .env.example .env`. Przy Ollamie na hoście Windows/Mac ustaw
+`LLM_BASE_URL=http://host.docker.internal:11434/v1` (compose ładuje `env_file: .env`).
 
 ```bash
 docker compose up --build
@@ -60,10 +64,10 @@ docker compose up --build
 
 ## Tests
 
-Offline (ASGI + unit, no OpenRouter): gates, auth JWT, rate limit, pre-lab, token budget,
+Offline (ASGI + unit, bez żywego LLM): gates, auth JWT, rate limit, pre-lab, token budget,
 idempotency, file-context, cache TTL, `SECURITY_FAIL_CLOSED`, stream extract, code penalty.
 
-Live HTTP (needs `uvicorn` on `:8000` + LLM key): scenarios **S1–S33** (`tests/live/scenarios/` + registry tags).
+Live HTTP (needs `uvicorn` on `:8000` + lokalne Ollama lub inny endpoint z `.env`): scenarios **S1–S33** (`tests/live/scenarios/` + registry tags).
 
 ```bash
 # Full evaluation: offline pytest, then live S1–S33 if API is up (else SKIP live)
@@ -94,6 +98,10 @@ Pełna mapa + usunięte w slim: [docs/API.md](docs/API.md).
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
+| `LLM_BASE_URL` | `http://127.0.0.1:11434/v1` | OpenAI-compatible API (Ollama / LM Studio) |
+| `LLM_API_KEY` | `ollama` | Wymagane przez SDK; lokalnie nie jest sekretem |
+| `MAIN_MODEL` / `SECURITY_MODEL` | `qwen2.5-coder:7b` | Modele czatu / security gate |
+| `MAIN_MODEL_FALLBACK` | *(puste)* | Opcjonalny model po 429 dostawcy |
 | `AI_AUTH_ENABLED` | `false` | Require Bearer JWT |
 | `SECURITY_FAIL_CLOSED` | `false` | Block chat if security LLM fails |
 | `RATE_LIMIT_PER_MINUTE` | `30` | Sliding window on protected routes |

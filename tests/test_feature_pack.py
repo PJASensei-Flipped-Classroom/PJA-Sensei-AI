@@ -290,6 +290,80 @@ def test_stream_final_fires_message_webhook(
     assert "penalty_applied" in evt
 
 
+def test_stream_emits_tokens_before_llm_finishes(
+    container: AppContainer,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """StreamService must yield token NDJSON while the LLM generator is still running."""
+    import asyncio
+    import uuid
+
+    from app.application.dto import CodeContext, MessageRequest
+    from app.domain.sensei import SenseiConfig
+
+    cid = container.sessions.start_conversation(
+        "Stream live lab",
+        SenseiConfig.model_validate(build_valid_config()),
+    )
+
+    class _Delta:
+        def __init__(self, content: str):
+            self.content = content
+
+    class _Choice:
+        def __init__(self, content: str):
+            self.delta = _Delta(content)
+
+    class _Chunk:
+        def __init__(self, content: str, usage=None):
+            self.choices = [_Choice(content)] if content else []
+            self.usage = usage
+
+    consumer_got_token = asyncio.Event()
+    prefix = '{"answer": "'
+    mid = "Hello"
+    suffix = ' World", "prompt_score": 5, "prompt_feedback": "f", "penalty_applied": false}'
+
+    async def fake_stream(**kwargs):
+        async def gen():
+            yield _Chunk(prefix + mid)
+            # Block until the consumer has yielded the first token line.
+            # If StreamService buffers until done, this deadlocks → timeout.
+            await asyncio.wait_for(consumer_got_token.wait(), timeout=2.0)
+            yield _Chunk(
+                suffix,
+                usage=MagicMock(prompt_tokens=2, completion_tokens=2),
+            )
+
+        return gen()
+
+    monkeypatch.setattr(
+        container.client.chat.completions, "create", AsyncMock(side_effect=fake_stream)
+    )
+
+    req = MessageRequest(
+        question="Ping?",
+        code_context=CodeContext(
+            current_file_name="A.java",
+            current_code="class A {}",
+            error_logs="",
+        ),
+    )
+
+    async def drive() -> list[str]:
+        lines: list[str] = []
+        async for line in container.stream.stream_message(cid, req, str(uuid.uuid4())):
+            lines.append(line)
+            if '"type": "token"' in line or '"type":"token"' in line:
+                consumer_got_token.set()
+        return lines
+
+    lines = asyncio.run(drive())
+    assert any('"type": "token"' in ln or '"type":"token"' in ln for ln in lines)
+    assert any('"type": "final"' in ln or '"type":"final"' in ln for ln in lines)
+    assert consumer_got_token.is_set()
+
+
 def test_rag_pdf_extract_chunks(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.adapters.rag_chroma import RagService
     from app.domain.sensei import ReferenceMaterial

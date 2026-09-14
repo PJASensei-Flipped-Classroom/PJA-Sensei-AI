@@ -10,8 +10,8 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 
 from app.core.config import (
-    OPENROUTER_API_KEY,
-    OPENROUTER_BASE_URL,
+    LLM_API_KEY,
+    LLM_BASE_URL,
     SECURITY_FAIL_CLOSED,
     SECURITY_MODEL,
 )
@@ -76,8 +76,9 @@ class SecurityService:
 
     def __init__(self, client: AsyncOpenAI | None = None) -> None:
         self.client = client or AsyncOpenAI(
-            base_url=OPENROUTER_BASE_URL,
-            api_key=OPENROUTER_API_KEY,
+            base_url=LLM_BASE_URL,
+            api_key=LLM_API_KEY,
+            timeout=120.0,
         )
 
     def injection_blocked_response(self, language: str = "pl") -> dict[str, Any]:

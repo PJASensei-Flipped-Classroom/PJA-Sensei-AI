@@ -18,7 +18,7 @@ api  →  application  →  ports / domain / core
 | `app/api` | HTTP: routery, deps, middleware, schematy FastAPI | `application`, `domain`, `core`; webhooks z routerów (tło) |
 | `app/application` | Use-case’y (chat, sessions, …); DI przez konstruktory | `ports`, `domain`, `core`, własne `dto` |
 | `app/ports` | Protocoly (LLM, RAG, cache, security, summary, ConversationRepository) | `domain` (typy) |
-| `app/adapters` | I/O: OpenRouter, Chroma, cache, security, webhooks, sesje w RAM | `domain`, `core` |
+| `app/adapters` | I/O: LLM (OpenAI-compatible), Chroma, cache, security, webhooks, sesje w RAM | `domain`, `core` |
 | `app/domain` | Modele i reguły bez HTTP/LLM | tylko stdlib / pydantic |
 | `app/core` | Konfiguracja env, JWT, metryki, rate limit | stdlib / pydantic-settings |
 
@@ -46,7 +46,7 @@ sequenceDiagram
   participant Client as VSCode_or_UI
   participant API as FastAPI
   participant App as application
-  participant LLM as OpenRouter
+  participant LLM as LocalLLM_or_cloud
 
   Client->>API: POST /conversations
   API->>App: sessions.start + opcjonalnie RAG load

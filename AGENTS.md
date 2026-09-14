@@ -25,7 +25,7 @@ Short rules for humans and coding agents working in this repo.
 
 - After HTTP/schema changes: `python -m scripts.export_openapi`
 - Offline: `python -m pytest -q`
-- Live scenarios need uvicorn + OpenRouter (`tests/live/`).
+- Live scenarios need uvicorn + local Ollama (or other OpenAI-compatible URL in `.env`) (`tests/live/`).
 
 ## More detail
 

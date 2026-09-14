@@ -1,4 +1,4 @@
-"""OpenRouter / OpenAI-compatible LLM client helpers."""
+"""OpenAI-compatible LLM client (Ollama / LM Studio)."""
 
 from __future__ import annotations
 
@@ -10,20 +10,20 @@ from openai import AsyncOpenAI, APIError, APITimeoutError, RateLimitError
 from openai.types import CompletionUsage
 from openai.types.chat import ChatCompletion
 
-from app.core.config import MAIN_MODEL, OPENROUTER_API_KEY, OPENROUTER_BASE_URL
+from app.core.config import LLM_API_KEY, LLM_BASE_URL, MAIN_MODEL
 from app.domain.conversation import Conversation
 
 logger = logging.getLogger(__name__)
 
 
-class OpenRouterClient:
-    """Odporny na błędy klient asynchroniczny dla modeli OpenAI/OpenRouter."""
+class OpenAICompatibleClient:
+    """Odporny na błędy klient asynchroniczny dla endpointów OpenAI-compatible."""
 
     def __init__(
         self,
-        base_url: str = OPENROUTER_BASE_URL,
-        api_key: str = OPENROUTER_API_KEY,
-        timeout: float = 60.0,
+        base_url: str = LLM_BASE_URL,
+        api_key: str = LLM_API_KEY,
+        timeout: float = 120.0,
         max_retries: int = 2,
     ) -> None:
         self._client = AsyncOpenAI(
@@ -42,7 +42,7 @@ class OpenRouterClient:
         """Zwalnia pulę połączeń HTTP."""
         await self._client.close()
 
-    async def __aenter__(self) -> OpenRouterClient:
+    async def __aenter__(self) -> OpenAICompatibleClient:
         return self
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -50,7 +50,6 @@ class OpenRouterClient:
 
     def model_for(self, conversation: Conversation) -> str:
         """Wybiera skonfigurowany model dla danej sesji lub stosuje fallback."""
-        # Bezpieczny odczyt atrybutu camelCase lub snake_case
         agent_config = getattr(conversation.config, "agent_behavior", None) or getattr(
             conversation.config, "agentBehavior", None
         )
@@ -78,7 +77,6 @@ class OpenRouterClient:
             if prompt or completion:
                 return int(prompt) + int(completion)
 
-        # Plan awaryjny (heurystyka ~4 znaki na token)
         chars = sum(len(t or "") for t in text_parts)
         return max(1, chars // 4)
 
@@ -104,5 +102,5 @@ class OpenRouterClient:
             logger.error("Upłynął limit czasu zapytania do LLM: %s", e)
             raise
         except APIError as e:
-            logger.error("Błąd API OpenRouter/OpenAI: status=%s, msg=%s", e.status_code, e.message)
+            logger.error("Błąd API LLM: status=%s, msg=%s", e.status_code, e.message)
             raise

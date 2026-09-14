@@ -9,6 +9,7 @@ paths:
       tags:
         - "ops"
       summary: "Podgląd interfejsu testowego"
+      description: "Serwuje static/index.html — lokalny tester manualny API."
       operationId: "serve_tester__get"
       responses:
         200:
@@ -55,6 +56,7 @@ paths:
       tags:
         - "ops"
       summary: "Zrzut metryk JSON"
+      description: "Zwraca snapshot liczników procesu + rozmiar cache/sesji."
       operationId: "get_metrics_metrics_get"
       responses:
         200:
@@ -70,6 +72,7 @@ paths:
       tags:
         - "ops"
       summary: "Metryki w formacie Prometheus"
+      description: "Ekspozycja metryk w formacie text/plain Prometheus exposition."
       operationId: "get_metrics_prometheus_metrics_prometheus_get"
       responses:
         200:
@@ -83,6 +86,7 @@ paths:
       tags:
         - "config"
       summary: "Walidacja konfiguracji Sensei"
+      description: "Waliduje SenseiConfig (Pydantic) oraz opcjonalnie JSON Schema z schemas/."
       operationId: "validate_config_validate_config_post"
       requestBody:
         content:
@@ -112,6 +116,7 @@ paths:
       tags:
         - "conversations"
       summary: "Rozpoczęcie nowej sesji konwersacyjnej"
+      description: "Tworzy sesję i w tle ładuje materiały RAG, jeśli podano referenceMaterials."
       operationId: "start_conversation_conversations_post"
       requestBody:
         content:
@@ -141,6 +146,7 @@ paths:
       tags:
         - "conversations"
       summary: "Pobranie stanu sesji"
+      description: "Zwraca zagregowany stan sesji (scores, prelab, tokens, checkpointy)."
       operationId: "get_conversation_conversations__conversation_id__get"
       security:
         -
@@ -173,6 +179,7 @@ paths:
       tags:
         - "conversations"
       summary: "Usunięcie sesji i rozliczenie podsumowania"
+      description: "Soft-delete: generuje summary (jeśli możliwe) i czyści dane sesji/RAG."
       operationId: "delete_conversation_conversations__conversation_id__delete"
       security:
         -
@@ -206,6 +213,7 @@ paths:
       tags:
         - "conversations"
       summary: "Pobranie ograniczeń edytora"
+      description: "Zwraca ideRestrictions skonfigurowane dla sesji."
       operationId: "get_restrictions_conversations__conversation_id__restrictions_get"
       security:
         -
@@ -239,6 +247,7 @@ paths:
       tags:
         - "conversations"
       summary: "Eksport historii czatu"
+      description: "Eksportuje historię i metadane sesji do payloadu JSON."
       operationId: "export_conversation_conversations__conversation_id__export_get"
       security:
         -
@@ -272,6 +281,7 @@ paths:
       tags:
         - "conversations"
       summary: "Pobranie kamieni milowych"
+      description: "Lista checkpointów z informacją o odblokowaniu."
       operationId: "get_checkpoints_conversations__conversation_id__checkpoints_get"
       security:
         -
@@ -305,6 +315,7 @@ paths:
       tags:
         - "conversations"
       summary: "Rejestracja zdarzenia z IDE"
+      description: "Zapisuje zdarzenie IDE (copy/paste/file) i opcjonalnie wysyła telemetrię."
       operationId: "post_ide_event_conversations__conversation_id__events_post"
       security:
         -
@@ -342,6 +353,7 @@ paths:
       tags:
         - "conversations"
       summary: "Odsłonięcie podpowiedzi"
+      description: "Mocniejsza podpowiedź po spełnieniu bramki frustracji / limitu reveal."
       operationId: "reveal_hint_conversations__conversation_id__hints_reveal_post"
       security:
         -
@@ -381,6 +393,7 @@ paths:
       tags:
         - "conversations"
       summary: "Generowanie podsumowania sesji"
+      description: "Generuje podsumowanie dydaktyczne i opcjonalnie wysyła je na webhook."
       operationId: "get_summary_conversations__conversation_id__summary_post"
       security:
         -
@@ -414,6 +427,7 @@ paths:
       tags:
         - "messages"
       summary: "Pobranie historii konwersacji"
+      description: "Zwraca historię wiadomości sesji (bez sekretów prelab)."
       operationId: "list_messages_conversations__conversation_id__messages_get"
       security:
         -
@@ -446,6 +460,7 @@ paths:
       tags:
         - "messages"
       summary: "Wysłanie wiadomości w trybie blokującym"
+      description: "Waliduje żądanie, wywołuje ChatService i emituje telemetrię w tle."
       operationId: "send_message_conversations__conversation_id__messages_post"
       security:
         -
@@ -483,6 +498,7 @@ paths:
       tags:
         - "messages"
       summary: "Wysłanie wiadomości w trybie strumieniowym (NDJSON)"
+      description: "Strumień NDJSON: tokeny live + final; telemetria po zdarzeniu final."
       operationId: "send_message_stream_conversations__conversation_id__messages_stream_post"
       security:
         -
@@ -520,6 +536,7 @@ paths:
       tags:
         - "messages"
       summary: "Zapis oceny studenta dla danej odpowiedzi"
+      description: "Zapisuje rating/komentarz studenta poprzez SessionService."
       operationId: "rate_message_conversations__conversation_id__messages__message_id__feedback_post"
       security:
         -
@@ -564,6 +581,7 @@ paths:
       tags:
         - "prelab"
       summary: "Pobranie pytań quizu wstępnego (widok studenta)"
+      description: "Zwraca pytania bez klucza odpowiedzi; enabled=false gdy prelab wyłączony."
       operationId: "get_prelab_conversations__conversation_id__prelab_get"
       security:
         -
@@ -594,6 +612,7 @@ paths:
       tags:
         - "prelab"
       summary: "Przesłanie odpowiedzi do weryfikacji quizu wstępnego"
+      description: "Ocenia odpowiedzi i odblokowuje czat przy zaliczeniu / wyczerpaniu prób."
       operationId: "submit_prelab_conversations__conversation_id__prelab_post"
       security:
         -
@@ -663,6 +682,7 @@ components:
       required:
         - "persona"
       title: "AgentBehavior"
+      description: "Zachowanie agenta: tryb (theory/debug/review), model i reguły anty-kodowe."
     AgentPersona:
       properties:
         role:
@@ -678,6 +698,7 @@ components:
         - "role"
         - "tone"
       title: "AgentPersona"
+      description: "Persona mentora: rola i ton odpowiedzi."
     Checkpoint:
       properties:
         id:
@@ -702,6 +723,7 @@ components:
       required:
         - "id"
       title: "Checkpoint"
+      description: "Punkt kontrolny odblokowywany po osiągnięciu wskazanego celu."
     CodeContext:
       properties:
         currentFileName:
@@ -746,6 +768,7 @@ components:
         - "currentFileName"
         - "currentCode"
       title: "CodeContext"
+      description: "Stan edytora przesyłany z klientem przy pytaniu do Sensei."
     CodeSelection:
       properties:
         startLine:
@@ -768,6 +791,7 @@ components:
         - "startLine"
         - "endLine"
       title: "CodeSelection"
+      description: "Zaznaczenie tekstu w edytorze (zakres linii + treść)."
     ConfigValidationResponse:
       properties:
         valid:
@@ -832,6 +856,7 @@ components:
       required:
         - "message"
       title: "DiagnosticItem"
+      description: "Diagnoza IDE (błąd/ostrzeżenie) dołączana do kontekstu kodu."
     FeedbackRequest:
       properties:
         rating:
@@ -853,6 +878,7 @@ components:
       required:
         - "rating"
       title: "FeedbackRequest"
+      description: "Ocena jakości odpowiedzi asystenta przez studenta."
     FeedbackResponse:
       properties:
         status:
@@ -870,6 +896,7 @@ components:
         - "message_id"
         - "rating"
       title: "FeedbackResponse"
+      description: "Potwierdzenie zapisania oceny studenta dla konkretnej wiadomości."
     HTTPValidationError:
       properties:
         detail:
@@ -898,6 +925,7 @@ components:
       required:
         - "type"
       title: "IdeEventRequest"
+      description: "Zdarzenie telemetryczne z rozszerzenia IDE (copy/paste/file)."
     IdeEventResponse:
       properties:
         status:
@@ -912,6 +940,7 @@ components:
         - "status"
         - "event"
       title: "IdeEventResponse"
+      description: "Potwierdzenie przyjęcia zdarzenia telemetrycznego z edytora."
     IdeRestrictions:
       properties:
         requireFileContextForChat:
@@ -924,6 +953,7 @@ components:
           default: false
       type: "object"
       title: "IdeRestrictions"
+      description: "Ograniczenia IDE: wymóg pliku w czacie, blokada kopiowania z czatu."
     LearningContext:
       properties:
         goals:
@@ -938,6 +968,7 @@ components:
           title: "Referencematerials"
       type: "object"
       title: "LearningContext"
+      description: "Cele dydaktyczne i lista materiałów powiązanych z zadaniem."
     MessageRequest:
       properties:
         question:
@@ -961,6 +992,7 @@ components:
         - "question"
         - "code_context"
       title: "MessageRequest"
+      description: "Payload wiadomości czatu: pytanie, kontekst edytora, opcjonalny klucz idempotencji."
     OpenFile:
       properties:
         path:
@@ -982,6 +1014,7 @@ components:
         - "path"
         - "content"
       title: "OpenFile"
+      description: "Dodatkowy otwarty plik w workspace (ścieżka + treść)."
     PreLabAnswerItem:
       properties:
         id:
@@ -999,6 +1032,7 @@ components:
         - "id"
         - "answer"
       title: "PreLabAnswerItem"
+      description: "Jedna odpowiedź studenta na pytanie quizu pre-lab."
     PreLabConfig:
       properties:
         enabled:
@@ -1027,6 +1061,7 @@ components:
           title: "Hintafterfail"
       type: "object"
       title: "PreLabConfig"
+      description: "Konfiguracja bramki pre-lab (włącz/wyłącz, limity prób, hint po porażce)."
     PreLabPublicResponse:
       properties:
         enabled:
@@ -1045,6 +1080,7 @@ components:
         - "enabled"
         - "passed"
       title: "PreLabPublicResponse"
+      description: "Stan prelab widoczny dla studenta przed/po zaliczeniu."
     PreLabQuestion:
       properties:
         id:
@@ -1065,6 +1101,7 @@ components:
         - "id"
         - "prompt"
       title: "PreLabQuestion"
+      description: "Pytanie quizu wstępnego z oczekiwanymi słowami kluczowymi."
     PreLabQuestionDTO:
       properties:
         id:
@@ -1083,6 +1120,7 @@ components:
         - "id"
         - "question"
       title: "PreLabQuestionDTO"
+      description: "Publiczna treść pytania quizowego (bez expected_keywords)."
     PreLabSubmitRequest:
       properties:
         answers:
@@ -1096,6 +1134,7 @@ components:
       required:
         - "answers"
       title: "PreLabSubmitRequest"
+      description: "Payload POST /prelab — lista odpowiedzi do ewaluacji."
     PreLabSubmitResponse:
       properties:
         passed:
@@ -1153,6 +1192,7 @@ components:
         - "passed"
         - "score"
       title: "PreLabSubmitResponse"
+      description: "Wynik oceny odpowiedzi quizu wstępnego."
     ReferenceMaterial:
       properties:
         type:
@@ -1192,6 +1232,7 @@ components:
         - "title"
         - "url"
       title: "ReferenceMaterial"
+      description: "Materiał referencyjny (doc/pdf/wideo) do RAG lub samego cytowania."
     RevealHintRequest:
       properties:
         code_context:
@@ -1211,6 +1252,7 @@ components:
           description: "Obszar problemu wskazany przez studenta"
       type: "object"
       title: "RevealHintRequest"
+      description: "Żądanie mocniejszej podpowiedzi (reveal) po spełnieniu bramki frustracji."
     SenseiConfig:
       properties:
         learningContext:
@@ -1259,6 +1301,7 @@ components:
         - "learningContext"
         - "agentBehavior"
       title: "SenseiConfig"
+      description: "Główna konfiguracja sesji Sensei (camelCase aliasy dla klienta IDE)."
     StartConversationResponse:
       properties:
         conversation_id:
@@ -1281,6 +1324,7 @@ components:
         - "prelab_required"
         - "ide_restrictions"
       title: "StartConversationResponse"
+      description: "Odpowiedź po utworzeniu sesji: id, czy wymagany prelab, ograniczenia IDE."
     StartRequest:
       properties:
         problem_description:
@@ -1296,6 +1340,7 @@ components:
         - "problem_description"
         - "config"
       title: "StartRequest"
+      description: "Payload startu sesji: treść zadania + SenseiConfig."
     ValidateConfigRequest:
       properties:
         config:
@@ -1307,6 +1352,7 @@ components:
       required:
         - "config"
       title: "ValidateConfigRequest"
+      description: "Surowy słownik konfiguracji do /validate-config (bez wymuszenia SenseiConfig)."
     ValidationError:
       properties:
         loc:

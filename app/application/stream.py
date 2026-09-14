@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
@@ -25,11 +26,13 @@ from app.core.metrics import metrics
 from app.ports import LlmPort
 
 STREAM_CHUNK_SIZE = 40
+_STREAM_DONE = object()
 logger = logging.getLogger(__name__)
 
 
 class StreamService:
     """Serwis realizujący asynchroniczny streaming odpowiedzi dydaktycznych w formacie NDJSON."""
+
     def __init__(
         self,
         sessions: SessionService,
@@ -90,14 +93,12 @@ class StreamService:
 
         lang = conversation.config.language
 
-        # 1. Sprawdzenie idempotencji
         if prior := self._sessions.lookup_idempotent(conversation_id, request.client_message_id):
             self._chat.track_result_metrics(prior)
             async for line in self._ndjson_stream_result(prior):
                 yield line
             return
 
-        # 2. Pamięć podręczna (omijana przy frustracji)
         if cached := self._chat.try_cache(conversation, conversation_id, request, message_id):
             stored = self._sessions.store_idempotent(conversation_id, request.client_message_id, cached)
             self._sessions.save_conversation(conversation_id, conversation)
@@ -106,12 +107,10 @@ class StreamService:
                 yield line
             return
 
-        # 3. Przygotowanie kontekstu i RAG
         chat_messages, code_changed, sources = await self._chat.prepare_chat_context(
             conversation_id, conversation, request
         )
 
-        # 4. Bramka pedagogiczna
         if gated := self._chat.maybe_pedagogy_gate(
             conversation, request, message_id=message_id, code_changed=code_changed, sources=sources
         ):
@@ -125,20 +124,18 @@ class StreamService:
                 yield line
             return
 
-        # 5. Uruchomienie strumienia z modelu LLM
         gen = self._chat.llm_generation_kwargs(conversation)
         model_name = self._llm.model_for(conversation)
         extractor = IncrementalAnswerExtractor()
         full_raw_response = ""
         usage = None
-        token_lines: list[str] = []
+        token_q: asyncio.Queue[Any] = asyncio.Queue()
 
         async def _consume_stream(model: str, *, use_response_format: bool) -> None:
             nonlocal full_raw_response, usage, extractor
             extractor = IncrementalAnswerExtractor()
             full_raw_response = ""
             usage = None
-            token_lines.clear()
             stream_response = await self._call_llm_stream(
                 model,
                 chat_messages,
@@ -155,7 +152,7 @@ class StreamService:
                     continue
                 full_raw_response += piece
                 if delta := extractor.feed(piece):
-                    token_lines.append(
+                    await token_q.put(
                         json.dumps({"type": "token", "text": delta}, ensure_ascii=False) + "\n"
                     )
 
@@ -171,8 +168,22 @@ class StreamService:
                 )
                 await _consume_stream(model, use_response_format=False)
 
+        async def _run_policy() -> tuple[Any, str]:
+            try:
+                return await call_with_rate_limit_policy(model_name, _stream_once)
+            finally:
+                await token_q.put(_STREAM_DONE)
+
+        policy_task = asyncio.create_task(_run_policy())
+
+        while True:
+            item = await token_q.get()
+            if item is _STREAM_DONE:
+                break
+            yield item
+
         try:
-            _, used_model = await call_with_rate_limit_policy(model_name, _stream_once)
+            _, used_model = await policy_task
         except Exception as exc:
             if is_rate_limit_error(exc):
                 metrics.inc("llm_rate_limited")
@@ -211,10 +222,6 @@ class StreamService:
                 yield line
             return
 
-        for line in token_lines:
-            yield line
-
-        # 6. Finalizacja i emisja podsumowującego zdarzenia 'final'
         prompt_text = "\n".join(str(m.get("content") or "") for m in chat_messages)
         tokens_used = self._llm.tokens_from_usage(usage, prompt_text, full_raw_response)
 

@@ -10,10 +10,9 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
-Ustaw `OPENROUTER_API_KEY` w `.env` (wymagane do prawdziwego LLM / live).  
-Domyślnie `MAIN_MODEL=google/gemma-4-31b-it:free`, `SECURITY_MODEL=liquid/lfm-2.5-2.6b:free`, `MAIN_MODEL_FALLBACK=nex-agi/nex-n2.5-mini:free` (po 429: retry, potem fallback spoza Google; nie `openrouter/free` do czatu).  
+Ustaw lokalne **Ollama** (lub LM Studio) w `.env` — wzór: [`.env.example`](.env.example).  
+Domyślnie `LLM_BASE_URL=http://127.0.0.1:11434/v1`, `MAIN_MODEL=qwen2.5-coder:7b`, `LLM_API_KEY=ollama`.  
 **Nie commituj** `.env` (jest w `.gitignore`).
-
 Uruchomienie lokalne:
 
 ```bash
@@ -26,13 +25,13 @@ Szczegóły, tagi live i edge case’y: [docs/TESTING.md](docs/TESTING.md).
 
 | Polecenie | Co robi |
 |-----------|---------|
-| `python -m pytest -q` | Offline ASGI + unit (bez OpenRouter; `tests/live` wykluczone przez `pytest.ini`) |
+| `python -m pytest -q` | Offline ASGI + unit (bez żywego LLM; `tests/live` wykluczone przez `pytest.ini`) |
 | `python -m tests.live.test_all --offline-only` | Orchestrator tylko offline |
 | `python -m tests.live.test_all` | Offline, potem live S1–S33 jeśli API na `:8000` |
 | `python -m tests.live.test_scenarios --only 6,22` | Wybrane numery live |
 | `python -m tests.live.test_scenarios --group student,gates` | Live wg tagów |
 
-Live wymaga działającego `uvicorn` + klucza OpenRouter.
+Live wymaga działającego `uvicorn` + lokalnego Ollama (lub innego endpointu z `.env`).
 
 ## OpenAPI
 

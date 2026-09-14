@@ -3,8 +3,8 @@
 Mapa pokrycia: **zachowania studenta** (gaming, cheating, edges) oraz kontrakt API.  
 API: [API.md](API.md). Live: `tests/live/` (S1–S33, `tests/live/registry.py`).
 
-**Live:** uvicorn + `OPENROUTER_API_KEY`. Po zmianie `.env` zrestartuj serwer.  
-Domyślne modele: `:free` (`gemma-4-31b-it` / `lfm` / fallback `nex-n2.5-mini`).
+**Live:** uvicorn + lokalne **Ollama** (domyślnie) albo inny OpenAI-compatible URL w `.env`. Po zmianie `.env` zrestartuj serwer.  
+Domyślny model: `qwen2.5-coder:7b` (`LLM_BASE_URL=http://127.0.0.1:11434/v1`).
 
 ## Komendy
 
@@ -31,7 +31,7 @@ Domyślne modele: `:free` (`gemma-4-31b-it` / `lfm` / fallback `nex-n2.5-mini`).
 | `test_cache_and_security.py` | Cache TTL/LRU, pinned IDs, fail-closed, pedagogy gates |
 | `test_code_penalty.py` | `contains_revealed_code` |
 | `test_stream_extract.py` | `IncrementalAnswerExtractor` |
-| `test_llm_rate_limit.py` | Retry / fallback przy 429 OpenRouter |
+| `test_llm_rate_limit.py` | Retry / fallback przy 429 dostawcy LLM |
 
 Fixtures: `tests/conftest.py` (`AppContainer`, `TestClient`, mock LLM; `client` omija security, `client_secure` nie).
 
@@ -100,7 +100,7 @@ Helpers: `tests/live/helpers.py`.
 | Auth włączony | **401** bez/błędny JWT |
 | Soft DELETE | Summary jeśli brak, potem cleanup RAG |
 | Stream cancel | Telemetria best-effort |
-| Health degraded | **503** (brak klucza / chroma); `/healthz` OK |
+| Health degraded | **503** (brak `llm_configured` / chroma); `/healthz` OK |
 | Obcięcie mid-sentence | `max_tokens` theory 700 / debug 900 / review 1000 |
 
 ---
@@ -108,5 +108,5 @@ Helpers: `tests/live/helpers.py`.
 ## Ograniczenia
 
 Sesje w RAM; config przy imporcie; `MAX_REVEALS_PER_SESSION` hardcode; anty-kod heurystyczny.  
-Przy 429 OpenRouter czat wraca HTTP 200 ze stubem (`message_id: provider_rate_limited`). Live S1/S2/S5–S7/S9/S16/S18/S22/S25–S27/S30/S31/S33 wtedy **SKIP** (nie FAIL pedagogiki i nie fałszywy PASS). Bramki bez LLM (S3, S4, kontrakt) nadal się oceniają.  
-Gotowe do IDE / Flipped Classroom przy jednym procesie + OpenRouter.
+Przy 429 dostawcy (głównie chmura) czat wraca HTTP 200 ze stubem (`message_id: provider_rate_limited`). Live S1/S2/S5–S7/S9/S16/S18/S22/S25–S27/S30/S31/S33 wtedy **SKIP** (nie FAIL pedagogiki i nie fałszywy PASS). Bramki bez LLM (S3, S4, kontrakt) nadal się oceniają.  
+Gotowe do IDE / Flipped Classroom przy jednym procesie + lokalnym Ollama.
