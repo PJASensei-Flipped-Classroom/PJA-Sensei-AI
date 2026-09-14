@@ -10,8 +10,7 @@ import pytest
 
 from fastapi.testclient import TestClient
 
-
-
+from app.application.container import AppContainer
 from tests.conftest import build_valid_config, mock_llm_json
 
 
@@ -203,14 +202,10 @@ def test_prelab_gate_blocks_and_unlocks(client: TestClient) -> None:
 
 
 def test_client_message_id_idempotency_prevents_duplicate_processing(
-
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
-
+    client: TestClient, container: AppContainer, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-
     """Identical client_message_id reuses prior response without calling LLM twice."""
-
-    mock_llm_call = mock_llm_json(monkeypatch)
+    mock_llm_call = mock_llm_json(monkeypatch, container)
 
 
 

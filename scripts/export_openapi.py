@@ -1,18 +1,20 @@
-"""Dump OpenAPI JSON to a simple YAML snapshot (no PyYAML dependency)."""
+"""Export OpenAPI from the running app factory to schemas/ (JSON + YAML)."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
 
-def dump(obj, indent: int = 0) -> str:
+def dump_yaml(obj, indent: int = 0) -> str:
+    """Minimal YAML dump (no PyYAML dependency)."""
     sp = "  " * indent
     if isinstance(obj, dict):
         lines: list[str] = []
         for key, value in obj.items():
             if isinstance(value, (dict, list)):
                 lines.append(f"{sp}{key}:")
-                lines.append(dump(value, indent + 1))
+                lines.append(dump_yaml(value, indent + 1))
             elif isinstance(value, str):
                 lines.append(f"{sp}{key}: {json.dumps(value, ensure_ascii=False)}")
             elif value is None:
@@ -27,7 +29,7 @@ def dump(obj, indent: int = 0) -> str:
         for item in obj:
             if isinstance(item, (dict, list)):
                 lines.append(f"{sp}-")
-                lines.append(dump(item, indent + 1))
+                lines.append(dump_yaml(item, indent + 1))
             else:
                 lines.append(f"{sp}- {json.dumps(item, ensure_ascii=False)}")
         return "\n".join(lines)
@@ -35,12 +37,22 @@ def dump(obj, indent: int = 0) -> str:
 
 
 def main() -> None:
+    """Buduje FastAPI app i zapisuje openapi.json oraz openapi.yaml do schemas/."""
+    from app.main import create_app
+
     root = Path(__file__).resolve().parents[1]
-    src = root / "schemas" / "openapi.json"
-    dst = root / "schemas" / "openapi.yaml"
-    spec = json.loads(src.read_text(encoding="utf-8"))
-    dst.write_text(dump(spec) + "\n", encoding="utf-8")
-    print(f"Wrote {dst}")
+    json_path = root / "schemas" / "openapi.json"
+    yaml_path = root / "schemas" / "openapi.yaml"
+
+    spec = create_app().openapi()
+    json_path.write_text(
+        json.dumps(spec, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    yaml_path.write_text(dump_yaml(spec) + "\n", encoding="utf-8")
+    print(f"Wrote {json_path}")
+    print(f"Wrote {yaml_path}")
+    print(f"Paths: {len(spec.get('paths') or {})}")
 
 
 if __name__ == "__main__":

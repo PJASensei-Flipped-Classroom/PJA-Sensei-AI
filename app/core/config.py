@@ -9,6 +9,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Konfiguracja runtime z zmiennych środowiskowych / pliku .env."""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -18,10 +20,13 @@ class Settings(BaseSettings):
 
     openrouter_api_key: str | None = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    main_model: str = "meta-llama/llama-3.3-70b-instruct"
-    security_model: str = "meta-llama/llama-3.1-8b-instruct"
+    # Free models (zero OpenRouter credits). Shared-pool 429 possible; avoid openrouter/free lottery.
+    main_model: str = "google/gemma-4-31b-it:free"
+    security_model: str = "liquid/lfm-2.5-2.6b:free"
+    # Different provider than MAIN (not Google) so fallback survives Google shared-pool 429.
+    main_model_fallback: str = "nex-agi/nex-n2.5-mini:free"
 
-    telemetry_url: str = "http://localhost:8080/api/ai/telemetry"
+    telemetry_url: str = ""
     summary_webhook_url: str | None = None
 
     cors_origins: str = (
@@ -55,15 +60,18 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Zwraca singleton Settings (cache'owany na czas życia procesu)."""
     return Settings()
 
 
+# Eksporty modułowe dla kodu legacy / adapterów — wartości z chwili importu.
 _settings = get_settings()
 
 OPENROUTER_API_KEY = _settings.openrouter_api_key
 OPENROUTER_BASE_URL = _settings.openrouter_base_url
 MAIN_MODEL = _settings.main_model
 SECURITY_MODEL = _settings.security_model
+MAIN_MODEL_FALLBACK = _settings.main_model_fallback
 TELEMETRY_URL = _settings.telemetry_url
 SUMMARY_WEBHOOK_URL = _settings.resolved_summary_webhook_url
 CORS_ORIGINS = _settings.cors_origin_list
@@ -76,3 +84,22 @@ CACHE_MAX_ENTRIES = _settings.cache_max_entries
 CONVERSATION_TTL = _settings.conversation_ttl
 MAX_CONVERSATIONS = _settings.max_conversations
 SECURITY_FAIL_CLOSED = _settings.security_fail_closed
+
+# Reveal hint quota (session-scoped; not SenseiConfig — avoids IDE camelCase sync).
+MAX_REVEALS_PER_SESSION = 3
+
+_PLACEHOLDER_API_KEYS = frozenset(
+    {
+        "",
+        "your_openrouter_api_key_here",
+        "changeme",
+        "replace_me",
+    }
+)
+
+
+def openrouter_key_is_configured(api_key: str | None = None) -> bool:
+    """True when a non-placeholder OpenRouter key is set."""
+    key = (OPENROUTER_API_KEY if api_key is None else api_key) or ""
+    key = key.strip()
+    return bool(key) and key not in _PLACEHOLDER_API_KEYS
