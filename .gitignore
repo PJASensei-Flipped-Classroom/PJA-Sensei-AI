@@ -1,18 +1,39 @@
-# Secrets & local env
+# Secrets (keep .env.example tracked)
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Virtualenvs
 .venv/
+venv/
+env/
 
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
+*.egg
 *.egg-info/
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-.coverage
-htmlcov/
+.eggs/
+*.so
 dist/
 build/
+pip-wheel-metadata/
+
+# Tests / typecheck / linters
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 
 # IDE / editor
 .idea/
@@ -23,9 +44,12 @@ build/
 
 # App runtime / local data
 .chroma/
+chroma/
+chroma_data/
 *.log
 
 # OS
 .DS_Store
 Thumbs.db
 Desktop.ini
+ehthumbs.db

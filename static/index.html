@@ -2,330 +2,1924 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>PJA-Sensei Tester</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PJA-Sensei Frontend (tester lokalny)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: system-ui; margin: 20px; background: #f4f4f9; display: flex; gap: 20px; }
-        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; }
-        input, select, textarea, button { width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; padding: 10px; border-radius: 4px; transition: 0.2s; }
-        button:hover:not(:disabled) { background: #0056b3; }
-        button:disabled { background: #cccccc; cursor: not-allowed; }
-
-        .chat-box { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background: #fafafa; border-radius: 4px; }
-        .msg { margin-bottom: 15px; padding: 10px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .msg.user { background: #e3f2fd; text-align: right; border-right: 4px solid #2196f3; }
-        .msg.ai { background: #e8f5e9; border-left: 4px solid #4caf50; }
-
-        .msg.system-gray { background: #eeeeee; color: #666; text-align: center; font-style: italic; border: 1px solid #ddd; }
-        .msg.system-red { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; font-weight: bold; }
-
-        .badge { font-size: 0.75em; padding: 3px 6px; border-radius: 4px; font-weight: bold; margin-bottom: 5px; display: inline-block; }
-        .badge-cache { background-color: #ffe082; color: #ff8f00; border: 1px solid #ffca28; }
-        .badge-penalty { background-color: #ffcdd2; color: #c62828; border: 1px solid #ef9a9a; }
-
-        .metrics { font-size: 0.85em; color: #555; background: #fdfdfd; padding: 10px; border-radius: 4px; border: 1px dashed #ccc; margin-top: 8px; display: block; }
-        .hidden { display: none; }
-        #loading { text-align: center; color: #666; font-style: italic; margin-top: 10px; }
-        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-right: 5px; vertical-align: middle; }
-        .spinner-dark { border: 2px solid #666; border-top-color: transparent; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .score-bar-bg { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; margin-top: 4px; overflow: hidden; }
-        .score-bar-fill { height: 100%; transition: width 0.5s ease-in-out, background-color 0.5s ease; }
-
-        .feedback-box { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 0.9em; display: flex; gap: 10px; align-items: center; }
-        .feedback-box select { width: auto; margin: 0; padding: 4px; }
-        .feedback-box button { width: auto; margin: 0; padding: 5px 10px; background: #28a745; font-size: 0.9em; }
-        .feedback-box button:hover:not(:disabled) { background: #218838; }
-
-        .blinking-cursor { display: inline-block; width: 8px; height: 15px; background-color: #333; animation: blink 1s step-end infinite; vertical-align: middle; margin-left: 2px;}
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --accent: #0f766e;
+            --accent-dark: #0d5c56;
+            --ink: #1a2332;
+            --danger: #b42318;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --ok: #15803d;
+            --warn: #a16207;
+            --user-bg: #0f766e;
+            --ai-bg: #ffffff;
+            --composer: #ffffff;
+            --rail: #eef2f5;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "DM Sans", system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+        .hero {
+            background: linear-gradient(145deg, #0f3d3a 0%, #134e4a 48%, #0f766e 100%);
+            color: #fff;
+            padding: 22px 24px 18px;
+            text-align: center;
+        }
+        .hero h1 {
+            margin: 0;
+            font-family: "Source Serif 4", Georgia, serif;
+            font-size: clamp(1.75rem, 4vw, 2.35rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+        .hero p {
+            margin: 6px auto 0;
+            opacity: 0.88;
+            font-size: 0.95rem;
+            max-width: 36rem;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            background: var(--rail);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 12px;
+        }
+        .tabs button {
+            width: auto;
+            margin: 0;
+            min-height: 36px;
+            border: none;
+            border-radius: 999px;
+            background: transparent;
+            color: var(--muted);
+            font-weight: 600;
+            padding: 8px 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+        }
+        .tabs button:hover:not(:disabled) {
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--accent);
+        }
+        .tabs button.active {
+            background: var(--panel);
+            color: var(--accent);
+            box-shadow: 0 1px 2px rgba(15, 61, 58, 0.08);
+        }
+        .wrap {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 16px 16px 48px;
+        }
+        .panel {
+            background: transparent;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+        }
+        #tab-wykladowca .panel {
+            background: var(--panel);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(15, 61, 58, 0.06);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        h2 {
+            margin: 0 0 10px;
+            font-family: "Source Serif 4", Georgia, serif;
+            font-size: 1.35rem;
+            color: var(--ink);
+        }
+        h3 { margin: 16px 0 8px; font-size: 1.05rem; color: var(--ink); }
+        h4 { margin: 0 0 6px; font-size: 0.95rem; }
+        label {
+            display: block;
+            font-size: 0.88em;
+            font-weight: 600;
+            margin: 8px 0 4px;
+            color: #334155;
+        }
+        .hint { font-weight: 400; color: var(--muted); font-size: 0.85em; }
+        input, select, textarea {
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 10px 12px;
+            box-sizing: border-box;
+            font: inherit;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #fff;
+        }
+        textarea { resize: vertical; }
+        button {
+            width: auto;
+            margin: 0;
+            min-height: 40px;
+            padding: 0 16px;
+            font: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            line-height: 1.2;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+        button:hover:not(:disabled) { background: var(--accent-dark); }
+        button:disabled { background: #94a3b8; cursor: not-allowed; opacity: 0.7; }
+        button.secondary {
+            background: #fff;
+            color: var(--ink);
+            border-color: var(--border);
+        }
+        button.secondary:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        button.success { background: var(--ok); color: #fff; border-color: transparent; }
+        button.success:hover:not(:disabled) { background: #166534; }
+        button.warn {
+            background: #fff;
+            color: #92400e;
+            border-color: #f59e0b;
+        }
+        button.warn:hover:not(:disabled) { background: #fffbeb; }
+        button.danger {
+            background: #fff;
+            color: var(--danger);
+            border-color: #fecaca;
+        }
+        button.danger:hover:not(:disabled) { background: #fef2f2; }
+        .btn-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: stretch;
+            margin: 10px 0;
+        }
+        .btn-toolbar > button {
+            flex: 1 1 auto;
+            min-width: 140px;
+            min-height: 40px;
+        }
+        .row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .row > input, .row > select, .row > textarea { flex: 1; min-width: 120px; margin-bottom: 0; }
+        .row > button { flex: 0 0 auto; }
+        .inline-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            margin: 6px 0 10px;
+        }
+        .inline-check input { width: auto; margin: 0; }
+        details.section {
+            margin: 0 0 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #f8fafc;
+            padding: 0 12px 10px;
+        }
+        details.section > summary {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--ink);
+            padding: 12px 0 8px;
+            list-style: none;
+        }
+        details.section > summary::-webkit-details-marker { display: none; }
+        details.section > summary::before { content: "▸ "; }
+        details.section[open] > summary::before { content: "▾ "; }
+        details.section-sub {
+            margin: 8px 0 4px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            padding: 0 10px 8px;
+        }
+        details.section-sub > summary {
+            cursor: pointer;
+            font-weight: 600;
+            padding: 10px 0 6px;
+            list-style: none;
+            font-size: 0.95em;
+        }
+        details.section-sub > summary::-webkit-details-marker { display: none; }
+        details.section-sub > summary::before { content: "▸ "; color: var(--muted); }
+        details.section-sub[open] > summary::before { content: "▾ "; }
+        .section-lead {
+            color: var(--muted);
+            font-size: 0.9em;
+            margin: 0 0 14px;
+        }
+        .field-grid { display: grid; gap: 4px 10px; margin-bottom: 8px; }
+        @media (min-width: 640px) {
+            .field-grid.two { grid-template-columns: 1fr 1fr; }
+        }
+        details.collapsed {
+            margin-top: 12px;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+        .actions-block { margin-top: 8px; }
+        .actions-block .btn-toolbar { margin-top: 4px; }
+        .id-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin: 8px 0 12px;
+        }
+        .id-row .mono { margin: 0; flex: 1 1 200px; }
+        .id-row button { flex: 0 0 auto; min-height: 36px; padding: 0 12px; font-size: 0.85rem; }
+        .student-actions {
+            margin-top: 12px;
+            padding-top: 4px;
+        }
+        .mono { font-family: ui-monospace, Consolas, monospace; font-size: 0.85em; word-break: break-all; }
+        .hidden { display: none !important; }
+        .ok-msg { color: var(--ok); font-weight: 600; margin: 8px 0; }
+        .err-msg { color: var(--danger); font-weight: 600; margin: 8px 0; }
+        .status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+            font-size: 0.82em;
+            color: var(--muted);
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: var(--rail);
+            border-radius: 12px;
+        }
+        .conv-chip {
+            font-family: ui-monospace, Consolas, monospace;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2px 8px;
+        }
+        .prelab-box {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .wrap:has(#tab-student.active) {
+            max-width: 1200px;
+        }
+        #tab-student .panel {
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 160px);
+        }
+        .student-workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+            gap: 14px;
+            align-items: stretch;
+            flex: 1;
+            min-height: calc(100vh - 220px);
+        }
+        .chat-column {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+        }
+        .chat-column > h2 { margin-bottom: 8px; }
+        #chat-area {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 360px;
+        }
+        .ide-column {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+        }
+        .ide-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 420px;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+        }
+        .ide-tabbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px 0;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            min-height: 40px;
+        }
+        .file-tab {
+            width: auto;
+            max-width: 240px;
+            margin: 0;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 0.82rem;
+            font-weight: 600;
+            outline: none;
+        }
+        .file-tab:focus {
+            box-shadow: inset 0 0 0 1px var(--accent);
+        }
+        .ide-hint {
+            color: #64748b;
+            font-size: 0.72rem;
+            margin-left: auto;
+            padding-right: 4px;
+        }
+        .code-editor {
+            flex: 1 1 auto;
+            width: 100%;
+            min-height: 280px;
+            margin: 0;
+            padding: 12px 14px;
+            border: none;
+            border-radius: 0;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            resize: none;
+            tab-size: 4;
+        }
+        .code-editor:focus { outline: none; }
+        .code-editor::placeholder { color: #64748b; }
+        .problems-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 0 0 28%;
+            min-height: 110px;
+            max-height: 180px;
+            border-top: 1px solid #334155;
+            background: #020617;
+        }
+        .problems-header {
+            padding: 6px 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #94a3b8;
+            background: #1e293b;
+        }
+        .problems-editor {
+            flex: 1;
+            width: 100%;
+            margin: 0;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 0;
+            background: #020617;
+            color: #fca5a5;
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            resize: none;
+        }
+        .problems-editor:focus { outline: none; }
+        .problems-editor::placeholder { color: #64748b; }
+        @media (max-width: 900px) {
+            .student-workspace {
+                grid-template-columns: 1fr;
+                min-height: 0;
+            }
+            .ide-panel { min-height: 360px; }
+            .code-editor { min-height: 220px; }
+        }
+        .report-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .report-modal.open { display: flex; }
+        .report-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+        }
+        .report-dialog {
+            position: relative;
+            z-index: 1;
+            width: min(720px, 100%);
+            max-height: min(88vh, 900px);
+            overflow: auto;
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.28);
+            padding: 20px 22px 18px;
+        }
+        .report-dialog h2 { margin-top: 0; }
+        .report-dialog .dash-block {
+            margin: 12px 0;
+            padding: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .report-dialog .report-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .report-dialog .report-actions .danger {
+            margin-left: auto;
+        }
+        body.report-locked {
+            overflow: hidden;
+        }
+        body.report-locked .student-workspace,
+        body.report-locked .ops-drawer,
+        body.report-locked .tabs,
+        body.report-locked .hero {
+            pointer-events: none;
+            user-select: none;
+        }
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 4px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+        .msg {
+            max-width: min(85%, 560px);
+            padding: 10px 14px;
+            border-radius: 18px;
+            animation: msgIn 0.28s ease-out;
+            word-break: break-word;
+        }
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .msg.user {
+            align-self: flex-end;
+            background: var(--user-bg);
+            color: #fff;
+            border-bottom-right-radius: 6px;
+            white-space: pre-wrap;
+        }
+        .msg.ai {
+            align-self: flex-start;
+            max-width: min(92%, 680px);
+            width: 100%;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            border-bottom-left-radius: 6px;
+            padding: 10px 14px;
+            box-shadow: 0 1px 2px rgba(15, 61, 58, 0.04);
+        }
+        .msg.system-red, .msg.system-gray {
+            align-self: center;
+            max-width: 90%;
+            text-align: center;
+            font-size: 0.92em;
+            border-radius: 12px;
+            padding: 10px 14px;
+            white-space: pre-wrap;
+        }
+        .msg.system-red { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+        .msg.system-gray { background: #f1f5f9; color: var(--muted); border: 1px solid var(--border); }
+        .msg strong {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+            opacity: 0.7;
+        }
+        .msg.user strong { color: rgba(255,255,255,0.9); }
+        .msg.ai strong { color: var(--accent); }
+        .stream-body { display: block; line-height: 1.5; color: var(--ink); font-size: 0.97rem; }
+        .stream-content { white-space: pre-wrap; }
+        .badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 0;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.72em;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .badge-src { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
+        .badge-cp { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+        .badge-cache { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+        .badge-penalty { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+        .next-tip {
+            margin: 0;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: #f0fdfa;
+            border: 1px solid #99f6e4;
+            color: #115e59;
+            font-size: 0.82em;
+            line-height: 1.35;
+        }
+        .next-tip strong { display: inline; font-size: inherit; text-transform: none; letter-spacing: 0; opacity: 1; color: inherit; margin: 0; }
+        .blinking-cursor {
+            display: inline-block;
+            width: 7px;
+            height: 1.05em;
+            margin-left: 2px;
+            background: var(--accent);
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+        }
         @keyframes blink { 50% { opacity: 0; } }
+        .final-metrics {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 0.78em;
+            color: var(--muted);
+            line-height: 1.35;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .meta-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+            align-items: center;
+            margin: 0;
+        }
+        .meta-strip .meta-item { white-space: nowrap; }
+        .final-metrics .meta-accent { color: var(--accent); font-weight: 600; }
+        .final-metrics .progress-block { margin: 0; }
+        .final-metrics .score-bar-bg {
+            height: 3px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+            margin: 4px 0 0;
+            max-width: 160px;
+        }
+        .final-metrics .score-bar-fill { height: 100%; border-radius: 999px; }
+        .final-metrics .prompt-note {
+            margin: 0;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            color: #475569;
+            font-size: 0.95em;
+            line-height: 1.35;
+        }
+        .final-metrics .model-tag {
+            margin: 0;
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 0.9em;
+            color: var(--muted);
+        }
+        .feedback-box {
+            margin: 0;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .feedback-box select, .feedback-box button { width: auto; margin: 0; min-height: 32px; padding: 0 12px; font-size: 0.85rem; }
+        .chat-compose {
+            position: sticky;
+            bottom: 0;
+            margin-top: auto;
+            padding: 10px;
+            background: var(--composer);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(15, 61, 58, 0.08);
+        }
+        .chat-compose .question-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .chat-compose .question-row input {
+            flex: 1;
+            margin-bottom: 0;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 0 14px;
+        }
+        .chat-compose .question-row button {
+            width: auto;
+            min-width: 100px;
+            height: 44px;
+            min-height: 44px;
+            margin-bottom: 0;
+            border-radius: 12px;
+            padding: 0 18px;
+            flex-shrink: 0;
+        }
+        .stream-toggle { margin: 8px 0 0; font-size: 0.85em; color: var(--muted); }
+        #loading { color: var(--muted); font-size: 0.9em; padding: 8px 4px; }
+        .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid #cbd5e1;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        details.ops-drawer {
+            margin-top: 16px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #fff;
+            padding: 0 14px 12px;
+        }
+        details.ops-drawer > summary {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--ink);
+            padding: 12px 0 8px;
+            list-style: none;
+        }
+        details.ops-drawer > summary::-webkit-details-marker { display: none; }
+        details.ops-drawer > summary::before { content: "▸ "; color: var(--muted); }
+        details.ops-drawer[open] > summary::before { content: "▾ "; }
+        .ops-note, .poll-hint {
+            margin: 0 0 8px;
+            color: var(--muted);
+            font-size: 0.88em;
+            line-height: 1.4;
+        }
+        .ops-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin: 8px 0 12px;
+        }
+        .ops-toolbar > button { min-height: 36px; }
+        .dev-grid, .ops-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+        @media (max-width: 560px) {
+            .dev-grid, .ops-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        .dev-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.85em;
+            min-height: 64px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+        }
+        .dev-card .label {
+            display: block;
+            color: var(--muted);
+            font-size: 0.72em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .dev-card .value {
+            font-weight: 700;
+            color: var(--ink);
+            font-size: 1.05em;
+            font-variant-numeric: tabular-nums;
+            word-break: break-word;
+        }
+        .dev-card .value.ok { color: var(--ok); }
+        .dev-card .value.bad { color: var(--danger); }
+        details.ops-drawer > details.section {
+            margin-top: 12px;
+            background: #f8fafc;
+        }
+        pre.mono {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 12px;
+            border-radius: 10px;
+            overflow: auto;
+            max-height: 280px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="panel" id="prof-panel">
-        <h2>🛠️ Panel Wykładowcy</h2>
-        <label>Zadanie:</label>
-        <textarea id="problem" rows="2">Napisz kontroler REST zwracający dane użytkownika w JSON.</textarea>
+<header class="hero">
+    <h1>PJA-Sensei</h1>
+    <p>Sokratyczny mentor do labu — konfiguracja wykładowcy i czat studenta.</p>
+</header>
 
-        <label>Materiały RAG (URL - ChromaDB potnie to na kawałki):</label>
-        <input type="text" id="rag-url" value="https://spring.io/guides/gs/rest-service/">
+<nav class="tabs" role="tablist">
+    <button type="button" id="tab-btn-wykladowca" class="active" role="tab" aria-selected="true" onclick="showTab('wykladowca')">Wykładowca</button>
+    <button type="button" id="tab-btn-student" role="tab" aria-selected="false" onclick="showTab('student')">Student</button>
+</nav>
 
-        <label>Zasady (strictRules):</label>
-        <select id="rule-preset">
-            <option value="Nie podawaj gotowego kodu. Pytaj o teorię.">Standardowy Sokratyk</option>
-            <option value="custom">Własna reguła...</option>
-        </select>
-        <input type="text" id="custom-rule" class="hidden" placeholder="Wpisz własną regułę...">
+<div class="wrap">
 
-        <button onclick="startSession()">Rozpocznij Sesję i ładuj wektory</button>
+    <!-- ========== WYKŁADOWCA ========== -->
+    <div class="tab-panel active" id="tab-wykladowca" role="tabpanel">
+        <div class="panel">
+            <h2>Konfiguracja sesji</h2>
+            <p class="section-lead">Wystarczy zadanie + Start; reszta jest opcjonalna (RAG, checkpoint, pre-lab, limity).</p>
+
+            <details class="section" open>
+                <summary>Zadanie i cele</summary>
+                <label>Zadanie <span class="hint">(wymagane)</span></label>
+                <textarea id="problem" rows="2">Napisz kontroler REST zwracający dane użytkownika w JSON.</textarea>
+
+                <label>Cele labu <span class="hint">(zalecane; jedna linia = jeden goal)</span></label>
+                <textarea id="goals" rows="3">REST controller
+JSON response
+Spring annotations</textarea>
+            </details>
+
+            <details class="section" open>
+                <summary>Tryb i reguły</summary>
+                <label>Tryb agenta</label>
+                <select id="agent-mode">
+                    <option value="debug" selected>debug — naprowadzanie przy kodzie</option>
+                    <option value="theory">theory — pytania koncepcyjne</option>
+                    <option value="review">review — przegląd podejścia (nie endpoint /review)</option>
+                </select>
+
+                <label>Zasady odpowiedzi</label>
+                <select id="rule-preset">
+                    <option value="Nie podawaj gotowego kodu. Pytaj o teorię.">Standardowy Sokratyk</option>
+                    <option value="custom">Własna reguła…</option>
+                </select>
+                <input type="text" id="custom-rule" class="hidden" placeholder="Wpisz własną regułę…">
+            </details>
+
+            <details class="section">
+                <summary>Materiały RAG <span class="hint">(opcjonalne)</span></summary>
+                <div class="row">
+                    <input type="text" id="rag-url" value="https://spring.io/guides/gs/rest-service/" placeholder="URL 1">
+                    <select id="rag-type" style="max-width: 100px;">
+                        <option value="doc" selected>doc</option>
+                        <option value="pdf">pdf</option>
+                        <option value="slide">slide</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <input type="text" id="rag-url-2" placeholder="URL 2 (opcjonalny)">
+                    <select id="rag-type-2" style="max-width: 100px;">
+                        <option value="doc" selected>doc</option>
+                        <option value="pdf">pdf</option>
+                        <option value="slide">slide</option>
+                    </select>
+                </div>
+            </details>
+
+            <details class="section">
+                <summary>Zaawansowane <span class="hint">(opcjonalne)</span></summary>
+
+                <details class="section-sub">
+                    <summary>Checkpoint</summary>
+                    <p class="hint">Kamienie milowe labu: po zaliczeniu celu Sensei może podać kolejną podpowiedź (hint).</p>
+                    <label class="inline-check"><input type="checkbox" id="demo-checkpoint" checked> Demo checkpoint po celu „REST controller”</label>
+                    <div id="checkpoint-fields">
+                        <div class="field-grid two">
+                            <div>
+                                <label>Id</label>
+                                <input type="text" id="cp-id" value="cp-rest" placeholder="np. cp-rest">
+                            </div>
+                            <div>
+                                <label>Cel odblokowania</label>
+                                <input type="text" id="cp-after" value="REST controller" placeholder="musi zgadzać się z celem">
+                            </div>
+                        </div>
+                        <label>Podpowiedź</label>
+                        <input type="text" id="cp-hint" value="Dodaj @RestController i mapowanie ścieżki HTTP." placeholder="hint dla studenta">
+                    </div>
+                </details>
+
+                <details class="section-sub">
+                    <summary>Pre-lab quiz</summary>
+                    <p class="hint">Quiz wejściowy: student musi zaliczyć go przed czatem (bramka wiedzy).</p>
+                    <label class="inline-check"><input type="checkbox" id="prelab-enabled"> Włącz pre-lab quiz</label>
+                    <div id="prelab-fields" class="hidden">
+                        <label>Pytanie</label>
+                        <input type="text" id="prelab-prompt" value="Jaką adnotację Spring oznaczysz klasę jako REST controller?">
+                        <label>Oczekiwane słowa kluczowe <span class="hint">(przecinki)</span></label>
+                        <input type="text" id="prelab-keywords" value="RestController, @RestController">
+                        <label>Max prób <span class="hint">(puste = bez limitu)</span></label>
+                        <input type="number" id="prelab-max" min="1" placeholder="np. 3">
+                    </div>
+                </details>
+
+                <details class="section-sub">
+                    <summary>Limity IDE</summary>
+                    <label>Limit tokenów na sesję <span class="hint">(puste = bez limitu; mocniejsze wskazówki: max 3 / sesję po stronie API)</span></label>
+                    <input type="number" id="max-tokens" min="1" placeholder="np. 2000">
+                    <label class="inline-check"><input type="checkbox" id="require-file"> Wymagaj pliku z kodem do czatu</label>
+                </details>
+            </details>
+
+            <div class="actions-block">
+                <h3>Akcje</h3>
+                <div id="validate-msg" class="hidden"></div>
+                <div class="btn-toolbar">
+                    <button type="button" class="secondary" onclick="validateConfig()">Waliduj SenseiConfig</button>
+                    <button type="button" onclick="startSession()">Start sesji</button>
+                </div>
+
+                <details class="collapsed hidden" id="session-tools">
+                    <summary>Sesja aktywna — narzędzia</summary>
+                    <div class="id-row">
+                        <p class="mono">ID: <span id="conv-id-prof"></span></p>
+                        <button type="button" class="secondary" onclick="copyConvId()">Copy ID</button>
+                    </div>
+                    <div class="btn-toolbar">
+                        <button type="button" class="secondary" onclick="exportSession()">Export JSON</button>
+                        <button type="button" class="secondary" onclick="fetchRestrictions()">Pokaż restrictions</button>
+                        <button type="button" class="secondary" onclick="fetchCheckpoints()">Pokaż checkpoints</button>
+                        <button type="button" class="secondary" onclick="refreshStatus()">Odśwież stan</button>
+                        <button type="button" class="danger" onclick="deleteSession()">Usuń sesję (DELETE)</button>
+                    </div>
+                    <pre class="mono hidden" id="session-tools-out"></pre>
+                </details>
+            </div>
+
+        </div>
     </div>
 
-    <div class="panel hidden" id="student-panel">
-        <h2>👨‍💻 Widok Studenta</h2>
-        <p><small style="color: #888;">Konwersacja ID: <span id="conv-id"></span></small></p>
+    <!-- ========== STUDENT ========== -->
+    <div class="tab-panel" id="tab-student" role="tabpanel">
+        <div class="panel">
+            <div class="status-bar" id="status-bar">
+                <span class="conv-chip" id="conv-id"></span>
+                <span id="st-avg">avg score: —</span>
+                <span id="st-frust">frustracja: —</span>
+                <span id="st-tokens">tokeny: —</span>
+                <span id="st-reveals">reveals: —</span>
+                <span id="st-mode">mode: —</span>
+            </div>
 
-        <div class="chat-box" id="chat"></div>
-        <div id="loading" class="hidden"><span class="spinner spinner-dark"></span> Sensei odbiera strumień danych...</div>
+            <div id="prelab-box" class="prelab-box hidden">
+                <h3 style="margin-top:0;">Pre-lab</h3>
+                <div id="prelab-questions"></div>
+                <button type="button" class="success" onclick="submitPrelab()">Wyślij odpowiedzi pre-lab</button>
+                <p id="prelab-feedback" class="hint"></p>
+            </div>
 
-        <label>Nazwa pliku:</label>
-        <input type="text" id="filename" value="MyController.java" placeholder="np. Main.java, App.py...">
+            <div class="student-workspace" id="student-workspace">
+                <div class="chat-column">
+                    <h2>Czat</h2>
+                    <div id="chat-area">
+                        <div class="chat-box" id="chat"></div>
+                        <div id="loading" class="hidden"><span class="spinner spinner-dark"></span> Sensei pracuje…</div>
 
-        <label>Twój kod (IDE):</label>
-        <textarea id="code" rows="4" style="font-family: monospace;">@Controller
+                        <div class="chat-compose">
+                            <div class="question-row">
+                                <input type="text" id="question" placeholder="Napisz wiadomość do Sensei…" onkeypress="if(event.key==='Enter') sendMessage()">
+                                <button type="button" id="send-btn" onclick="sendMessage()">Wyślij</button>
+                            </div>
+                            <input type="checkbox" id="use-stream" checked class="hidden" aria-hidden="true">
+                        </div>
+
+                        <div class="student-actions btn-toolbar">
+                            <button type="button" class="warn" id="reveal-btn" onclick="requestReveal()">Mocniejsza wskazówka</button>
+                            <button type="button" id="summary-btn" onclick="getSummary()">Zakończ i pokaż raport</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ide-column">
+                    <div class="ide-panel" aria-label="Edytor kodu">
+                        <div class="ide-tabbar">
+                            <input type="text" id="file-tab" class="file-tab" value="MyController.java" spellcheck="false" title="Kliknij, aby zmienić nazwę pliku" aria-label="Nazwa pliku">
+                            <span class="ide-hint">Edytor</span>
+                        </div>
+                        <textarea id="code" class="code-editor" spellcheck="false" placeholder="Pisz kod labu tutaj…">@Controller
 public class MyController {
 }</textarea>
+                        <div class="problems-panel">
+                            <div class="problems-header">Problems / stack trace</div>
+                            <textarea id="error-logs" class="problems-editor" spellcheck="false" placeholder="Wklej błędy kompilacji lub stack trace (opcjonalnie)"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <label>Pytanie:</label>
-        <input type="text" id="question" placeholder="Zadaj pytanie (np. Dlaczego to nie działa?)" onkeypress="if(event.key === 'Enter') sendMessage()">
-
-        <button id="send-btn" onclick="sendMessage()">Wyślij Pytanie</button>
-        <button id="summary-btn" style="background: #6f42c1; margin-top: 10px;" onclick="getSummary()">Zakończ i pokaż Raport (Summary)</button>
+            <details class="ops-drawer" id="ops-drawer-student">
+                <summary>Ops (dev)</summary>
+                <p class="ops-note">Szybka diagnostyka (czy API i LLM żyją). Pełne metryki: API <code>/metrics</code>, Prometheus: <code>/metrics/prometheus</code>.</p>
+                <p class="poll-hint">Auto-odświeżanie co 4 s gdy otwarte. <span class="ops-poll-state">Polling wyłączony.</span></p>
+                <div class="ops-toolbar">
+                    <button type="button" class="secondary" onclick="refreshOpsStats()">Odśwież teraz</button>
+                </div>
+                <div class="dev-grid">
+                    <div class="dev-card"><span class="label">status</span><span class="value ops-h-status">—</span></div>
+                    <div class="dev-card"><span class="label">llm</span><span class="value ops-h-llm">—</span></div>
+                    <div class="dev-card"><span class="label">chroma_ok</span><span class="value ops-h-chroma_ok">—</span></div>
+                    <div class="dev-card"><span class="label">messages</span><span class="value ops-m-messages_total">—</span></div>
+                    <div class="dev-card"><span class="label">llm_errors</span><span class="value ops-m-llm_errors">—</span></div>
+                    <div class="dev-card"><span class="label">llm_rate_limited</span><span class="value ops-m-llm_rate_limited">—</span></div>
+                </div>
+                <details class="section">
+                    <summary>Raw JSON (health + metrics)</summary>
+                    <pre class="mono" id="ops-raw-json">—</pre>
+                </details>
+            </details>
+        </div>
     </div>
 
-    <div class="panel hidden" id="dashboard-panel">
-        <h2>📊 Dashboard Wyników</h2>
+</div>
+
+<div id="report-modal" class="report-modal" aria-hidden="true">
+    <div class="report-backdrop" aria-hidden="true"></div>
+    <div class="report-dialog" role="dialog" aria-modal="true" aria-labelledby="report-title">
+        <h2 id="report-title">Dashboard wyników</h2>
         <h3 id="mastery"></h3>
-        <p><strong>Działania studenta z kodem:</strong> <span id="student-actions"></span></p>
-        <p><strong>Ewolucja pytań (Okiem Agenta):</strong> <span id="agent-eval"></span></p>
-        <p><strong>Opinia Studenta (Okiem Studenta):</strong> <span id="student-eval"></span></p>
-        <p><strong>Wnioski dydaktyczne:</strong> <span id="summary"></span></p>
-        <button onclick="location.reload()">Rozpocznij Nową Sesję</button>
+        <div class="dash-block">
+            <h4>Narracja dla wykładowcy</h4>
+            <p><span id="student-actions"></span></p>
+            <p><span id="agent-eval"></span></p>
+            <p><span id="student-eval"></span></p>
+            <p><span id="summary"></span></p>
+        </div>
+        <div class="dash-block" id="rich-summary">
+            <h4>Metryki ROI</h4>
+            <div id="goal-mastery"></div>
+            <div id="criteria-assessment"></div>
+            <div id="reveal-usage"></div>
+            <div id="ide-events-rich"></div>
+        </div>
+        <div class="report-actions">
+            <button type="button" class="secondary" onclick="exportSession()">Export JSON</button>
+            <button type="button" class="danger" id="end-session-btn" onclick="endSessionFromReport()">Zakończ sesję</button>
+        </div>
     </div>
+</div>
 
-    <script>
-        let convId = "";
-        const apiUrl = "http://localhost:8000";
+<script>
+const apiUrl = window.location.origin.includes("8000")
+    ? window.location.origin
+    : "http://127.0.0.1:8000";
 
-        document.getElementById('rule-preset').addEventListener('change', (e) => {
-            document.getElementById('custom-rule').classList.toggle('hidden', e.target.value !== 'custom');
+let convId = "";
+let lastRevealRemaining = null;
+let currentTab = "wykladowca";
+let opsPollTimer = null;
+
+document.getElementById("rule-preset").addEventListener("change", (e) => {
+    document.getElementById("custom-rule").classList.toggle("hidden", e.target.value !== "custom");
+});
+document.getElementById("prelab-enabled").addEventListener("change", (e) => {
+    document.getElementById("prelab-fields").classList.toggle("hidden", !e.target.checked);
+});
+document.getElementById("demo-checkpoint").addEventListener("change", (e) => {
+    document.getElementById("checkpoint-fields").classList.toggle("hidden", !e.target.checked);
+});
+
+function showTab(name) {
+    const tabs = ["wykladowca", "student"];
+    if (!tabs.includes(name)) return;
+
+    currentTab = name;
+    tabs.forEach((t) => {
+        const panel = document.getElementById("tab-" + t);
+        const btn = document.getElementById("tab-btn-" + t);
+        const on = t === name;
+        panel.classList.toggle("active", on);
+        btn.classList.toggle("active", on);
+        btn.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    syncOpsPolling();
+}
+
+function anyOpsDrawerOpen() {
+    return Array.from(document.querySelectorAll("details.ops-drawer")).some((d) => d.open);
+}
+
+function setOpsPollState(text) {
+    document.querySelectorAll(".ops-poll-state").forEach((el) => {
+        el.textContent = text;
+    });
+}
+
+function setOpsValues(selector, value, okClass) {
+    document.querySelectorAll(selector).forEach((el) => {
+        el.textContent = value == null || value === "" ? "—" : String(value);
+        el.classList.remove("ok", "bad");
+        if (okClass === true) el.classList.add("ok");
+        if (okClass === false) el.classList.add("bad");
+    });
+}
+
+async function refreshOpsStats() {
+    let health = {};
+    let metricsSnap = {};
+    try {
+        const healthRes = await fetch(`${apiUrl}/health`);
+        try {
+            health = await healthRes.json();
+        } catch (_) {
+            health = {};
+        }
+        if (health && health.detail && typeof health.detail === "object") {
+            health = health.detail;
+        }
+        setOpsValues(".ops-h-status", health.status, health.status === "ok");
+        setOpsValues(".ops-h-chroma_ok", health.chroma_ok, !!health.chroma_ok);
+        setOpsValues(".ops-h-llm", health.llm_configured, !!health.llm_configured);
+    } catch (e) {
+        setOpsValues(".ops-h-status", "błąd sieci", false);
+    }
+
+    try {
+        const metricsRes = await fetch(`${apiUrl}/metrics`);
+        metricsSnap = await metricsRes.json();
+        setOpsValues(".ops-m-messages_total", metricsSnap.messages_total);
+        const errCount = Number(metricsSnap.llm_errors || 0);
+        const rlCount = Number(metricsSnap.llm_rate_limited || 0);
+        setOpsValues(".ops-m-llm_errors", metricsSnap.llm_errors, errCount === 0);
+        setOpsValues(".ops-m-llm_rate_limited", metricsSnap.llm_rate_limited, rlCount === 0);
+    } catch (e) {
+        setOpsValues(".ops-m-messages_total", "błąd");
+    }
+
+    const raw = document.getElementById("ops-raw-json");
+    if (raw) {
+        raw.textContent = JSON.stringify({ health, metrics: metricsSnap }, null, 2);
+    }
+}
+
+function startOpsPoll() {
+    stopOpsPoll();
+    setOpsPollState("Polling aktywny (4 s).");
+    opsPollTimer = setInterval(() => {
+        if (anyOpsDrawerOpen()) refreshOpsStats();
+        else stopOpsPoll();
+    }, 4000);
+}
+
+function stopOpsPoll() {
+    if (opsPollTimer) {
+        clearInterval(opsPollTimer);
+        opsPollTimer = null;
+    }
+    setOpsPollState("Polling wyłączony.");
+}
+
+function syncOpsPolling() {
+    if (anyOpsDrawerOpen()) {
+        refreshOpsStats();
+        startOpsPoll();
+    } else {
+        stopOpsPoll();
+    }
+}
+
+document.querySelectorAll("details.ops-drawer").forEach((drawer) => {
+    drawer.addEventListener("toggle", syncOpsPolling);
+});
+
+function esc(s) {
+    return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function nl2br(s) {
+    return esc(s).replace(/\n/g, "<br>");
+}
+
+function parseGoals() {
+    return document.getElementById("goals").value
+        .split("\n")
+        .map((g) => g.trim())
+        .filter(Boolean);
+}
+
+function buildReferenceMaterials() {
+    const mats = [];
+    const u1 = document.getElementById("rag-url").value.trim();
+    if (u1) {
+        mats.push({
+            type: document.getElementById("rag-type").value,
+            title: "Materiał 1",
+            url: u1,
+        });
+    }
+    const u2 = document.getElementById("rag-url-2").value.trim();
+    if (u2) {
+        mats.push({
+            type: document.getElementById("rag-type-2").value,
+            title: "Materiał 2",
+            url: u2,
+        });
+    }
+    return mats;
+}
+
+function buildConfig() {
+    const ruleSelect = document.getElementById("rule-preset").value;
+    const rule = ruleSelect === "custom"
+        ? document.getElementById("custom-rule").value.trim()
+        : ruleSelect;
+
+    const goals = parseGoals();
+    const config = {
+        learningContext: {
+            goals: goals.length ? goals : ["Rozwiązanie zadania"],
+            referenceMaterials: buildReferenceMaterials(),
+        },
+        agentBehavior: {
+            persona: { role: "Sokratyczny Nauczyciel", tone: "Cierpliwy" },
+            strictRules: [rule || "Nie podawaj gotowego kodu."],
+            mode: document.getElementById("agent-mode").value,
+            codeRevealFallback:
+                "Asystent próbował podać gotowe rozwiązanie. Na laboratoriach piszemy kod samodzielnie. Od czego zaczniesz?",
+        },
+        ideRestrictions: {
+            requireFileContextForChat: document.getElementById("require-file").checked,
+            disableCopyFromChat: false,
+        },
+        language: "pl",
+        evaluationCriteria: [
+            "Clarity of questions",
+            "Use of code context",
+            "Progress on goals",
+        ],
+        checkpoints: [],
+    };
+
+    if (document.getElementById("demo-checkpoint").checked) {
+        config.checkpoints.push({
+            id: document.getElementById("cp-id").value.trim() || "cp-1",
+            after_goal: document.getElementById("cp-after").value.trim() || null,
+            hint: document.getElementById("cp-hint").value.trim() || null,
+        });
+    }
+
+    if (document.getElementById("prelab-enabled").checked) {
+        const kws = document.getElementById("prelab-keywords").value
+            .split(",")
+            .map((k) => k.trim())
+            .filter(Boolean);
+        const maxRaw = document.getElementById("prelab-max").value;
+        config.preLab = {
+            enabled: true,
+            questions: [{
+                id: "q1",
+                prompt: document.getElementById("prelab-prompt").value.trim() || "Pytanie pre-lab",
+                expected_keywords: kws,
+            }],
+            max_attempts: maxRaw ? parseInt(maxRaw, 10) : null,
+            hint_after_fail: "Szukaj adnotacji RestController w dokumentacji Spring.",
+        };
+    }
+
+    const maxTok = document.getElementById("max-tokens").value;
+    if (maxTok) config.maxTokensPerSession = parseInt(maxTok, 10);
+
+    return config;
+}
+
+function showValidate(ok, text) {
+    const el = document.getElementById("validate-msg");
+    el.classList.remove("hidden", "ok", "err");
+    el.classList.add(ok ? "ok" : "err");
+    el.textContent = text;
+}
+
+function showSessionToolsOut(text) {
+    const el = document.getElementById("session-tools-out");
+    el.classList.remove("hidden");
+    el.textContent = text;
+}
+
+async function validateConfig() {
+    const config = buildConfig();
+    try {
+        const res = await fetch(`${apiUrl}/validate-config`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ config }),
+        });
+        const data = await res.json();
+        if (data.valid) {
+            showValidate(true, "SenseiConfig OK");
+        } else {
+            showValidate(false, "Błędy: " + JSON.stringify(data.errors || data));
+        }
+    } catch (e) {
+        showValidate(false, "Brak połączenia z API (" + apiUrl + ")");
+    }
+}
+
+async function startSession() {
+    const config = buildConfig();
+    const payload = {
+        problem_description: document.getElementById("problem").value,
+        config,
+    };
+    try {
+        const res = await fetch(`${apiUrl}/conversations`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+            showValidate(false, "Start sesji: HTTP " + res.status + " " + (await res.text()));
+            return;
+        }
+        const data = await res.json();
+        convId = data.conversation_id;
+        document.getElementById("conv-id").textContent = convId;
+        document.getElementById("conv-id-prof").textContent = convId;
+        document.getElementById("session-tools").classList.remove("hidden");
+        closeReportModal();
+        document.getElementById("chat").innerHTML = "";
+        document.getElementById("code").value = "";
+        document.getElementById("session-tools-out").classList.add("hidden");
+        document.getElementById("session-tools-out").textContent = "";
+        await setupPrelabOrChat();
+        await refreshStatus();
+        showTab("student");
+    } catch (e) {
+        showValidate(false, "Błąd sieci przy starcie sesji");
+    }
+}
+
+function copyConvId() {
+    if (!convId) return;
+    navigator.clipboard.writeText(convId).catch(() => {});
+}
+
+async function fetchRestrictions() {
+    if (!convId) {
+        alert("Brak aktywnej sesji");
+        return;
+    }
+    try {
+        const res = await fetch(`${apiUrl}/conversations/${convId}/restrictions`);
+        const data = await res.json();
+        if (!res.ok) {
+            showSessionToolsOut("HTTP " + res.status + "\n" + JSON.stringify(data, null, 2));
+            return;
+        }
+        showSessionToolsOut(JSON.stringify(data, null, 2));
+    } catch (e) {
+        alert("Nie udało się pobrać restrictions");
+    }
+}
+
+async function fetchCheckpoints() {
+    if (!convId) {
+        alert("Brak aktywnej sesji");
+        return;
+    }
+    try {
+        const res = await fetch(`${apiUrl}/conversations/${convId}/checkpoints`);
+        const data = await res.json();
+        if (!res.ok) {
+            showSessionToolsOut("HTTP " + res.status + "\n" + JSON.stringify(data, null, 2));
+            return;
+        }
+        showSessionToolsOut(JSON.stringify(data, null, 2));
+    } catch (e) {
+        alert("Nie udało się pobrać checkpoints");
+    }
+}
+
+async function deleteSession() {
+    if (!convId) {
+        alert("Brak aktywnej sesji");
+        return;
+    }
+    if (!confirm("Usunąć sesję " + convId + " (DELETE)?")) return;
+    try {
+        const res = await fetch(`${apiUrl}/conversations/${convId}`, { method: "DELETE" });
+        const text = await res.text();
+        let data = text;
+        try { data = JSON.stringify(JSON.parse(text), null, 2); } catch (_) { /* plain */ }
+        if (!res.ok) {
+            showSessionToolsOut("DELETE HTTP " + res.status + "\n" + data);
+            alert("Usuwanie nieudane: HTTP " + res.status);
+            return;
+        }
+        showSessionToolsOut("Sesja usunięta.\n" + data);
+        convId = "";
+        lastRevealRemaining = null;
+        document.getElementById("conv-id").textContent = "";
+        document.getElementById("conv-id-prof").textContent = "";
+        document.getElementById("session-tools").classList.add("hidden");
+        document.getElementById("chat").innerHTML = "";
+        closeReportModal();
+        document.getElementById("prelab-box").classList.add("hidden");
+        document.getElementById("chat-area").classList.remove("hidden");
+        document.getElementById("st-avg").textContent = "avg score: —";
+        document.getElementById("st-frust").textContent = "frustracja: —";
+        document.getElementById("st-frust").classList.remove("hot");
+        document.getElementById("st-tokens").textContent = "tokeny: —";
+        document.getElementById("st-reveals").textContent = "reveals: —";
+        document.getElementById("st-mode").textContent = "mode: —";
+        showTab("wykladowca");
+        alert("Sesja usunięta");
+    } catch (e) {
+        alert("Błąd sieci przy DELETE");
+    }
+}
+
+async function setupPrelabOrChat() {
+    const box = document.getElementById("prelab-box");
+    const chatArea = document.getElementById("chat-area");
+    const res = await fetch(`${apiUrl}/conversations/${convId}/prelab`);
+    const data = await res.json();
+    if (data.enabled && !data.passed) {
+        box.classList.remove("hidden");
+        chatArea.classList.add("hidden");
+        const root = document.getElementById("prelab-questions");
+        root.innerHTML = "";
+        (data.questions || []).forEach((q) => {
+            root.innerHTML += `
+                <div class="prelab-q" data-qid="${esc(q.id)}">
+                    <label>${esc(q.prompt)}</label>
+                    <input type="text" class="prelab-answer" data-qid="${esc(q.id)}" placeholder="Twoja odpowiedź">
+                </div>`;
+        });
+        document.getElementById("prelab-feedback").textContent =
+            data.hint_after_fail ? "Podpowiedź po failu: " + data.hint_after_fail : "";
+    } else {
+        box.classList.add("hidden");
+        chatArea.classList.remove("hidden");
+    }
+}
+
+async function submitPrelab() {
+    const answers = [...document.querySelectorAll(".prelab-answer")].map((inp) => ({
+        id: inp.dataset.qid,
+        answer: inp.value,
+    }));
+    const res = await fetch(`${apiUrl}/conversations/${convId}/prelab`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers }),
+    });
+    const data = await res.json();
+    const fb = document.getElementById("prelab-feedback");
+    if (data.passed) {
+        fb.textContent = "Pre-lab zaliczony (score=" + data.score + ")";
+        document.getElementById("prelab-box").classList.add("hidden");
+        document.getElementById("chat-area").classList.remove("hidden");
+        await refreshStatus();
+    } else {
+        fb.textContent = (data.detail || "Nie zaliczono") +
+            (data.hint_after_fail ? " — " + data.hint_after_fail : "") +
+            ` (próba ${data.attempts}/${data.max_attempts ?? "∞"})`;
+    }
+}
+
+async function refreshStatus() {
+    if (!convId) return;
+    try {
+        const res = await fetch(`${apiUrl}/conversations/${convId}`);
+        if (!res.ok) return;
+        const s = await res.json();
+        document.getElementById("st-avg").textContent = "avg score: " + (s.avg_score ?? "—");
+        const fr = document.getElementById("st-frust");
+        fr.textContent = "frustracja: " + (s.is_frustrated ? "TAK" : "nie");
+        fr.classList.toggle("hot", !!s.is_frustrated);
+        document.getElementById("st-tokens").textContent =
+            "tokeny: " + (s.tokens_used_total ?? 0) +
+            (s.max_tokens_per_session != null ? " / " + s.max_tokens_per_session : "");
+        const rem = (s.max_reveals_per_session ?? 3) - (s.reveal_count ?? 0);
+        lastRevealRemaining = rem;
+        document.getElementById("st-reveals").textContent =
+            "reveals: " + (s.reveal_count ?? 0) + " / " + (s.max_reveals_per_session ?? 3) +
+            " (pozostało " + rem + ")";
+        document.getElementById("st-mode").textContent = "mode: " + (s.mode || "—");
+    } catch (_) { /* ignore */ }
+}
+
+function currentFileName() {
+    const tab = document.getElementById("file-tab");
+    const name = (tab && tab.value ? tab.value : "").trim();
+    return name || "MyController.java";
+}
+
+function codeContextPayload() {
+    return {
+        current_file_name: currentFileName(),
+        current_code: document.getElementById("code").value,
+        error_logs: document.getElementById("error-logs").value || "",
+    };
+}
+
+function openReportModal() {
+    const modal = document.getElementById("report-modal");
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("report-locked");
+}
+
+function closeReportModal() {
+    const modal = document.getElementById("report-modal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("report-locked");
+}
+
+async function endSessionFromReport() {
+    const btn = document.getElementById("end-session-btn");
+    if (btn) btn.disabled = true;
+    try {
+        if (convId) {
+            const res = await fetch(`${apiUrl}/conversations/${convId}`, { method: "DELETE" });
+            if (!res.ok) {
+                alert("Nie udało się usunąć sesji: HTTP " + res.status);
+                if (btn) btn.disabled = false;
+                return;
+            }
+        }
+    } catch (e) {
+        alert("Błąd sieci przy zakończeniu sesji");
+        if (btn) btn.disabled = false;
+        return;
+    }
+    location.reload();
+}
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.getElementById("report-modal")?.classList.contains("open")) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+});
+
+document.getElementById("file-tab")?.addEventListener("blur", () => {
+    const tab = document.getElementById("file-tab");
+    if (!tab) return;
+    tab.value = (tab.value || "").trim() || "MyController.java";
+});
+
+document.getElementById("code")?.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    e.preventDefault();
+    const el = e.target;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    el.value = el.value.slice(0, start) + "    " + el.value.slice(end);
+    el.selectionStart = el.selectionEnd = start + 4;
+});
+
+function updateStatusFromMessage(data) {
+    if (!data || typeof data !== "object") return;
+    if (data.debug_info && data.debug_info.is_frustrated != null) {
+        const fr = document.getElementById("st-frust");
+        fr.textContent = "frustracja: " + (data.debug_info.is_frustrated ? "TAK" : "nie");
+        fr.classList.toggle("hot", !!data.debug_info.is_frustrated);
+    }
+    if (data.reveals_remaining != null) {
+        lastRevealRemaining = data.reveals_remaining;
+        document.getElementById("st-reveals").textContent =
+            "reveals pozostało: " + data.reveals_remaining;
+    }
+    if (data.prompt_score != null && data.debug_info && data.debug_info.avg_score != null) {
+        document.getElementById("st-avg").textContent = "avg score: " + data.debug_info.avg_score;
+    }
+}
+
+function renderBadges(data) {
+    let chips = "";
+    let tip = "";
+    if (data.is_cached) chips += `<span class="badge badge-cache">Cache</span>`;
+    if (data.penalty_applied) chips += `<span class="badge badge-penalty">Kara</span>`;
+    if (data.sources && data.sources.length) {
+        const titles = data.sources.map((s) => s.title || s.url).filter(Boolean);
+        const short = titles.length <= 2 ? titles.join(", ") : titles.slice(0, 2).join(", ") + " +" + (titles.length - 2);
+        chips += `<span class="badge badge-src" title="${esc(titles.join(", "))}">Sources: ${esc(short)}</span>`;
+    }
+    if (data.next_checkpoint) {
+        const cp = data.next_checkpoint;
+        chips += `<span class="badge badge-cp">Checkpoint ${esc(cp.id)}</span>`;
+        if (cp.hint) tip += `<div class="next-tip"><strong>Checkpoint:</strong> ${esc(cp.hint)}</div>`;
+    }
+    if (data.suggested_next_step) {
+        tip += `<div class="next-tip"><strong>Next:</strong> ${esc(data.suggested_next_step)}</div>`;
+    }
+    const chipRow = chips ? `<div class="badge-row">${chips}</div>` : "";
+    return chipRow + tip;
+}
+
+function appendFeedbackAndMetrics(container, data, backendMsgId, duration) {
+    const goals = Array.isArray(data.goal_progress) ? data.goal_progress : [];
+    const totalGoals = goals.length;
+    const doneGoals = goals.filter((g) => g && g.status === "done").length;
+    const progressPct = totalGoals ? Math.round((doneGoals / totalGoals) * 100) : 0;
+    const progressLabel = totalGoals
+        ? `Postęp labu: ${doneGoals}/${totalGoals} celów`
+        : "Postęp labu: brak celów";
+    const score = data.prompt_score || 5;
+    const bar = totalGoals
+        ? `<div class="score-bar-bg"><div class="score-bar-fill" style="width:${progressPct}%;background-color:hsl(${Math.min(120, progressPct * 1.2)},70%,40%);"></div></div>`
+        : "";
+    container.innerHTML = [
+        renderBadges(data),
+        `<div class="progress-block"><span class="meta-accent">${esc(progressLabel)}</span>${bar}</div>`,
+        `<div class="meta-strip">` +
+            `<span class="meta-item">Jakość: <span class="meta-accent">${score}/10</span></span>` +
+            `<span class="meta-item">Czas: <span class="meta-accent">${duration} s</span></span>` +
+            (data.tokens_used != null
+                ? `<span class="meta-item">Tokeny: <span class="meta-accent">${data.tokens_used}</span></span>`
+                : "") +
+            (data.model
+                ? `<span class="meta-item model-tag">Model: <code>${esc(data.model)}</code></span>`
+                : "") +
+        `</div>`,
+        data.prompt_feedback ? `<div class="prompt-note">${esc(data.prompt_feedback)}</div>` : "",
+        `<div class="feedback-box" id="fb-box-${backendMsgId}">` +
+            `<span>Oceń poradę:</span>` +
+            `<select id="rating-${backendMsgId}"><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>` +
+            `<button type="button" onclick="submitFeedback('${backendMsgId}')">Wyślij opinię</button>` +
+        `</div>`,
+    ].filter(Boolean).join("");
+}
+
+function appendAiShell(msgDomId) {
+    const chat = document.getElementById("chat");
+    chat.insertAdjacentHTML("beforeend",
+        `<div class="msg ai" id="${msgDomId}"><strong>Sensei:</strong><div class="stream-body"><span class="stream-content"></span><span class="blinking-cursor"></span></div><div class="final-metrics"></div></div>`);
+    chat.scrollTop = chat.scrollHeight;
+    return document.getElementById(msgDomId);
+}
+
+async function sendMessage() {
+    const startTime = performance.now();
+    const questionInput = document.getElementById("question");
+    const chat = document.getElementById("chat");
+    const loading = document.getElementById("loading");
+    const sendBtn = document.getElementById("send-btn");
+    const question = questionInput.value.trim();
+    if (!question || !convId) return;
+
+    chat.insertAdjacentHTML("beforeend", `<div class="msg user"><strong>Ty:</strong> ${esc(question)}</div>`);
+    questionInput.value = "";
+    chat.scrollTop = chat.scrollHeight;
+    loading.classList.remove("hidden");
+    sendBtn.disabled = true;
+
+    const payload = { question, code_context: codeContextPayload() };
+    const useStream = document.getElementById("use-stream").checked;
+
+    async function readErrorBody(res) {
+        const text = await res.text();
+        try {
+            return JSON.parse(text);
+        } catch (_) {
+            return { answer: text.slice(0, 400) || ("HTTP " + res.status), detail: text.slice(0, 200) };
+        }
+    }
+
+    try {
+        if (!useStream) {
+            const res = await fetch(`${apiUrl}/conversations/${convId}/messages`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const data = res.ok ? await res.json() : await readErrorBody(res);
+            const duration = ((performance.now() - startTime) / 1000).toFixed(2);
+            if (!res.ok) {
+                chat.insertAdjacentHTML("beforeend",
+                    `<div class="msg system-red">${nl2br(data.answer || data.detail || ("Błąd HTTP " + res.status))}</div>`);
+                await refreshStatus();
+                return;
+            }
+            if (res.status === 403) {
+                chat.insertAdjacentHTML("beforeend",
+                    `<div class="msg system-red">${nl2br(data.answer || data.detail || "403")}</div>`);
+                await refreshStatus();
+                return;
+            }
+            if (data.message_id === "rejected") {
+                chat.insertAdjacentHTML("beforeend",
+                    `<div class="msg system-gray">${nl2br(data.answer || "Brak kontekstu pliku.")}</div>`);
+                return;
+            }
+            if (data.message_id === "blocked" || (data.tokens_used === 0 && data.penalty_applied)) {
+                chat.insertAdjacentHTML("beforeend",
+                    `<div class="msg system-red">${nl2br(data.answer || "Zablokowano")}</div>`);
+                return;
+            }
+            const msgDomId = "msg-" + Date.now();
+            const el = appendAiShell(msgDomId);
+            el.querySelector(".blinking-cursor")?.remove();
+            el.querySelector(".stream-content").innerHTML = nl2br(data.answer || "");
+            appendFeedbackAndMetrics(
+                el.querySelector(".final-metrics"),
+                data,
+                data.message_id || msgDomId,
+                duration
+            );
+            updateStatusFromMessage(data);
+            await refreshStatus();
+            return;
+        }
+
+        const res = await fetch(`${apiUrl}/conversations/${convId}/messages/stream`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
         });
 
-        async function startSession() {
-            const ruleSelect = document.getElementById('rule-preset').value;
-            const rule = ruleSelect === 'custom' ? document.getElementById('custom-rule').value : ruleSelect;
-
-            const payload = {
-                problem_description: document.getElementById('problem').value,
-                config: {
-                    learningContext: { goals: ["Rozwiązanie zadania"], referenceMaterials: [{ type: "doc", title: "Materiały", url: document.getElementById('rag-url').value }] },
-                    agentBehavior: { persona: { role: "Sokratyczny Nauczyciel", tone: "Cierpliwy" }, strictRules: [rule], codeRevealFallback: "🚨 [SYSTEM] Asystent próbował podać Ci gotowe rozwiązanie. Przypominam: na tych laboratoriach piszemy kod samodzielnie. Od czego zaczniesz?" },
-                    ideRestrictions: { requireFileContextForChat: false },
-                    language: "pl"
-                }
-            };
-
-            const res = await fetch(`${apiUrl}/conversations`, {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            convId = data.conversation_id;
-
-            document.getElementById('prof-panel').classList.add('hidden');
-            document.getElementById('student-panel').classList.remove('hidden');
-            document.getElementById('conv-id').innerText = convId;
-            document.getElementById('code').value = "";
+        const contentType = res.headers.get("content-type") || "";
+        if (!res.ok || contentType.includes("application/json")) {
+            const data = contentType.includes("application/json") || contentType.includes("json")
+                ? await res.json()
+                : await readErrorBody(res);
+            if (res.status === 403) {
+                chat.insertAdjacentHTML("beforeend",
+                    `<div class="msg system-red">${nl2br(data.answer || data.detail || "403")}</div>`);
+            } else if (data.message_id === "rejected") {
+                chat.insertAdjacentHTML("beforeend",
+                    `<div class="msg system-gray">${nl2br(data.answer || "Wymagany kontekst pliku.")}</div>`);
+            } else {
+                chat.insertAdjacentHTML("beforeend",
+                    `<div class="msg system-red">${nl2br(data.answer || data.detail || ("Błąd HTTP " + res.status))}</div>`);
+            }
+            await refreshStatus();
+            return;
         }
 
-        async function sendMessage() {
-            const startTime = performance.now();
+        const backendMsgId = res.headers.get("X-Message-Id") || ("msg-" + Date.now());
+        const msgDomId = "msg-" + Date.now();
+        const el = appendAiShell(msgDomId);
+        const streamContentSpan = el.querySelector(".stream-content");
+        const finalMetricsDiv = el.querySelector(".final-metrics");
+        const cursor = el.querySelector(".blinking-cursor");
 
-            const questionInput = document.getElementById('question');
-            const codeInput = document.getElementById('code');
-            const chat = document.getElementById('chat');
-            const loading = document.getElementById('loading');
-            const sendBtn = document.getElementById('send-btn');
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let finalData = null;
+        let displayAnswer = "";
 
-            const filenameInput = document.getElementById('filename').value || "Nieznany_Plik";
-            const question = questionInput.value.trim();
-            if (!question) return;
-
-            chat.innerHTML += `<div class="msg user"><strong>Ty:</strong> ${question}</div>`;
-            questionInput.value = "";
-            chat.scrollTop = chat.scrollHeight;
-
-            loading.classList.remove('hidden');
-            sendBtn.disabled = true;
-
-            const payload = {
-                question: question,
-                code_context: { current_file_name: filenameInput, current_code: codeInput.value, error_logs: "" }
-            };
-
-            try {
-                const res = await fetch(`${apiUrl}/conversations/${convId}/messages/stream`, {
-                    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
-                });
-
-                const contentType = res.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
-                    const data = await res.json();
-                    if (data.message_id === "rejected") {
-                        chat.innerHTML += `<div class="msg system-gray">To zadanie wymaga analizy kodu. Otwórz odpowiedni plik w edytorze VS Code zanim zadasz pytanie.</div>`;
-                    } else if (data.tokens_used === 0) {
-                        chat.innerHTML += `<div class="msg system-red">🚨 ALERT: ${data.answer.replace(/\n/g, '<br>')}</div>`;
-                    }
-                    loading.classList.add('hidden');
-                    sendBtn.disabled = false;
-                    chat.scrollTop = chat.scrollHeight;
-                    return;
-                }
-
-                const backendMsgId = res.headers.get("X-Message-Id") || ("msg-" + Date.now());
-
-                const msgDomId = "msg-" + Date.now();
-                chat.innerHTML += `
-                    <div class="msg ai" id="${msgDomId}">
-                        <strong>Sensei:</strong> <span class="stream-content"></span><span class="blinking-cursor"></span>
-                        <div class="final-metrics"></div>
-                    </div>`;
-                const streamContentSpan = document.getElementById(msgDomId).querySelector('.stream-content');
-                const finalMetricsDiv = document.getElementById(msgDomId).querySelector('.final-metrics');
-                const cursor = document.getElementById(msgDomId).querySelector('.blinking-cursor');
-                chat.scrollTop = chat.scrollHeight;
-
-                const reader = res.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = "";
-                let finalData = null;
-                let displayAnswer = "";
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split("\n");
-                    buffer = lines.pop() || "";
-
-                    for (const line of lines) {
-                        if (!line.trim()) continue;
-                        try {
-                            const evt = JSON.parse(line);
-                            if (evt.type === "token" && evt.text) {
-                                displayAnswer += evt.text;
-                                streamContentSpan.innerHTML = displayAnswer
-                                    .replace(/\n/g, '<br>');
-                            } else if (evt.type === "final") {
-                                finalData = evt;
-                                if (evt.answer) {
-                                    displayAnswer = evt.answer;
-                                    streamContentSpan.innerHTML = displayAnswer
-                                        .replace(/\n/g, '<br>');
-                                }
-                            }
-                        } catch (parseErr) {
-                            // fallback: ignore bad line
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                try {
+                    const evt = JSON.parse(line);
+                    if (evt.type === "token" && evt.text) {
+                        displayAnswer += evt.text;
+                        streamContentSpan.innerHTML = nl2br(displayAnswer);
+                    } else if (evt.type === "final") {
+                        finalData = evt;
+                        const body = evt.answer || evt.prompt_feedback || "";
+                        if (body) {
+                            displayAnswer = body;
+                            streamContentSpan.innerHTML = nl2br(displayAnswer);
                         }
                     }
-                    chat.scrollTop = chat.scrollHeight;
-                }
-
-                cursor.remove();
-
-                const endTime = performance.now();
-                const duration = ((endTime - startTime) / 1000).toFixed(2);
-
-                try {
-                    const data = finalData || {};
-
-                    if (!streamContentSpan.innerText.trim() && data.answer) {
-                        streamContentSpan.innerHTML = String(data.answer).replace(/\n/g, '<br>');
-                    }
-
-                    const score = data.prompt_score || 5;
-                    const hue = ((score - 1) / 9) * 120;
-                    const scorePercentage = (score / 10) * 100;
-
-                    const isCached = data.is_cached === true;
-                    const isPenalty = data.penalty_applied === true;
-
-                    let badgesHtml = "";
-                    if (isCached) badgesHtml += `<div class="badge badge-cache">Cache</div><br>`;
-                    if (isPenalty) badgesHtml += `<div class="badge badge-penalty">Kara / penalty</div><br>`;
-                    if (data.sources && data.sources.length) {
-                        badgesHtml += `<div class="badge">Sources: ${data.sources.map(s => s.title || s.url).join(", ")}</div><br>`;
-                    }
-                    if (data.suggested_next_step) {
-                        badgesHtml += `<div class="badge">Next: ${data.suggested_next_step}</div><br>`;
-                    }
-
-                    if (badgesHtml) {
-                        streamContentSpan.insertAdjacentHTML('beforebegin', badgesHtml);
-                    }
-
-                    finalMetricsDiv.innerHTML = `
-                        <div class="metrics">
-                            <div><strong>Ocena Twojego pytania (Prompt Score): ${score}/10</strong></div>
-                            <div class="score-bar-bg">
-                                <div class="score-bar-fill" style="width: ${scorePercentage}%; background-color: hsl(${hue}, 100%, 40%);"></div>
-                            </div>
-                            <div style="margin-top: 5px;">Czas odpowiedzi: <strong>${duration} s</strong></div>
-                        </div>
-                        <div class="feedback-box" id="fb-box-${backendMsgId}">
-                            <span>Oceń poradę:</span>
-                            <select id="rating-${backendMsgId}">
-                                <option value="5">5</option>
-                                <option value="4">4</option>
-                                <option value="3">3</option>
-                                <option value="2">2</option>
-                                <option value="1">1</option>
-                            </select>
-                            <button onclick="submitFeedback('${backendMsgId}')">Wyślij opinię</button>
-                        </div>
-                    `;
-                } catch (e) {
-                    if (!streamContentSpan.innerText.trim()) {
-                        streamContentSpan.innerText = displayAnswer || buffer;
-                    }
-                }
-
-            } catch (error) {
-                chat.innerHTML += `<div class="msg ai" style="color: red;"><strong>Błąd sieci:</strong> Brak połączenia API.</div>`;
-            } finally {
-                loading.classList.add('hidden');
-                sendBtn.disabled = false;
-                chat.scrollTop = chat.scrollHeight;
+                } catch (_) { /* skip bad line */ }
             }
+            chat.scrollTop = chat.scrollHeight;
         }
 
-        async function submitFeedback(msgId) {
-            const ratingVal = parseInt(document.getElementById(`rating-${msgId}`).value);
-            const box = document.getElementById(`fb-box-${msgId}`);
-            box.innerHTML = `<span style="color: #28a745;"><i>Wysyłanie...</i></span>`;
-            try {
-                await fetch(`${apiUrl}/conversations/${convId}/messages/${msgId}/feedback`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ rating: ratingVal, comment: "Ocena ze strumienia UI" })
-                });
-                box.innerHTML = `<span style="color: #28a745;"><strong>Dziękujemy! Oceniono na ${ratingVal}/5 ⭐</strong></span>`;
-            } catch (e) {
-                box.innerHTML = `<span style="color: red;">Błąd wysyłania opinii.</span>`;
-            }
+        cursor?.remove();
+        const duration = ((performance.now() - startTime) / 1000).toFixed(2);
+        const data = finalData || {};
+        if (!streamContentSpan.innerText.trim()) {
+            const body = data.answer || data.prompt_feedback || "Brak treści odpowiedzi.";
+            streamContentSpan.innerHTML = nl2br(body);
         }
+        appendFeedbackAndMetrics(finalMetricsDiv, data, backendMsgId, duration);
+        updateStatusFromMessage(data);
+        await refreshStatus();
+    } catch (error) {
+        chat.insertAdjacentHTML("beforeend",
+            `<div class="msg ai" style="color:red;"><strong>Błąd sieci:</strong> ${esc(error.message || "brak API")}</div>`);
+    } finally {
+        loading.classList.add("hidden");
+        sendBtn.disabled = false;
+        chat.scrollTop = chat.scrollHeight;
+    }
+}
 
-        async function getSummary() {
-            const sumBtn = document.getElementById('summary-btn');
-            sumBtn.disabled = true;
-            sumBtn.innerHTML = '<span class="spinner"></span> Generowanie szczegółowego raportu...';
-            try {
-                const res = await fetch(`${apiUrl}/conversations/${convId}/summary`, { method: "POST" });
-                const data = await res.json();
-                document.getElementById('student-panel').classList.add('hidden');
-                document.getElementById('dashboard-panel').classList.remove('hidden');
-                document.getElementById('mastery').innerText = `Ocena opanowania materiału: ${data.mastery_score || 'Brak'}/10`;
-                document.getElementById('student-actions').innerText = data.student_actions || 'Brak danych';
-                document.getElementById('agent-eval').innerText = data.agent_evaluation_of_student || 'Brak danych';
-                document.getElementById('student-eval').innerText = data.student_evaluation_of_agent || 'Brak danych';
-                document.getElementById('summary').innerText = data.professors_summary || data.summary || 'Brak danych';
-            } catch (e) {
-                alert("Błąd podczas generowania podsumowania!");
-                sumBtn.disabled = false;
-                sumBtn.innerHTML = 'Zakończ i pokaż Raport (Summary)';
-            }
+async function requestReveal() {
+    if (!convId) return;
+    const chat = document.getElementById("chat");
+    const btn = document.getElementById("reveal-btn");
+    btn.disabled = true;
+    try {
+        const res = await fetch(`${apiUrl}/conversations/${convId}/hints/reveal`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                focus: document.getElementById("question").value || "",
+                code_context: codeContextPayload(),
+            }),
+        });
+        const data = await res.json();
+        if (res.status === 403) {
+            chat.insertAdjacentHTML("beforeend",
+                `<div class="msg system-gray">Reveal niedostępny: ${esc(data.detail || "wymagana frustracja / niski streak / quota")}</div>`);
+        } else if (res.ok) {
+            chat.insertAdjacentHTML("beforeend", `
+                <div class="msg ai">
+                    <span class="badge badge-cp">Reveal</span>
+                    <strong>Wskazówka:</strong> ${nl2br(data.hint || "")}
+                    ${data.suggested_next_step ? "<div class='metrics'>Next: " + esc(data.suggested_next_step) + "</div>" : ""}
+                    <div class="hint">Pozostało reveals: ${data.reveals_remaining ?? "—"}</div>
+                </div>`);
+            if (data.reveals_remaining != null) lastRevealRemaining = data.reveals_remaining;
+        } else {
+            chat.insertAdjacentHTML("beforeend",
+                `<div class="msg system-red">Reveal HTTP ${res.status}: ${esc(JSON.stringify(data))}</div>`);
         }
-    </script>
+        await refreshStatus();
+        chat.scrollTop = chat.scrollHeight;
+    } catch (e) {
+        alert("Błąd reveal");
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function submitFeedback(msgId) {
+    const ratingVal = parseInt(document.getElementById(`rating-${msgId}`).value, 10);
+    const box = document.getElementById(`fb-box-${msgId}`);
+    box.innerHTML = `<span style="color:var(--ok);"><i>Wysyłanie…</i></span>`;
+    try {
+        await fetch(`${apiUrl}/conversations/${convId}/messages/${msgId}/feedback`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rating: ratingVal, comment: "Ocena z tester UI" }),
+        });
+        box.innerHTML = `<span style="color:var(--ok);"><strong>Oceniono na ${ratingVal}/5</strong></span>`;
+    } catch (e) {
+        box.innerHTML = `<span style="color:var(--danger);">Błąd opinii.</span>`;
+    }
+}
+
+function renderListBlock(title, items, formatter) {
+    if (!items || !items.length) return `<p><em>${esc(title)}: brak</em></p>`;
+    return `<p><strong>${esc(title)}</strong></p><ul class="compact">${items.map(formatter).join("")}</ul>`;
+}
+
+async function getSummary() {
+    if (!convId) {
+        alert("Brak aktywnej sesji");
+        return;
+    }
+    const sumBtn = document.getElementById("summary-btn");
+    sumBtn.disabled = true;
+    sumBtn.innerHTML = '<span class="spinner"></span> Generowanie raportu…';
+    try {
+        const res = await fetch(`${apiUrl}/conversations/${convId}/summary`, { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) {
+            alert("Błąd raportu: HTTP " + res.status);
+            sumBtn.disabled = false;
+            sumBtn.innerHTML = "Zakończ i pokaż raport";
+            return;
+        }
+        document.getElementById("mastery").textContent =
+            `Ocena opanowania: ${data.mastery_score ?? "—"}${data.mastery_score != null ? "/10" : ""}`;
+        document.getElementById("student-actions").textContent = data.student_actions || "Brak danych";
+        document.getElementById("agent-eval").textContent = data.agent_evaluation_of_student || "Brak danych";
+        document.getElementById("student-eval").textContent = data.student_evaluation_of_agent || "Brak danych";
+        document.getElementById("summary").textContent = data.professors_summary || data.summary || "Brak danych";
+
+        document.getElementById("goal-mastery").innerHTML = renderListBlock(
+            "goal_mastery",
+            data.goal_mastery || data.goal_progress,
+            (g) => `<li>${esc(g.goal || g)} — ${esc(g.status || "")} ${g.notes ? "(" + esc(g.notes) + ")" : ""}</li>`
+        );
+        document.getElementById("criteria-assessment").innerHTML = renderListBlock(
+            "criteria_assessment",
+            data.criteria_assessment || (data.evaluation_criteria || []).map((c) =>
+                typeof c === "string" ? { criterion: c } : c
+            ),
+            (c) => `<li>${esc(c.criterion || c)} ${c.score != null ? "→ " + esc(c.score) : ""} ${c.notes ? "(" + esc(c.notes) + ")" : ""}</li>`
+        );
+        const ru = data.reveal_usage || (data.reveal_count != null ? { reveal_count: data.reveal_count } : null);
+        document.getElementById("reveal-usage").innerHTML = ru
+            ? `<p><strong>reveal_usage</strong>: ${esc(JSON.stringify(ru))}</p>`
+            : `<p><em>reveal_usage: brak</em></p>`;
+        const ide = data.ide_events_structured || data.ide_events_detail || data.ide_events;
+        document.getElementById("ide-events-rich").innerHTML = ide
+            ? `<p><strong>IDE events</strong></p><pre class="mono" style="white-space:pre-wrap;">${esc(JSON.stringify(ide, null, 2))}</pre>`
+            : `<p><em>IDE events: brak</em></p>`;
+
+        openReportModal();
+        sumBtn.disabled = false;
+        sumBtn.innerHTML = "Zakończ i pokaż raport";
+    } catch (e) {
+        alert("Błąd podczas generowania podsumowania");
+        sumBtn.disabled = false;
+        sumBtn.innerHTML = "Zakończ i pokaż raport";
+    }
+}
+
+async function exportSession() {
+    if (!convId) {
+        alert("Brak aktywnej sesji");
+        return;
+    }
+    try {
+        const res = await fetch(`${apiUrl}/conversations/${convId}/export`);
+        const data = await res.json();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `sensei-export-${convId}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    } catch (e) {
+        alert("Export nieudany");
+    }
+}
+</script>
 </body>
 </html>

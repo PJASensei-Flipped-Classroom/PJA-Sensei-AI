@@ -1,18 +1,34 @@
-"""In-memory conversation aggregate."""
+"""In-memory conversation aggregate (Domain Model)."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 from app.domain.sensei import SenseiConfig
 
 FRUSTRATION_THRESHOLD = 4
 FRUSTRATION_STREAK = 3
+REVEAL_LOW_STREAK = 2
+
+GoalStatus = Literal["not_started", "in_progress", "done"]
+
+
+@dataclass(slots=True, frozen=True)
+class GoalProgress:
+    """Wartość opisująca stan realizacji celu dydaktycznego."""
+    goal: str
+    status: GoalStatus = "not_started"
+
+    def to_dict(self) -> dict[str, str]:
+        return {"goal": self.goal, "status": self.status}
 
 
 def consecutive_low_scores(
     scores: list[int], threshold: int = FRUSTRATION_THRESHOLD
 ) -> int:
+    """Zlicza, ile ostatnich ocen z rzędu było mniejszych bądź równych progowi."""
     count = 0
     for score in reversed(scores):
         if score <= threshold:
@@ -23,31 +39,30 @@ def consecutive_low_scores(
 
 
 def is_frustrated(scores: list[int]) -> bool:
-    return consecutive_low_scores(scores) >= FRUSTRATION_STREAK
+    """Określa, czy student wykazuje chroniczną frustrację / utknięcie."""
+    return consecutive_low_scores(scores, FRUSTRATION_THRESHOLD) >= FRUSTRATION_STREAK
 
 
-def recent_avg_score(scores: list[int]) -> float:
+def recent_avg_score(scores: list[int], window: int = 3) -> float:
+    """Wylicza średnią ocen z ostatniego okna zapytań."""
     if not scores:
         return 0.0
-    recent = scores[-3:]
+    recent = scores[-window:]
     return sum(recent) / len(recent)
 
 
-def consecutive_low_enough(
-    scores: list[int],
-    n: int = FRUSTRATION_STREAK,
-    threshold: int = FRUSTRATION_THRESHOLD,
-) -> bool:
-    if len(scores) < n:
-        return False
-    return all(s <= threshold for s in scores[-n:])
+def reveal_gate_open(scores: list[int], *, is_frustrated_now: bool) -> bool:
+    """Sprawdza, czy kryteria uprawniają studenta do odsłonięcia mocniejszej wskazówki."""
+    return is_frustrated_now or consecutive_low_scores(scores, FRUSTRATION_THRESHOLD) >= REVEAL_LOW_STREAK
 
 
-@dataclass
+@dataclass(slots=True)
 class Conversation:
+    """Agregat domenowy reprezentujący pełny stan sesji laboratoryjnej."""
+
     problem: str
     config: SenseiConfig
-    messages: list[dict] = field(default_factory=list)
+    messages: list[dict[str, Any]] = field(default_factory=list)
     prompt_scores: list[int] = field(default_factory=list)
     last_code: str = ""
     prelab_passed: bool = False
@@ -70,7 +85,7 @@ class Conversation:
     )
 
     def remember_identifiers(self, tokens: list[str], *, limit: int = 12) -> None:
-        """Keep student-stated code identifiers across compression."""
+        """Zapamiętuje kluczowe identyfikatory zmiennych nazwane przez studenta."""
         seen = {t.lower() for t in self.pinned_identifiers}
         for tok in tokens:
             key = tok.lower()
@@ -83,15 +98,19 @@ class Conversation:
 
     @property
     def is_frustrated(self) -> bool:
+        """Stan frustracji wyliczany na bieżąco z historii promptów."""
         return is_frustrated(self.prompt_scores)
 
     def touch(self) -> None:
+        """Odświeża znacznik czasu ostatniej aktywności."""
         self.last_active_at = datetime.now(timezone.utc)
 
     def ensure_goal_progress_defaults(self) -> None:
+        """Inicjalizuje stan celów dydaktycznych na podstawie konfiguracji zadania."""
         if self.goal_progress:
             return
+        goals = self.config.learning_context.goals or []
         self.goal_progress = [
-            {"goal": g, "status": "not_started"}
-            for g in (self.config.learningContext.goals or [])
+            GoalProgress(goal=g, status="not_started").to_dict()
+            for g in goals
         ]

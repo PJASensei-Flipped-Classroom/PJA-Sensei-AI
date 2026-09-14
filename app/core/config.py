@@ -5,10 +5,13 @@ from __future__ import annotations
 from datetime import timedelta
 from functools import lru_cache
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Konfiguracja runtime z zmiennych środowiskowych / pliku .env."""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -16,12 +19,24 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    openrouter_api_key: str | None = None
-    openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    main_model: str = "meta-llama/llama-3.3-70b-instruct"
-    security_model: str = "meta-llama/llama-3.1-8b-instruct"
+    # OpenAI-compatible endpoint (Ollama / LM Studio).
+    llm_base_url: str = Field(
+        default="http://127.0.0.1:11434/v1",
+        validation_alias=AliasChoices("LLM_BASE_URL", "BASE_URL"),
+    )
+    llm_api_key: str = Field(
+        default="ollama",
+        validation_alias=AliasChoices("LLM_API_KEY", "API_KEY"),
+    )
+    main_model: str = Field(
+        default="qwen2.5-coder:7b",
+        validation_alias=AliasChoices("MAIN_MODEL", "MODEL"),
+    )
+    security_model: str = "qwen2.5-coder:7b"
+    # Optional second model after provider 429 (usually empty for local Ollama).
+    main_model_fallback: str = ""
 
-    telemetry_url: str = "http://localhost:8080/api/ai/telemetry"
+    telemetry_url: str = ""
     summary_webhook_url: str | None = None
 
     cors_origins: str = (
@@ -55,15 +70,18 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Zwraca singleton Settings (cache'owany na czas życia procesu)."""
     return Settings()
 
 
+# Eksporty modułowe — wartości z chwili importu.
 _settings = get_settings()
 
-OPENROUTER_API_KEY = _settings.openrouter_api_key
-OPENROUTER_BASE_URL = _settings.openrouter_base_url
+LLM_BASE_URL = _settings.llm_base_url
+LLM_API_KEY = _settings.llm_api_key
 MAIN_MODEL = _settings.main_model
 SECURITY_MODEL = _settings.security_model
+MAIN_MODEL_FALLBACK = _settings.main_model_fallback
 TELEMETRY_URL = _settings.telemetry_url
 SUMMARY_WEBHOOK_URL = _settings.resolved_summary_webhook_url
 CORS_ORIGINS = _settings.cors_origin_list
@@ -76,3 +94,20 @@ CACHE_MAX_ENTRIES = _settings.cache_max_entries
 CONVERSATION_TTL = _settings.conversation_ttl
 MAX_CONVERSATIONS = _settings.max_conversations
 SECURITY_FAIL_CLOSED = _settings.security_fail_closed
+
+MAX_REVEALS_PER_SESSION = 3
+
+_PLACEHOLDER_API_KEYS = frozenset(
+    {
+        "",
+        "changeme",
+        "replace_me",
+    }
+)
+
+
+def llm_is_configured(api_key: str | None = None) -> bool:
+    """True when LLM API key is set (``ollama`` / ``lm-studio`` count as configured)."""
+    key = (LLM_API_KEY if api_key is None else api_key) or ""
+    key = key.strip()
+    return bool(key) and key not in _PLACEHOLDER_API_KEYS

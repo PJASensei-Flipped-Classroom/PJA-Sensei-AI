@@ -1,11 +1,15 @@
 openapi: "3.1.0"
 info:
   title: "PJA-Sensei AI Microservice"
-  version: "0.1.0"
+  description: "Sokratyczny asystent dydaktyczny dla laboratoriów programistycznych."
+  version: "1.0.0"
 paths:
   /:
     get:
-      summary: "Serve Tester"
+      tags:
+        - "ops"
+      summary: "Podgląd interfejsu testowego"
+      description: "Serwuje static/index.html — lokalny tester manualny API."
       operationId: "serve_tester__get"
       responses:
         200:
@@ -14,60 +18,75 @@ paths:
             application/json:
               schema:
 
+  /healthz:
+    get:
+      tags:
+        - "ops"
+      summary: "Sonda Liveness (Kubernetes/Orchestrator)"
+      description: "Tylko sprawdzenie, czy pętla zdarzeń procesu żyje."
+      operationId: "liveness_healthz_get"
+      responses:
+        200:
+          description: "Successful Response"
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: "string"
+                type: "object"
+                title: "Response Liveness Healthz Get"
   /health:
     get:
-      summary: "Health"
-      operationId: "health_health_get"
+      tags:
+        - "ops"
+      summary: "Sonda Readiness / Stan komponentów"
+      description: "Weryfikacja gotowości serwisu do przyjmowania ruchu."
+      operationId: "readiness_health_get"
       responses:
         200:
           description: "Successful Response"
           content:
             application/json:
               schema:
-
+                additionalProperties: true
+                type: "object"
+                title: "Response Readiness Health Get"
   /metrics:
     get:
-      summary: "Get Metrics"
+      tags:
+        - "ops"
+      summary: "Zrzut metryk JSON"
+      description: "Zwraca snapshot liczników procesu + rozmiar cache/sesji."
       operationId: "get_metrics_metrics_get"
-      parameters:
-        -
-          name: "format"
-          in: "query"
-          required: false
-          schema:
-            anyOf:
-              -
-                type: "string"
-              -
-                type: "null"
-            title: "Format"
       responses:
         200:
           description: "Successful Response"
           content:
             application/json:
               schema:
-
-        422:
-          description: "Validation Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPValidationError"
+                additionalProperties: true
+                type: "object"
+                title: "Response Get Metrics Metrics Get"
   /metrics/prometheus:
     get:
-      summary: "Get Metrics Prometheus"
+      tags:
+        - "ops"
+      summary: "Metryki w formacie Prometheus"
+      description: "Ekspozycja metryk w formacie text/plain Prometheus exposition."
       operationId: "get_metrics_prometheus_metrics_prometheus_get"
       responses:
         200:
           description: "Successful Response"
           content:
-            application/json:
+            text/plain:
               schema:
-
+                type: "string"
   /validate-config:
     post:
-      summary: "Validate Config"
+      tags:
+        - "config"
+      summary: "Walidacja konfiguracji Sensei"
+      description: "Waliduje SenseiConfig (Pydantic) oraz opcjonalnie JSON Schema z schemas/."
       operationId: "validate_config_validate_config_post"
       requestBody:
         content:
@@ -81,7 +100,7 @@ paths:
           content:
             application/json:
               schema:
-
+                $ref: "#/components/schemas/ConfigValidationResponse"
         422:
           description: "Validation Error"
           content:
@@ -92,24 +111,12 @@ paths:
         -
           HTTPBearer:
 
-  /analytics/correlations:
-    get:
-      summary: "Analytics Correlations"
-      operationId: "analytics_correlations_analytics_correlations_get"
-      responses:
-        200:
-          description: "Successful Response"
-          content:
-            application/json:
-              schema:
-
-      security:
-        -
-          HTTPBearer:
-
   /conversations:
     post:
-      summary: "Start Conversation"
+      tags:
+        - "conversations"
+      summary: "Rozpoczęcie nowej sesji konwersacyjnej"
+      description: "Tworzy sesję i w tle ładuje materiały RAG, jeśli podano referenceMaterials."
       operationId: "start_conversation_conversations_post"
       requestBody:
         content:
@@ -123,7 +130,7 @@ paths:
           content:
             application/json:
               schema:
-
+                $ref: "#/components/schemas/StartConversationResponse"
         422:
           description: "Validation Error"
           content:
@@ -136,7 +143,10 @@ paths:
 
   /conversations/{conversation_id}:
     get:
-      summary: "Get Conversation"
+      tags:
+        - "conversations"
+      summary: "Pobranie stanu sesji"
+      description: "Zwraca zagregowany stan sesji (scores, prelab, tokens, checkpointy)."
       operationId: "get_conversation_conversations__conversation_id__get"
       security:
         -
@@ -156,7 +166,9 @@ paths:
           content:
             application/json:
               schema:
-
+                type: "object"
+                additionalProperties: true
+                title: "Response Get Conversation Conversations  Conversation Id  Get"
         422:
           description: "Validation Error"
           content:
@@ -164,7 +176,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
     delete:
-      summary: "Delete Conversation"
+      tags:
+        - "conversations"
+      summary: "Usunięcie sesji i rozliczenie podsumowania"
+      description: "Soft-delete: generuje summary (jeśli możliwe) i czyści dane sesji/RAG."
       operationId: "delete_conversation_conversations__conversation_id__delete"
       security:
         -
@@ -184,70 +199,9 @@ paths:
           content:
             application/json:
               schema:
-
-        422:
-          description: "Validation Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPValidationError"
-  /conversations/{conversation_id}/messages:
-    get:
-      summary: "List Messages"
-      operationId: "list_messages_conversations__conversation_id__messages_get"
-      security:
-        -
-          HTTPBearer:
-
-      parameters:
-        -
-          name: "conversation_id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            title: "Conversation Id"
-      responses:
-        200:
-          description: "Successful Response"
-          content:
-            application/json:
-              schema:
-
-        422:
-          description: "Validation Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPValidationError"
-    post:
-      summary: "Send Message"
-      operationId: "send_message_conversations__conversation_id__messages_post"
-      security:
-        -
-          HTTPBearer:
-
-      parameters:
-        -
-          name: "conversation_id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            title: "Conversation Id"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MessageRequest"
-      responses:
-        200:
-          description: "Successful Response"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageResponse"
+                type: "object"
+                additionalProperties: true
+                title: "Response Delete Conversation Conversations  Conversation Id  Delete"
         422:
           description: "Validation Error"
           content:
@@ -256,7 +210,10 @@ paths:
                 $ref: "#/components/schemas/HTTPValidationError"
   /conversations/{conversation_id}/restrictions:
     get:
-      summary: "Get Restrictions"
+      tags:
+        - "conversations"
+      summary: "Pobranie ograniczeń edytora"
+      description: "Zwraca ideRestrictions skonfigurowane dla sesji."
       operationId: "get_restrictions_conversations__conversation_id__restrictions_get"
       security:
         -
@@ -276,7 +233,9 @@ paths:
           content:
             application/json:
               schema:
-
+                type: "object"
+                additionalProperties: true
+                title: "Response Get Restrictions Conversations  Conversation Id  Restrictions Get"
         422:
           description: "Validation Error"
           content:
@@ -285,7 +244,10 @@ paths:
                 $ref: "#/components/schemas/HTTPValidationError"
   /conversations/{conversation_id}/export:
     get:
-      summary: "Export Conversation"
+      tags:
+        - "conversations"
+      summary: "Eksport historii czatu"
+      description: "Eksportuje historię i metadane sesji do payloadu JSON."
       operationId: "export_conversation_conversations__conversation_id__export_get"
       security:
         -
@@ -305,7 +267,9 @@ paths:
           content:
             application/json:
               schema:
-
+                type: "object"
+                additionalProperties: true
+                title: "Response Export Conversation Conversations  Conversation Id  Export Get"
         422:
           description: "Validation Error"
           content:
@@ -314,7 +278,10 @@ paths:
                 $ref: "#/components/schemas/HTTPValidationError"
   /conversations/{conversation_id}/checkpoints:
     get:
-      summary: "Get Checkpoints"
+      tags:
+        - "conversations"
+      summary: "Pobranie kamieni milowych"
+      description: "Lista checkpointów z informacją o odblokowaniu."
       operationId: "get_checkpoints_conversations__conversation_id__checkpoints_get"
       security:
         -
@@ -334,71 +301,9 @@ paths:
           content:
             application/json:
               schema:
-
-        422:
-          description: "Validation Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPValidationError"
-  /conversations/{conversation_id}/goals/assess:
-    post:
-      summary: "Assess Goals"
-      operationId: "assess_goals_conversations__conversation_id__goals_assess_post"
-      security:
-        -
-          HTTPBearer:
-
-      parameters:
-        -
-          name: "conversation_id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            title: "Conversation Id"
-      responses:
-        200:
-          description: "Successful Response"
-          content:
-            application/json:
-              schema:
-
-        422:
-          description: "Validation Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPValidationError"
-  /conversations/{conversation_id}/review:
-    post:
-      summary: "Review Code"
-      operationId: "review_code_conversations__conversation_id__review_post"
-      security:
-        -
-          HTTPBearer:
-
-      parameters:
-        -
-          name: "conversation_id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            title: "Conversation Id"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReviewRequest"
-      responses:
-        200:
-          description: "Successful Response"
-          content:
-            application/json:
-              schema:
-
+                type: "object"
+                additionalProperties: true
+                title: "Response Get Checkpoints Conversations  Conversation Id  Checkpoints Get"
         422:
           description: "Validation Error"
           content:
@@ -407,7 +312,10 @@ paths:
                 $ref: "#/components/schemas/HTTPValidationError"
   /conversations/{conversation_id}/events:
     post:
-      summary: "Post Ide Event"
+      tags:
+        - "conversations"
+      summary: "Rejestracja zdarzenia z IDE"
+      description: "Zapisuje zdarzenie IDE (copy/paste/file) i opcjonalnie wysyła telemetrię."
       operationId: "post_ide_event_conversations__conversation_id__events_post"
       security:
         -
@@ -433,45 +341,20 @@ paths:
           content:
             application/json:
               schema:
-
+                $ref: "#/components/schemas/IdeEventResponse"
         422:
           description: "Validation Error"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
-  /conversations/{conversation_id}/prelab:
-    get:
-      summary: "Get Prelab"
-      operationId: "get_prelab_conversations__conversation_id__prelab_get"
-      security:
-        -
-          HTTPBearer:
-
-      parameters:
-        -
-          name: "conversation_id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            title: "Conversation Id"
-      responses:
-        200:
-          description: "Successful Response"
-          content:
-            application/json:
-              schema:
-
-        422:
-          description: "Validation Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPValidationError"
+  /conversations/{conversation_id}/hints/reveal:
     post:
-      summary: "Submit Prelab"
-      operationId: "submit_prelab_conversations__conversation_id__prelab_post"
+      tags:
+        - "conversations"
+      summary: "Odsłonięcie podpowiedzi"
+      description: "Mocniejsza podpowiedź po spełnieniu bramki frustracji / limitu reveal."
+      operationId: "reveal_hint_conversations__conversation_id__hints_reveal_post"
       security:
         -
           HTTPBearer:
@@ -489,24 +372,29 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PreLabSubmitRequest"
+              $ref: "#/components/schemas/RevealHintRequest"
       responses:
         200:
           description: "Successful Response"
           content:
             application/json:
               schema:
-
+                type: "object"
+                additionalProperties: true
+                title: "Response Reveal Hint Conversations  Conversation Id  Hints Reveal Post"
         422:
           description: "Validation Error"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
-  /conversations/{conversation_id}/prelab/generate:
+  /conversations/{conversation_id}/summary:
     post:
-      summary: "Generate Prelab"
-      operationId: "generate_prelab_conversations__conversation_id__prelab_generate_post"
+      tags:
+        - "conversations"
+      summary: "Generowanie podsumowania sesji"
+      description: "Generuje podsumowanie dydaktyczne i opcjonalnie wysyła je na webhook."
+      operationId: "get_summary_conversations__conversation_id__summary_post"
       security:
         -
           HTTPBearer:
@@ -525,6 +413,79 @@ paths:
           content:
             application/json:
               schema:
+                type: "object"
+                additionalProperties: true
+                title: "Response Get Summary Conversations  Conversation Id  Summary Post"
+        422:
+          description: "Validation Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+  /conversations/{conversation_id}/messages:
+    get:
+      tags:
+        - "messages"
+      summary: "Pobranie historii konwersacji"
+      description: "Zwraca historię wiadomości sesji (bez sekretów prelab)."
+      operationId: "list_messages_conversations__conversation_id__messages_get"
+      security:
+        -
+          HTTPBearer:
+
+      parameters:
+        -
+          name: "conversation_id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            title: "Conversation Id"
+      responses:
+        200:
+          description: "Successful Response"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                additionalProperties: true
+                title: "Response List Messages Conversations  Conversation Id  Messages Get"
+        422:
+          description: "Validation Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+    post:
+      tags:
+        - "messages"
+      summary: "Wysłanie wiadomości w trybie blokującym"
+      description: "Waliduje żądanie, wywołuje ChatService i emituje telemetrię w tle."
+      operationId: "send_message_conversations__conversation_id__messages_post"
+      security:
+        -
+          HTTPBearer:
+
+      parameters:
+        -
+          name: "conversation_id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            title: "Conversation Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageRequest"
+      responses:
+        200:
+          description: "Successful Response"
+          content:
+            application/json:
+              schema:
 
         422:
           description: "Validation Error"
@@ -534,7 +495,10 @@ paths:
                 $ref: "#/components/schemas/HTTPValidationError"
   /conversations/{conversation_id}/messages/stream:
     post:
-      summary: "Send Message Stream"
+      tags:
+        - "messages"
+      summary: "Wysłanie wiadomości w trybie strumieniowym (NDJSON)"
+      description: "Strumień NDJSON: tokeny live + final; telemetria po zdarzeniu final."
       operationId: "send_message_stream_conversations__conversation_id__messages_stream_post"
       security:
         -
@@ -567,80 +531,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
-  /conversations/{conversation_id}/messages/{message_id}/regenerate:
-    post:
-      summary: "Regenerate Message"
-      operationId: "regenerate_message_conversations__conversation_id__messages__message_id__regenerate_post"
-      security:
-        -
-          HTTPBearer:
-
-      parameters:
-        -
-          name: "conversation_id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            title: "Conversation Id"
-        -
-          name: "message_id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            title: "Message Id"
-      responses:
-        200:
-          description: "Successful Response"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageResponse"
-        422:
-          description: "Validation Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPValidationError"
-  /conversations/{conversation_id}/hints/reveal:
-    post:
-      summary: "Reveal Hint"
-      operationId: "reveal_hint_conversations__conversation_id__hints_reveal_post"
-      security:
-        -
-          HTTPBearer:
-
-      parameters:
-        -
-          name: "conversation_id"
-          in: "path"
-          required: true
-          schema:
-            type: "string"
-            title: "Conversation Id"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RevealHintRequest"
-      responses:
-        200:
-          description: "Successful Response"
-          content:
-            application/json:
-              schema:
-
-        422:
-          description: "Validation Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPValidationError"
   /conversations/{conversation_id}/messages/{message_id}/feedback:
     post:
-      summary: "Rate Message"
+      tags:
+        - "messages"
+      summary: "Zapis oceny studenta dla danej odpowiedzi"
+      description: "Zapisuje rating/komentarz studenta poprzez SessionService."
       operationId: "rate_message_conversations__conversation_id__messages__message_id__feedback_post"
       security:
         -
@@ -673,17 +569,20 @@ paths:
           content:
             application/json:
               schema:
-
+                $ref: "#/components/schemas/FeedbackResponse"
         422:
           description: "Validation Error"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
-  /conversations/{conversation_id}/summary:
-    post:
-      summary: "Get Summary"
-      operationId: "get_summary_conversations__conversation_id__summary_post"
+  /conversations/{conversation_id}/prelab:
+    get:
+      tags:
+        - "prelab"
+      summary: "Pobranie pytań quizu wstępnego (widok studenta)"
+      description: "Zwraca pytania bez klucza odpowiedzi; enabled=false gdy prelab wyłączony."
+      operationId: "get_prelab_conversations__conversation_id__prelab_get"
       security:
         -
           HTTPBearer:
@@ -702,7 +601,44 @@ paths:
           content:
             application/json:
               schema:
+                $ref: "#/components/schemas/PreLabPublicResponse"
+        422:
+          description: "Validation Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+    post:
+      tags:
+        - "prelab"
+      summary: "Przesłanie odpowiedzi do weryfikacji quizu wstępnego"
+      description: "Ocenia odpowiedzi i odblokowuje czat przy zaliczeniu / wyczerpaniu prób."
+      operationId: "submit_prelab_conversations__conversation_id__prelab_post"
+      security:
+        -
+          HTTPBearer:
 
+      parameters:
+        -
+          name: "conversation_id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            title: "Conversation Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreLabSubmitRequest"
+      responses:
+        200:
+          description: "Successful Response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreLabSubmitResponse"
         422:
           description: "Validation Error"
           content:
@@ -745,33 +681,37 @@ components:
       type: "object"
       required:
         - "persona"
-        - "strictRules"
       title: "AgentBehavior"
+      description: "Zachowanie agenta: tryb (theory/debug/review), model i reguły anty-kodowe."
     AgentPersona:
       properties:
         role:
           type: "string"
+          minLength: 1
           title: "Role"
         tone:
           type: "string"
+          minLength: 1
           title: "Tone"
       type: "object"
       required:
         - "role"
         - "tone"
       title: "AgentPersona"
+      description: "Persona mentora: rola i ton odpowiedzi."
     Checkpoint:
       properties:
         id:
           type: "string"
+          minLength: 1
           title: "Id"
-        after_goal:
+        afterGoal:
           anyOf:
             -
               type: "string"
             -
               type: "null"
-          title: "After Goal"
+          title: "Aftergoal"
         hint:
           anyOf:
             -
@@ -783,28 +723,30 @@ components:
       required:
         - "id"
       title: "Checkpoint"
+      description: "Punkt kontrolny odblokowywany po osiągnięciu wskazanego celu."
     CodeContext:
       properties:
-        current_file_name:
+        currentFileName:
           type: "string"
-          title: "Current File Name"
-        current_code:
+          minLength: 1
+          title: "Currentfilename"
+        currentCode:
           type: "string"
-          title: "Current Code"
-        error_logs:
+          title: "Currentcode"
+        errorLogs:
           anyOf:
             -
               type: "string"
             -
               type: "null"
-          title: "Error Logs"
-        workspace_root:
+          title: "Errorlogs"
+        workspaceRoot:
           anyOf:
             -
               type: "string"
             -
               type: "null"
-          title: "Workspace Root"
+          title: "Workspaceroot"
         selection:
           anyOf:
             -
@@ -816,24 +758,27 @@ components:
             $ref: "#/components/schemas/DiagnosticItem"
           type: "array"
           title: "Diagnostics"
-        open_files:
+        openFiles:
           items:
             $ref: "#/components/schemas/OpenFile"
           type: "array"
-          title: "Open Files"
+          title: "Openfiles"
       type: "object"
       required:
-        - "current_file_name"
-        - "current_code"
+        - "currentFileName"
+        - "currentCode"
       title: "CodeContext"
+      description: "Stan edytora przesyłany z klientem przy pytaniu do Sensei."
     CodeSelection:
       properties:
-        start_line:
+        startLine:
           type: "integer"
-          title: "Start Line"
-        end_line:
+          minimum: 1.0
+          title: "Startline"
+        endLine:
           type: "integer"
-          title: "End Line"
+          minimum: 1.0
+          title: "Endline"
         text:
           anyOf:
             -
@@ -843,26 +788,33 @@ components:
           title: "Text"
       type: "object"
       required:
-        - "start_line"
-        - "end_line"
+        - "startLine"
+        - "endLine"
       title: "CodeSelection"
-    DebugInfo:
+      description: "Zaznaczenie tekstu w edytorze (zakres linii + treść)."
+    ConfigValidationResponse:
       properties:
-        is_frustrated:
+        valid:
           type: "boolean"
-          title: "Is Frustrated"
-        avg_score:
-          type: "number"
-          title: "Avg Score"
-        code_changed:
-          type: "boolean"
-          title: "Code Changed"
+          title: "Valid"
+          description: "Czy konfiguracja spełnia wszystkie wymagania"
+        pydantic_errors:
+          items:
+            type: "string"
+          type: "array"
+          title: "Pydantic Errors"
+          description: "Błędy walidacji domenowej Pydantic"
+        schema_errors:
+          items:
+            type: "string"
+          type: "array"
+          title: "Schema Errors"
+          description: "Błędy zgodności z JSON Schema"
       type: "object"
       required:
-        - "is_frustrated"
-        - "avg_score"
-        - "code_changed"
-      title: "DebugInfo"
+        - "valid"
+      title: "ConfigValidationResponse"
+      description: "Sformalizowany model odpowiedzi walidacji konfiguracji."
     DiagnosticItem:
       properties:
         file:
@@ -883,11 +835,13 @@ components:
           default: "error"
         message:
           type: "string"
+          minLength: 1
           title: "Message"
         line:
           anyOf:
             -
               type: "integer"
+              minimum: 1.0
             -
               type: "null"
           title: "Line"
@@ -902,39 +856,47 @@ components:
       required:
         - "message"
       title: "DiagnosticItem"
+      description: "Diagnoza IDE (błąd/ostrzeżenie) dołączana do kontekstu kodu."
     FeedbackRequest:
       properties:
         rating:
           type: "integer"
+          maximum: 5.0
+          minimum: 1.0
           title: "Rating"
+          description: "Ocena trafności wskazówki w skali 1-5"
         comment:
           anyOf:
             -
               type: "string"
+              maxLength: 1000
             -
               type: "null"
           title: "Comment"
+          description: "Opcjonalny komentarz zwrotny studenta"
       type: "object"
       required:
         - "rating"
       title: "FeedbackRequest"
-    GoalProgressItem:
+      description: "Ocena jakości odpowiedzi asystenta przez studenta."
+    FeedbackResponse:
       properties:
-        goal:
-          type: "string"
-          title: "Goal"
         status:
           type: "string"
-          enum:
-            - "not_started"
-            - "in_progress"
-            - "done"
           title: "Status"
-          default: "not_started"
+          default: "recorded"
+        message_id:
+          type: "string"
+          title: "Message Id"
+        rating:
+          type: "integer"
+          title: "Rating"
       type: "object"
       required:
-        - "goal"
-      title: "GoalProgressItem"
+        - "message_id"
+        - "rating"
+      title: "FeedbackResponse"
+      description: "Potwierdzenie zapisania oceny studenta dla konkretnej wiadomości."
     HTTPValidationError:
       properties:
         detail:
@@ -953,14 +915,32 @@ components:
             - "file_opened"
             - "paste_attempt"
           title: "Type"
+          description: "Kategoria zdarzenia telemetrycznego z edytora"
         meta:
           additionalProperties: true
           type: "object"
           title: "Meta"
+          description: "Dodatkowy kontekst zdarzenia"
       type: "object"
       required:
         - "type"
       title: "IdeEventRequest"
+      description: "Zdarzenie telemetryczne z rozszerzenia IDE (copy/paste/file)."
+    IdeEventResponse:
+      properties:
+        status:
+          type: "string"
+          title: "Status"
+        event:
+          additionalProperties: true
+          type: "object"
+          title: "Event"
+      type: "object"
+      required:
+        - "status"
+        - "event"
+      title: "IdeEventResponse"
+      description: "Potwierdzenie przyjęcia zdarzenia telemetrycznego z edytora."
     IdeRestrictions:
       properties:
         requireFileContextForChat:
@@ -973,6 +953,7 @@ components:
           default: false
       type: "object"
       title: "IdeRestrictions"
+      description: "Ograniczenia IDE: wymóg pliku w czacie, blokada kopiowania z czatu."
     LearningContext:
       properties:
         goals:
@@ -986,17 +967,18 @@ components:
           type: "array"
           title: "Referencematerials"
       type: "object"
-      required:
-        - "goals"
-        - "referenceMaterials"
       title: "LearningContext"
+      description: "Cele dydaktyczne i lista materiałów powiązanych z zadaniem."
     MessageRequest:
       properties:
         question:
           type: "string"
+          minLength: 1
           title: "Question"
+          description: "Pytanie zadane asystentowi"
         code_context:
           $ref: "#/components/schemas/CodeContext"
+          description: "Stan edytora kodu w momencie wysłania pytania"
         client_message_id:
           anyOf:
             -
@@ -1004,77 +986,18 @@ components:
             -
               type: "null"
           title: "Client Message Id"
+          description: "Klucz idempotencji żądania"
       type: "object"
       required:
         - "question"
         - "code_context"
       title: "MessageRequest"
-    MessageResponse:
-      properties:
-        message_id:
-          type: "string"
-          title: "Message Id"
-        answer:
-          type: "string"
-          title: "Answer"
-        prompt_score:
-          type: "integer"
-          title: "Prompt Score"
-        prompt_feedback:
-          type: "string"
-          title: "Prompt Feedback"
-        tokens_used:
-          type: "integer"
-          title: "Tokens Used"
-        is_cached:
-          type: "boolean"
-          title: "Is Cached"
-          default: false
-        penalty_applied:
-          type: "boolean"
-          title: "Penalty Applied"
-          default: false
-        sources:
-          items:
-            $ref: "#/components/schemas/SourceRef"
-          type: "array"
-          title: "Sources"
-        suggested_next_step:
-          anyOf:
-            -
-              type: "string"
-            -
-              type: "null"
-          title: "Suggested Next Step"
-        goal_progress:
-          items:
-            $ref: "#/components/schemas/GoalProgressItem"
-          type: "array"
-          title: "Goal Progress"
-        debug_info:
-          anyOf:
-            -
-              $ref: "#/components/schemas/DebugInfo"
-            -
-              type: "null"
-        client_message_id:
-          anyOf:
-            -
-              type: "string"
-            -
-              type: "null"
-          title: "Client Message Id"
-      type: "object"
-      required:
-        - "answer"
-        - "prompt_score"
-        - "prompt_feedback"
-        - "tokens_used"
-      title: "MessageResponse"
+      description: "Payload wiadomości czatu: pytanie, kontekst edytora, opcjonalny klucz idempotencji."
     OpenFile:
       properties:
         path:
           type: "string"
+          minLength: 1
           title: "Path"
         content:
           type: "string"
@@ -1091,19 +1014,25 @@ components:
         - "path"
         - "content"
       title: "OpenFile"
+      description: "Dodatkowy otwarty plik w workspace (ścieżka + treść)."
     PreLabAnswerItem:
       properties:
         id:
           type: "string"
+          minLength: 1
           title: "Id"
+          description: "Identyfikator pytania quizowego"
         answer:
           type: "string"
+          minLength: 1
           title: "Answer"
+          description: "Odpowiedź zaznaczona/wpisana przez studenta"
       type: "object"
       required:
         - "id"
         - "answer"
       title: "PreLabAnswerItem"
+      description: "Jedna odpowiedź studenta na pytanie quizu pre-lab."
     PreLabConfig:
       properties:
         enabled:
@@ -1115,6 +1044,135 @@ components:
             $ref: "#/components/schemas/PreLabQuestion"
           type: "array"
           title: "Questions"
+        maxAttempts:
+          anyOf:
+            -
+              type: "integer"
+              minimum: 1.0
+            -
+              type: "null"
+          title: "Maxattempts"
+        hintAfterFail:
+          anyOf:
+            -
+              type: "string"
+            -
+              type: "null"
+          title: "Hintafterfail"
+      type: "object"
+      title: "PreLabConfig"
+      description: "Konfiguracja bramki pre-lab (włącz/wyłącz, limity prób, hint po porażce)."
+    PreLabPublicResponse:
+      properties:
+        enabled:
+          type: "boolean"
+          title: "Enabled"
+        passed:
+          type: "boolean"
+          title: "Passed"
+        questions:
+          items:
+            $ref: "#/components/schemas/PreLabQuestionDTO"
+          type: "array"
+          title: "Questions"
+      type: "object"
+      required:
+        - "enabled"
+        - "passed"
+      title: "PreLabPublicResponse"
+      description: "Stan prelab widoczny dla studenta przed/po zaliczeniu."
+    PreLabQuestion:
+      properties:
+        id:
+          type: "string"
+          minLength: 1
+          title: "Id"
+        prompt:
+          type: "string"
+          minLength: 1
+          title: "Prompt"
+        expectedKeywords:
+          items:
+            type: "string"
+          type: "array"
+          title: "Expectedkeywords"
+      type: "object"
+      required:
+        - "id"
+        - "prompt"
+      title: "PreLabQuestion"
+      description: "Pytanie quizu wstępnego z oczekiwanymi słowami kluczowymi."
+    PreLabQuestionDTO:
+      properties:
+        id:
+          type: "string"
+          title: "Id"
+        question:
+          type: "string"
+          title: "Question"
+        options:
+          items:
+            type: "string"
+          type: "array"
+          title: "Options"
+      type: "object"
+      required:
+        - "id"
+        - "question"
+      title: "PreLabQuestionDTO"
+      description: "Publiczna treść pytania quizowego (bez expected_keywords)."
+    PreLabSubmitRequest:
+      properties:
+        answers:
+          items:
+            $ref: "#/components/schemas/PreLabAnswerItem"
+          type: "array"
+          minItems: 1
+          title: "Answers"
+          description: "Komplet odpowiedzi do quizu"
+      type: "object"
+      required:
+        - "answers"
+      title: "PreLabSubmitRequest"
+      description: "Payload POST /prelab — lista odpowiedzi do ewaluacji."
+    PreLabSubmitResponse:
+      properties:
+        passed:
+          type: "boolean"
+          title: "Passed"
+        score:
+          type: "number"
+          title: "Score"
+        feedback:
+          anyOf:
+            -
+              type: "string"
+            -
+              type: "null"
+          title: "Feedback"
+        detail:
+          anyOf:
+            -
+              type: "string"
+            -
+              type: "null"
+          title: "Detail"
+        unlocked:
+          type: "boolean"
+          title: "Unlocked"
+          default: false
+        failed_ids:
+          items:
+            type: "string"
+          type: "array"
+          title: "Failed Ids"
+        attempts:
+          anyOf:
+            -
+              type: "integer"
+            -
+              type: "null"
+          title: "Attempts"
         max_attempts:
           anyOf:
             -
@@ -1130,36 +1188,11 @@ components:
               type: "null"
           title: "Hint After Fail"
       type: "object"
-      title: "PreLabConfig"
-    PreLabQuestion:
-      properties:
-        id:
-          type: "string"
-          title: "Id"
-        prompt:
-          type: "string"
-          title: "Prompt"
-        expected_keywords:
-          items:
-            type: "string"
-          type: "array"
-          title: "Expected Keywords"
-      type: "object"
       required:
-        - "id"
-        - "prompt"
-      title: "PreLabQuestion"
-    PreLabSubmitRequest:
-      properties:
-        answers:
-          items:
-            $ref: "#/components/schemas/PreLabAnswerItem"
-          type: "array"
-          title: "Answers"
-      type: "object"
-      required:
-        - "answers"
-      title: "PreLabSubmitRequest"
+        - "passed"
+        - "score"
+      title: "PreLabSubmitResponse"
+      description: "Wynik oceny odpowiedzi quizu wstępnego."
     ReferenceMaterial:
       properties:
         type:
@@ -1173,9 +1206,11 @@ components:
           default: "doc"
         title:
           type: "string"
+          minLength: 1
           title: "Title"
         url:
           type: "string"
+          minLength: 1
           title: "Url"
         timestamp:
           anyOf:
@@ -1188,6 +1223,7 @@ components:
           anyOf:
             -
               type: "integer"
+              minimum: 1.0
             -
               type: "null"
           title: "Page"
@@ -1196,6 +1232,7 @@ components:
         - "title"
         - "url"
       title: "ReferenceMaterial"
+      description: "Materiał referencyjny (doc/pdf/wideo) do RAG lub samego cytowania."
     RevealHintRequest:
       properties:
         code_context:
@@ -1204,6 +1241,7 @@ components:
               $ref: "#/components/schemas/CodeContext"
             -
               type: "null"
+          description: "Opcjonalny zrzut kodu przy prośbie o podpowiedź"
         focus:
           anyOf:
             -
@@ -1211,23 +1249,10 @@ components:
             -
               type: "null"
           title: "Focus"
+          description: "Obszar problemu wskazany przez studenta"
       type: "object"
       title: "RevealHintRequest"
-    ReviewRequest:
-      properties:
-        code_context:
-          $ref: "#/components/schemas/CodeContext"
-        focus:
-          anyOf:
-            -
-              type: "string"
-            -
-              type: "null"
-          title: "Focus"
-      type: "object"
-      required:
-        - "code_context"
-      title: "ReviewRequest"
+      description: "Żądanie mocniejszej podpowiedzi (reveal) po spełnieniu bramki frustracji."
     SenseiConfig:
       properties:
         learningContext:
@@ -1262,6 +1287,7 @@ components:
           anyOf:
             -
               type: "integer"
+              minimum: 1.0
             -
               type: "null"
           title: "Maxtokenspersession"
@@ -1275,55 +1301,58 @@ components:
         - "learningContext"
         - "agentBehavior"
       title: "SenseiConfig"
-    SourceRef:
+      description: "Główna konfiguracja sesji Sensei (camelCase aliasy dla klienta IDE)."
+    StartConversationResponse:
       properties:
-        title:
+        conversation_id:
           type: "string"
-          title: "Title"
-        url:
-          type: "string"
-          title: "Url"
-        timestamp:
+          title: "Conversation Id"
+        prelab_required:
+          type: "boolean"
+          title: "Prelab Required"
+        ide_restrictions:
           anyOf:
             -
-              type: "string"
+              additionalProperties: true
+              type: "object"
             -
               type: "null"
-          title: "Timestamp"
-        page:
-          anyOf:
-            -
-              type: "integer"
-            -
-              type: "null"
-          title: "Page"
+          title: "Ide Restrictions"
       type: "object"
       required:
-        - "title"
-        - "url"
-      title: "SourceRef"
+        - "conversation_id"
+        - "prelab_required"
+        - "ide_restrictions"
+      title: "StartConversationResponse"
+      description: "Odpowiedź po utworzeniu sesji: id, czy wymagany prelab, ograniczenia IDE."
     StartRequest:
       properties:
         problem_description:
           type: "string"
+          minLength: 1
           title: "Problem Description"
+          description: "Treść zadania laboratoryjnego"
         config:
           $ref: "#/components/schemas/SenseiConfig"
+          description: "Konfiguracja ograniczeń i zachowania asystenta"
       type: "object"
       required:
         - "problem_description"
         - "config"
       title: "StartRequest"
+      description: "Payload startu sesji: treść zadania + SenseiConfig."
     ValidateConfigRequest:
       properties:
         config:
           additionalProperties: true
           type: "object"
           title: "Config"
+          description: "Surowy słownik konfiguracji do walidacji ze schematem"
       type: "object"
       required:
         - "config"
       title: "ValidateConfigRequest"
+      description: "Surowy słownik konfiguracji do /validate-config (bez wymuszenia SenseiConfig)."
     ValidationError:
       properties:
         loc:

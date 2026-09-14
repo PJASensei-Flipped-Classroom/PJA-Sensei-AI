@@ -1,55 +1,79 @@
-import logging
+"""JWT Bearer authentication dependency."""
 
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
+from typing import Annotated
+
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import AI_AUTH_ENABLED, AI_JWT_ALGORITHM, AI_JWT_SECRET
 
 logger = logging.getLogger(__name__)
-_bearer = HTTPBearer(auto_error=False)
+
+_bearer_scheme = HTTPBearer(auto_error=False)
+
+
+@dataclass(frozen=True)
+class AuthUser:
+    """Kontekst uwierzytelnionego użytkownika."""
+    subject: str
+    is_authenticated: bool = True
 
 
 async def require_auth(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
-) -> str | None:
-    """Validate Bearer JWT when AI_AUTH_ENABLED. Returns subject or None if auth off."""
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer_scheme)],
+) -> AuthUser | None:
+    """Weryfikuje token Bearer JWT. Zwraca obiekt użytkownika lub None przy wyłączonym auth."""
     if not AI_AUTH_ENABLED:
         return None
 
     if not AI_JWT_SECRET:
-        logger.error("AI_AUTH_ENABLED but AI_JWT_SECRET is empty")
+        logger.critical("AI_AUTH_ENABLED jest aktywne, lecz AI_JWT_SECRET nie zostało skonfigurowane.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Auth misconfigured",
+            detail="Błąd konfiguracji serwera uwierzytelniania.",
         )
 
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing Bearer token",
+            detail="Wymagany nagłówek Authorization: Bearer ",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    token = credentials.credentials
     try:
-        import jwt
-
         payload = jwt.decode(
-            credentials.credentials,
+            token,
             AI_JWT_SECRET,
             algorithms=[AI_JWT_ALGORITHM],
+            options={"require": ["exp", "sub"]},
         )
-    except Exception as exc:
-        logger.warning("JWT validation failed: %s", exc)
+    except jwt.ExpiredSignatureError as exc:
+        logger.info("Próba użycia wygasłego tokenu JWT: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Token dostępowy wygasł.",
+            headers={"WWW-Authenticate": "Bearer error=\"invalid_token\", error_description=\"token expired\""},
+        ) from exc
+    except jwt.InvalidTokenError as exc:
+        logger.warning("Niepoprawny token JWT: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Nieprawidłowy token uwierzytelniający.",
+            headers={"WWW-Authenticate": "Bearer error=\"invalid_token\""},
         ) from exc
 
-    sub = payload.get("sub")
-    if not sub:
+    subject = payload.get("sub")
+    if not subject:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token missing sub claim",
+            detail="Token nie zawiera wymaganego identyfikatora podmiotu (sub).",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    return str(sub)
+
+    return AuthUser(subject=str(subject))

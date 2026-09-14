@@ -3,7 +3,7 @@ Unified test entrypoint for PJA-Sensei AI Module.
 
 Runs:
   1) Offline: pytest (tests/) + code-penalty unit checks
-  2) Live HTTP suite (S1–S24) when the API is up
+  2) Live HTTP suite (S1–S33) when the API is up
 
 Usage:
     .venv\\Scripts\\python.exe -m tests.live.test_all
@@ -11,6 +11,7 @@ Usage:
     python -m tests.live.test_all --offline-only
     python -m tests.live.test_all --require-live
     python -m tests.live.test_all --only 14,15,23,24
+    python -m tests.live.test_all --group roi,gates
 """
 
 from __future__ import annotations
@@ -68,7 +69,9 @@ _ensure_project_venv()
 import httpx
 
 from app.application.response_pipeline import contains_revealed_code
-from tests.live.test_memory import API_BASE, SCENARIOS, parse_only, run_suite
+from tests.live.helpers import API_BASE
+from tests.live.registry import SPECS, parse_groups, parse_only, select_scenarios
+from tests.live.test_scenarios import run_suite
 
 
 def resolve_pytest_python() -> str:
@@ -180,6 +183,7 @@ async def run_live_block(only: list[int], require_live: bool) -> list[BlockResul
             f"live:S{r.number}:{r.name}",
             r.passed,
             r.details,
+            skipped=r.skipped,
         )
         for r in scenario_results
     ]
@@ -190,7 +194,7 @@ async def run_live_block(only: list[int], require_live: bool) -> list[BlockResul
 
 def print_summary(blocks: list[BlockResult]) -> int:
     print("\n" + "=" * 60)
-    print(f"PODSUMOWANIE test_all (offline + live S1-S{max(SCENARIOS)})")
+    print(f"PODSUMOWANIE test_all (offline + live S1-S{max(SPECS)})")
     print("=" * 60)
     offline = [b for b in blocks if b.name.startswith(("unit:", "pytest:"))]
     live = [b for b in blocks if b.name.startswith("live:")]
@@ -239,7 +243,13 @@ def main() -> None:
         "--only",
         type=str,
         default=None,
-        help="Numery scenariuszy live, np. 14,15,16 (przekazywane do test_memory)",
+        help="Numery scenariuszy live, np. 14,15,16 (przekazywane do test_scenarios)",
+    )
+    parser.add_argument(
+        "--group",
+        type=str,
+        default=None,
+        help="Tagi scenariuszy live, np. roi,gates",
     )
     args = parser.parse_args()
 
@@ -248,8 +258,14 @@ def main() -> None:
     blocks.extend(run_offline_block())
 
     if not args.offline_only:
-        only = parse_only(args.only)
-        blocks.extend(asyncio.run(run_live_block(only, args.require_live)))
+        only = select_scenarios(parse_only(args.only), parse_groups(args.group))
+        if not only:
+            print("[FAIL] live — brak scenariuszy pasujących do --only/--group")
+            blocks.append(
+                BlockResult("live:suite", False, "empty --only/--group selection")
+            )
+        else:
+            blocks.extend(asyncio.run(run_live_block(only, args.require_live)))
     else:
         print("\n[SKIP] live suite — --offline-only")
         blocks.append(
