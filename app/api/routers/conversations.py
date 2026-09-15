@@ -1,15 +1,16 @@
-"""Conversation lifecycle and session contract routes."""
+"""Trasy API zarządzające cyklem życia sesji konwersacji i kontraktem edytora IDE."""
 
 from __future__ import annotations
 
 import logging
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends
 from pydantic import BaseModel
 
 from app.api.deps import get_container
 from app.api.middleware import request_id_var
+from app.api.routers.config_validate import assert_sensei_config_valid
 from app.api.schemas.requests import (
     IdeEventRequest,
     RevealHintRequest,
@@ -25,10 +26,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["conversations"])
 
 
-# --- Schematy odpowiedzi API ---
+# --- Schematy odpowiedzi DTO ---
 
 class StartConversationResponse(BaseModel):
-    """Odpowiedź po utworzeniu sesji: id, czy wymagany prelab, ograniczenia IDE."""
+    """Odpowiedź po zainicjalizowaniu sesji z informacjami wstępnymi dla IDE."""
 
     conversation_id: str
     prelab_required: bool
@@ -36,13 +37,23 @@ class StartConversationResponse(BaseModel):
 
 
 class IdeEventResponse(BaseModel):
-    """Potwierdzenie przyjęcia zdarzenia telemetrycznego z edytora."""
+    """Potwierdzenie odebrania i przetworzenia zdarzenia z edytora IDE."""
 
     status: str
     event: dict[str, Any]
 
 
-# --- Trasy ---
+# --- Narzędzia pomocnicze ---
+
+def _resolve_attr(target: Any, *candidates: str) -> Any | None:
+    """Pobiera pierwszy istniejący atrybut spośród kandydatów (obsługa snake_case vs camelCase)."""
+    for attr in candidates:
+        if (value := getattr(target, attr, None)) is not None:
+            return value
+    return None
+
+
+# --- Trasy i kontrolery ---
 
 @router.post(
     "/conversations",
@@ -54,19 +65,17 @@ async def start_conversation(
     background_tasks: BackgroundTasks,
     container: AppContainer = Depends(get_container),
 ) -> StartConversationResponse:
-    """Tworzy sesję i w tle ładuje materiały RAG, jeśli podano referenceMaterials."""
+    """Tworzy sesję konwersacyjną oraz asynchronicznie indeksuje materiały RAG w tle."""
     metrics.inc("requests_total")
+    assert_sensei_config_valid(request.config)
     conv_id = container.sessions.start_conversation(
-        request.problem_description, request.config
+        request.problem_description,
+        request.config,
     )
 
-    # Obsługa snake_case i camelCase z klienta IDE
-    learning_ctx = getattr(request.config, "learning_context", None) or getattr(
-        request.config, "learningContext", None
-    )
-    materials = getattr(learning_ctx, "reference_materials", None) or getattr(
-        learning_ctx, "referenceMaterials", None
-    )
+    # Elastyczne wyciąganie zagnieżdżonych struktur niezależnie od konwencji nazewnictwa
+    learning_ctx = _resolve_attr(request.config, "learning_context", "learningContext")
+    materials = _resolve_attr(learning_ctx, "reference_materials", "referenceMaterials")
 
     if materials:
         background_tasks.add_task(
@@ -75,17 +84,16 @@ async def start_conversation(
             materials,
         )
 
-    pre_lab = getattr(request.config, "pre_lab", None) or getattr(request.config, "preLab", None)
+    pre_lab = _resolve_attr(request.config, "pre_lab", "preLab")
     is_prelab_required = bool(pre_lab and getattr(pre_lab, "enabled", False))
 
-    ide_restrictions = getattr(request.config, "ide_restrictions", None) or getattr(
-        request.config, "ideRestrictions", None
-    )
+    restrictions = _resolve_attr(request.config, "ide_restrictions", "ideRestrictions")
+    serialized_restrictions = restrictions.model_dump() if restrictions else None
 
     return StartConversationResponse(
         conversation_id=conv_id,
         prelab_required=is_prelab_required,
-        ide_restrictions=ide_restrictions.model_dump() if ide_restrictions else None,
+        ide_restrictions=serialized_restrictions,
     )
 
 
@@ -94,7 +102,7 @@ async def get_conversation(
     conversation_id: str,
     container: AppContainer = Depends(get_container),
 ) -> dict[str, Any]:
-    """Zwraca zagregowany stan sesji (scores, prelab, tokens, checkpointy)."""
+    """Zwraca zagregowane metryki, stan modułu prelab oraz checkpointy sesji."""
     return container.sessions.get_session_state(conversation_id)
 
 
@@ -103,7 +111,7 @@ async def get_restrictions(
     conversation_id: str,
     container: AppContainer = Depends(get_container),
 ) -> dict[str, Any]:
-    """Zwraca ideRestrictions skonfigurowane dla sesji."""
+    """Zwraca zestaw zasad narzuconych na edytor (ideRestrictions)."""
     return container.sessions.get_restrictions(conversation_id)
 
 
@@ -112,7 +120,7 @@ async def export_conversation(
     conversation_id: str,
     container: AppContainer = Depends(get_container),
 ) -> dict[str, Any]:
-    """Eksportuje historię i metadane sesji do payloadu JSON."""
+    """Eksportuje kompletną historię dialogu i parametry dydaktyczne do JSON-a."""
     return container.sessions.export_conversation(conversation_id)
 
 
@@ -121,7 +129,7 @@ async def get_checkpoints(
     conversation_id: str,
     container: AppContainer = Depends(get_container),
 ) -> dict[str, Any]:
-    """Lista checkpointów z informacją o odblokowaniu."""
+    """Zwraca listę celów edukacyjnych wraz ze stanem ich ukończenia."""
     return container.sessions.get_checkpoints(conversation_id)
 
 
@@ -136,7 +144,7 @@ async def post_ide_event(
     background_tasks: BackgroundTasks,
     container: AppContainer = Depends(get_container),
 ) -> dict[str, Any]:
-    """Zapisuje zdarzenie IDE (copy/paste/file) i opcjonalnie wysyła telemetrię."""
+    """Rejestruje akcję studenta w edytorze i emituje telemetrię do zewnętrznej kolejki."""
     req_id = request_id_var.get("-")
     result = container.sessions.record_ide_event(conversation_id, payload)
 
@@ -158,10 +166,11 @@ async def delete_conversation(
     background_tasks: BackgroundTasks,
     container: AppContainer = Depends(get_container),
 ) -> dict[str, Any]:
-    """Soft-delete: generuje summary (jeśli możliwe) i czyści dane sesji/RAG."""
+    """Zamyka sesję, zwalnia wektory RAG i asynchronicznie przesyła podsumowanie na webhook."""
     req_id = request_id_var.get("-")
     result = await container.sessions.delete_conversation(
-        conversation_id, generate_summary_on_delete=True
+        conversation_id,
+        generate_summary_on_delete=True,
     )
 
     if summary := result.get("summary"):
@@ -185,9 +194,7 @@ async def reveal_hint(
     payload: RevealHintRequest,
     container: AppContainer = Depends(get_container),
 ) -> dict[str, Any]:
-    """Mocniejsza podpowiedź po spełnieniu bramki frustracji / limitu reveal."""
-    # Wyjątki domenowe (UnknownConversation, PrelabRequired, RevealNotAllowed) 
-    # są mapowane automatycznie przez globalny ExceptionHandler FastAPI
+    """Weryfikuje reguły frustracji studenta i odblokowuje bezpośrednią podpowiedź techniczną."""
     return await container.chat.reveal_hint(conversation_id, payload)
 
 
@@ -197,16 +204,15 @@ async def get_summary(
     background_tasks: BackgroundTasks,
     container: AppContainer = Depends(get_container),
 ) -> dict[str, Any]:
-    """Generuje podsumowanie dydaktyczne i opcjonalnie wysyła je na webhook."""
+    """Generuje raport dydaktyczny z sesji i przekazuje go do systemu telemetrii."""
     req_id = request_id_var.get("-")
     summary = await container.summary.generate_summary(conversation_id)
     conversation = container.sessions.get_conversation_or_404(conversation_id)
 
-    scores = conversation.prompt_scores
     feedbacks = [
-        m["student_feedback"]
-        for m in conversation.messages
-        if m.get("role") == "assistant" and "student_feedback" in m
+        msg["student_feedback"]
+        for msg in conversation.messages
+        if msg.get("role") == "assistant" and "student_feedback" in msg
     ]
 
     background_tasks.add_task(
@@ -215,7 +221,7 @@ async def get_summary(
             "event": "session_summary",
             "conversation_id": conversation_id,
             "summary": summary,
-            "scores": scores,
+            "scores": conversation.prompt_scores,
             "feedbacks": feedbacks,
         },
         url=SUMMARY_WEBHOOK_URL,

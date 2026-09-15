@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     ai_jwt_algorithm: str = "HS256"
 
     rate_limit_per_minute: int = 30
+    # Gdy False (domyślnie lokalnie), X-Forwarded-For jest ignorowane — bez spoofingu limitu.
+    trust_x_forwarded_for: bool = False
     cache_ttl_seconds: int = 30 * 60
     cache_max_entries: int = 500
     conversation_ttl_seconds: int = 2 * 3600
@@ -89,6 +91,7 @@ AI_AUTH_ENABLED = _settings.ai_auth_enabled
 AI_JWT_SECRET = _settings.ai_jwt_secret
 AI_JWT_ALGORITHM = _settings.ai_jwt_algorithm
 RATE_LIMIT_PER_MINUTE = _settings.rate_limit_per_minute
+TRUST_X_FORWARDED_FOR = _settings.trust_x_forwarded_for
 CACHE_TTL_SECONDS = _settings.cache_ttl_seconds
 CACHE_MAX_ENTRIES = _settings.cache_max_entries
 CONVERSATION_TTL = _settings.conversation_ttl

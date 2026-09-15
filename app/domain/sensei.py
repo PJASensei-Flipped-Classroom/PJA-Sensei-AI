@@ -31,7 +31,7 @@ class ReferenceMaterial(DomainModel):
 class LearningContext(DomainModel):
     """Cele dydaktyczne i lista materiałów powiązanych z zadaniem."""
 
-    goals: list[str] = Field(default_factory=list)
+    goals: list[str] = Field(..., min_length=1)
     reference_materials: list[ReferenceMaterial] = Field(default_factory=list)
 
 

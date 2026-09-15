@@ -25,11 +25,11 @@ Szczegóły, tagi live i edge case’y: [docs/TESTING.md](docs/TESTING.md).
 
 | Polecenie | Co robi |
 |-----------|---------|
-| `python -m pytest -q` | Offline ASGI + unit (bez żywego LLM; `tests/live` wykluczone przez `pytest.ini`) |
+| `python -m pytest -q` | Offline: warstwy happy / struggle / cheat / edges |
 | `python -m tests.live.test_all --offline-only` | Orchestrator tylko offline |
-| `python -m tests.live.test_all` | Offline, potem live S1–S33 jeśli API na `:8000` |
-| `python -m tests.live.test_scenarios --only 6,22` | Wybrane numery live |
-| `python -m tests.live.test_scenarios --group student,gates` | Live wg tagów |
+| `python -m tests.live.test_all` | Offline, potem live S1–S9 jeśli API na `:8000` |
+| `python -m tests.live.test_scenarios --only 1,4` | Wybrane numery live |
+| `python -m tests.live.test_scenarios --group happy,cheat` | Live wg warstw |
 
 Live wymaga działającego `uvicorn` + lokalnego Ollama (lub innego endpointu z `.env`).
 

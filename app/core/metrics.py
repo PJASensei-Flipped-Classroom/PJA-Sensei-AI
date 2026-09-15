@@ -18,6 +18,7 @@ _ALLOWED_COUNTERS: Final[frozenset[str]] = frozenset({
     "rate_limited",
     "llm_errors",
     "llm_rate_limited",
+    "language_drift_retry",
 })
 
 
@@ -34,6 +35,7 @@ class MetricsCollector:
     rate_limited: int = 0
     llm_errors: int = 0
     llm_rate_limited: int = 0
+    language_drift_retry: int = 0
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def inc(self, name: str, amount: int = 1) -> None:
@@ -65,6 +67,7 @@ class MetricsCollector:
                 "rate_limited": self.rate_limited,
                 "llm_errors": self.llm_errors,
                 "llm_rate_limited": self.llm_rate_limited,
+                "language_drift_retry": self.language_drift_retry,
             }
 
     def prometheus_text(self, extra: dict[str, Any] | None = None) -> str:
@@ -83,6 +86,7 @@ class MetricsCollector:
             ("rate_limited", "rate_limited_total", "counter", "Rate-limit rejections"),
             ("llm_errors", "llm_errors_total", "counter", "LLM call failures"),
             ("llm_rate_limited", "llm_rate_limited_total", "counter", "LLM provider 429 after retry/fallback"),
+            ("language_drift_retry", "language_drift_retry_total", "counter", "LLM retries after Cyrillic/language drift"),
             ("conversations", "conversations", "gauge", "Active in-memory conversations"),
             ("cache_size", "cache_size", "gauge", "Exact-match cache entries"),
         )

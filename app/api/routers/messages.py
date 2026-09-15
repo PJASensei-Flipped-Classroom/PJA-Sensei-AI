@@ -1,15 +1,15 @@
-"""Chat message routes (sync, stream, feedback)."""
+"""Trasy obsługi wiadomości czatu (tryb synchroniczny, strumieniowy NDJSON oraz feedback)."""
 
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
 import json
 import logging
-import uuid
-from collections.abc import AsyncIterator
 from typing import Any
+import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -26,15 +26,15 @@ router = APIRouter(tags=["messages"])
 
 
 class FeedbackResponse(BaseModel):
-    """Potwierdzenie zapisania oceny studenta dla konkretnej wiadomości."""
+    """Potwierdzenie zarejestrowania oceny studenta dla konkretnej wypowiedzi."""
 
-    status: str = Field(default="recorded")
-    message_id: str
-    rating: int
+    status: str = Field(default="recorded", description="Status operacji zapisu")
+    message_id: str = Field(..., description="Identyfikator ocenionej wiadomości")
+    rating: int = Field(..., description="Wartość liczbowa oceny")
 
 
-def _message_telemetry_payload(conversation_id: str, result: dict[str, Any]) -> dict[str, Any]:
-    """Buduje payload webhooka telemetrycznego po zakończeniu tury czatu."""
+def _build_telemetry_payload(conversation_id: str, result: dict[str, Any]) -> dict[str, Any]:
+    """Buduje ujednolicony słownik ze statystykami tury czatu na potrzeby telemetrii."""
     return {
         "event": "message",
         "conversation_id": conversation_id,
@@ -47,32 +47,34 @@ def _message_telemetry_payload(conversation_id: str, result: dict[str, Any]) -> 
 
 
 async def _stream_with_telemetry(
-    lines: AsyncIterator[str | bytes],
+    stream_generator: AsyncIterator[str | bytes],
     conversation_id: str,
     request_id: str,
 ) -> AsyncIterator[str | bytes]:
-    """Forward NDJSON lines and emit telemetry on the final event."""
-    final_event_sent = False
+    """Przekazuje linie NDJSON do klienta i wysyła telemetrię po dotarciu do zdarzenia 'final'."""
+    is_completed = False
     try:
-        async for line in lines:
-            yield line
+        async for chunk in stream_generator:
+            yield chunk
+
             try:
-                raw_text = line if isinstance(line, str) else line.decode("utf-8")
-                evt = json.loads(raw_text)
-                if evt.get("type") == "final":
-                    final_event_sent = True
-                    await send_request_telemetry(
-                        _message_telemetry_payload(conversation_id, evt),
-                        request_id=request_id,
-                    )
+                raw_text = chunk if isinstance(chunk, str) else chunk.decode("utf-8")
+                event_data = json.loads(raw_text)
+
+                if event_data.get("type") == "final":
+                    is_completed = True
+                    payload = _build_telemetry_payload(conversation_id, event_data)
+                    await send_request_telemetry(payload, request_id=request_id)
             except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
+                # Pomijamy fragmenty niebędące pełnymi obiektami JSON
                 continue
+
     except asyncio.CancelledError:
-        logger.info("Client cancelled stream [request_id=%s]", request_id)
+        logger.info("Klient zerwał połączenie strumieniowe [request_id=%s]", request_id)
         raise
     finally:
-        if not final_event_sent:
-            logger.debug("Stream ended without final [request_id=%s]", request_id)
+        if not is_completed:
+            logger.debug("Strumień zakończony bez zdarzenia finalnego [request_id=%s]", request_id)
 
 
 @router.get(
@@ -83,7 +85,7 @@ async def list_messages(
     conversation_id: str,
     container: AppContainer = Depends(get_container),
 ) -> dict[str, Any]:
-    """Zwraca historię wiadomości sesji (bez sekretów prelab)."""
+    """Zwraca dotychczasowy przebieg dialogu w sesji z pominięciem pól poufnych prelabu."""
     return container.sessions.get_message_history(conversation_id)
 
 
@@ -96,23 +98,21 @@ async def send_message(
     conversation_id: str,
     request: MessageRequest,
     background_tasks: BackgroundTasks,
-    http_request: Request,
     container: AppContainer = Depends(get_container),
 ) -> MessageResponse | JSONResponse:
-    """Waliduje żądanie, wywołuje ChatService i emituje telemetrię w tle."""
-    _, early = await validate_message_request(
-        conversation_id, request, http_request, background_tasks, container
+    """Waliduje stan sesji, generuje kompletną odpowiedź i emituje telemetrię w tle."""
+    _, early_response = await validate_message_request(
+        conversation_id, request, background_tasks, container
     )
-    if early is not None:
-        return early
+    if early_response is not None:
+        return early_response
 
     req_id = request_id_var.get("-")
     result = await container.chat.send_message(conversation_id, request)
 
     background_tasks.add_task(
         send_request_telemetry,
-        _message_telemetry_payload(conversation_id, result),
-        None,
+        _build_telemetry_payload(conversation_id, result),
         request_id=req_id,
     )
     return MessageResponse(**result)
@@ -127,29 +127,29 @@ async def send_message_stream(
     conversation_id: str,
     request: MessageRequest,
     background_tasks: BackgroundTasks,
-    http_request: Request,
     container: AppContainer = Depends(get_container),
 ) -> StreamingResponse | JSONResponse:
-    """Strumień NDJSON: tokeny live + final; telemetria po zdarzeniu final."""
-    _, early = await validate_message_request(
-        conversation_id, request, http_request, background_tasks, container
+    """Zwraca strumień tokenów NDJSON na żywo, a po evencie 'final' emituje telemetrię."""
+    _, early_response = await validate_message_request(
+        conversation_id, request, background_tasks, container
     )
-    if early is not None:
-        return early
+    if early_response is not None:
+        return early_response
 
-    msg_id = str(uuid.uuid4())
+    message_id = str(uuid.uuid4())
     req_id = request_id_var.get("-")
+    stream_generator = container.stream.stream_message(conversation_id, request, message_id)
 
-    generator = container.stream.stream_message(conversation_id, request, msg_id)
+    response_headers = {
+        "X-Message-Id": message_id,
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",  # Wyłącza buforowanie w Nginx dla płynnego streamingu
+    }
 
     return StreamingResponse(
-        _stream_with_telemetry(generator, conversation_id, req_id),
+        _stream_with_telemetry(stream_generator, conversation_id, req_id),
         media_type="application/x-ndjson",
-        headers={
-            "X-Message-Id": msg_id,
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-        },
+        headers=response_headers,
     )
 
 
@@ -165,7 +165,7 @@ async def rate_message(
     feedback: FeedbackRequest,
     container: AppContainer = Depends(get_container),
 ) -> FeedbackResponse:
-    """Zapisuje rating/komentarz studenta poprzez SessionService."""
+    """Zapisuje ocenę punktową i opcjonalny komentarz dydaktyczny studenta."""
     container.sessions.record_message_feedback(
         conversation_id,
         message_id,

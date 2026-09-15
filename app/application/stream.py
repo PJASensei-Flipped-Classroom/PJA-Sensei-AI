@@ -196,7 +196,7 @@ class StreamService:
             else:
                 metrics.inc("llm_errors")
                 logger.error("Błąd strumieniowania LLM dla sesji %s: %s", conversation_id, exc)
-                fallback = llm_error_fallback(message_id, lang)
+                fallback = llm_error_fallback(message_id, lang, exc=exc)
             conversation.messages.append(
                 {
                     "role": "assistant",

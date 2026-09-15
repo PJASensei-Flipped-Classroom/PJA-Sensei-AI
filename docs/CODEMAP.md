@@ -15,7 +15,7 @@ Warstwy: [ARCHITECTURE.md](ARCHITECTURE.md). API: [API.md](API.md). Testy: [TEST
 | `static/` | Lokalny tester UI (Wykładowca / Student + Ops) |
 | `scripts/` | `python -m scripts.export_openapi` |
 | `schemas/` | SenseiConfig JSON Schema + snapshot OpenAPI |
-| `tests/` | Offline pytest; `tests/live/` S1–S33 |
+| `tests/` | Offline: happy/struggle/cheat/edges; `tests/live/` S1–S9 |
 
 ### Ważne rozróżnienia
 

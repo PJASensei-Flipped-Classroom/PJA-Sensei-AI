@@ -1,1 +1,1 @@
-"""Live scenario implementations grouped by concern."""
+"""Live narrative scenario modules."""

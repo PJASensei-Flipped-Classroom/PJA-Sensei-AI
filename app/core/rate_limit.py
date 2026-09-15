@@ -10,10 +10,11 @@ from dataclasses import dataclass
 
 from fastapi import HTTPException, Request, status
 
-from app.core.config import RATE_LIMIT_PER_MINUTE
+from app.core.config import RATE_LIMIT_PER_MINUTE, TRUST_X_FORWARDED_FOR
 from app.core.metrics import metrics
 
 WINDOW_SECONDS = 60.0
+_CLEANUP_INTERVAL_SECONDS = 120.0
 
 
 @dataclass(frozen=True)
@@ -65,6 +66,32 @@ class SlidingWindowRateLimiter:
 
 
 rate_limiter = SlidingWindowRateLimiter()
+_cleanup_stop = threading.Event()
+_cleanup_thread: threading.Thread | None = None
+
+
+def _cleanup_loop() -> None:
+    while not _cleanup_stop.wait(_CLEANUP_INTERVAL_SECONDS):
+        rate_limiter.cleanup_stale_buckets()
+
+
+def start_rate_limit_cleanup() -> None:
+    """Uruchamia okresowe czyszczenie koszyków (idempotentne)."""
+    global _cleanup_thread
+    if _cleanup_thread is not None and _cleanup_thread.is_alive():
+        return
+    _cleanup_stop.clear()
+    _cleanup_thread = threading.Thread(
+        target=_cleanup_loop,
+        name="rate-limit-cleanup",
+        daemon=True,
+    )
+    _cleanup_thread.start()
+
+
+def stop_rate_limit_cleanup() -> None:
+    """Zatrzymuje wątek czyszczący (np. przy shutdown TestClient)."""
+    _cleanup_stop.set()
 
 
 def resolve_client_key(request: Request, conversation_id: str | None = None) -> str:
@@ -72,11 +99,11 @@ def resolve_client_key(request: Request, conversation_id: str | None = None) -> 
     if conversation_id:
         return f"conv:{conversation_id}"
 
-    # W środowisku za zaufanym reverse-proxy bierzemy pierwszy publiczny adres
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        client_ip = forwarded.split(",")[0].strip()
-        return f"ip:{client_ip}"
+    if TRUST_X_FORWARDED_FOR:
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            client_ip = forwarded.split(",")[0].strip()
+            return f"ip:{client_ip}"
 
     client_ip = request.client.host if request.client else "unknown"
     return f"ip:{client_ip}"

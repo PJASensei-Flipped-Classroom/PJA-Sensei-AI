@@ -1,10 +1,8 @@
-"""Pre-lab quiz routes."""
+"""Trasy obsługi quizu wstępnego (pre-lab quiz) przed dopuszczeniem do konwersacji."""
 
 from __future__ import annotations
 
-from typing import Any
-
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from app.api.deps import get_container
@@ -17,36 +15,36 @@ router = APIRouter(tags=["prelab"])
 # --- Schematy DTO odpowiedzi ---
 
 class PreLabQuestionDTO(BaseModel):
-    """Publiczna treść pytania quizowego (bez expected_keywords)."""
+    """Pojedyncze pytanie quizowe z perspektywy studenta (bez poprawnych odpowiedzi)."""
 
-    id: str
-    question: str
-    options: list[str] = Field(default_factory=list)
+    id: str = Field(..., description="Unikalny identyfikator pytania")
+    question: str = Field(..., description="Treść pytania")
+    options: list[str] = Field(default_factory=list, description="Lista wariantów do wyboru w pytaniach zamkniętych")
 
 
 class PreLabPublicResponse(BaseModel):
-    """Stan prelab widoczny dla studenta przed/po zaliczeniu."""
+    """Stan modułu pre-lab oraz zestaw pytań udostępniany interfejsowi studenta."""
 
-    enabled: bool
-    passed: bool
-    questions: list[PreLabQuestionDTO] = Field(default_factory=list)
+    enabled: bool = Field(..., description="Czy pre-lab jest aktywny w bieżącej sesji")
+    passed: bool = Field(..., description="Czy student zaliczył już quiz")
+    questions: list[PreLabQuestionDTO] = Field(default_factory=list, description="Lista pytań quizowych")
 
 
 class PreLabSubmitResponse(BaseModel):
-    """Wynik oceny odpowiedzi quizu wstępnego."""
+    """Szczegółowy wynik weryfikacji nadesłanych odpowiedzi quizu wstępnego."""
 
-    passed: bool
-    score: float
-    feedback: str | None = None
-    detail: str | None = None
-    unlocked: bool = False
-    failed_ids: list[str] = Field(default_factory=list)
-    attempts: int | None = None
-    max_attempts: int | None = None
-    hint_after_fail: str | None = None
+    passed: bool = Field(..., description="Czy nadesłane odpowiedzi spełniły próg zaliczenia")
+    score: float = Field(..., description="Uzyskany wynik punktowy lub procentowy")
+    unlocked: bool = Field(default=False, description="Czy główny czat został odblokowany do dyskusji")
+    feedback: str | None = Field(default=None, description="Ogólna informacja zwrotna dla studenta")
+    detail: str | None = Field(default=None, description="Dodatkowe wyjaśnienia lub opis błędu")
+    failed_ids: list[str] = Field(default_factory=list, description="Lista identyfikatorów pytań, na które odpowiedziano błędnie")
+    attempts: int | None = Field(default=None, description="Bieżąca liczba wykorzystanych podejść")
+    max_attempts: int | None = Field(default=None, description="Maksymalna dopuszczalna liczba podejść")
+    hint_after_fail: str | None = Field(default=None, description="Podpowiedź dydaktyczna wyświetlana po nieudanym podejściu")
 
 
-# --- Trasy ---
+# --- Trasy i kontrolery ---
 
 @router.get(
     "/conversations/{conversation_id}/prelab",
@@ -56,21 +54,20 @@ class PreLabSubmitResponse(BaseModel):
 async def get_prelab(
     conversation_id: str,
     container: AppContainer = Depends(get_container),
-) -> Any:
-    """Zwraca pytania bez klucza odpowiedzi; enabled=false gdy prelab wyłączony."""
+) -> PreLabPublicResponse:
+    """Zwraca stan pre-labu i pytania bez pól wrażliwych (kluczy odpowiedzi i oczekiwanych słów kluczowych)."""
     return container.prelab.get_prelab_public(conversation_id)
 
 
 @router.post(
     "/conversations/{conversation_id}/prelab",
     response_model=PreLabSubmitResponse,
-    status_code=status.HTTP_200_OK,
     summary="Przesłanie odpowiedzi do weryfikacji quizu wstępnego",
 )
 async def submit_prelab(
     conversation_id: str,
     payload: PreLabSubmitRequest,
     container: AppContainer = Depends(get_container),
-) -> Any:
-    """Ocenia odpowiedzi i odblokowuje czat przy zaliczeniu / wyczerpaniu prób."""
+) -> PreLabSubmitResponse:
+    """Ocenia nadesłane odpowiedzi, zlicza próby i odblokowuje dostęp do asystenta po zaliczeniu."""
     return container.prelab.submit_prelab(conversation_id, payload)

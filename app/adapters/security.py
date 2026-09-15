@@ -1,4 +1,4 @@
-"""Jailbreak / prompt-injection gate with layered defense and low-latency heuristics."""
+"""Wielowarstwowy strażnik bezpieczeństwa promptów (heurystyki regex + klasyfikator LLM)."""
 
 from __future__ import annotations
 
@@ -18,8 +18,8 @@ from app.core.config import (
 
 logger = logging.getLogger(__name__)
 
-# Skompilowane wyrażenie dla twardych blokad (szybka ewaluacja jednym przebiegiem)
-_FORBIDDEN_RE = re.compile(
+# Twarda blokada typowych ataków prompt injection
+_FORBIDDEN_PATTERNS = re.compile(
     r"(?:"
     r"zignoruj\s+(poprzednie|wszystkie|instrukcje|polecenia)|"
     r"ignore\s+(all\s+)?(previous\s+)?instructions|"
@@ -32,7 +32,8 @@ _FORBIDDEN_RE = re.compile(
     re.IGNORECASE,
 )
 
-_LAB_ALLOWLIST_RE = re.compile(
+# Bezpieczne frazy typowe dla laboratoriów i zadań z programowania
+_BENIGN_CONTEXT_PATTERNS = re.compile(
     r"(?:"
     r"zapami[eę]taj|"
     r"\bremember\b|"
@@ -46,7 +47,8 @@ _LAB_ALLOWLIST_RE = re.compile(
     re.IGNORECASE,
 )
 
-_JAILBREAK_SIGNAL_RE = re.compile(
+# Podejrzane sygnały sprawdzane, gdy model zwróci werdykt DANGER
+_SUSPICIOUS_SIGNALS = re.compile(
     r"(?:"
     r"zignoruj|"
     r"ignore\s+.{0,40}instruction|"
@@ -72,17 +74,23 @@ _SECURITY_SYSTEM_PROMPT = (
 
 
 class SecurityService:
-    """Wielowarstwowy strażnik bezpieczeństwa promptów (Regex -> Allowlist -> LLM)."""
+    """Wielowarstwowa ochrona przed jailbreakiem: Regex -> Reguły kontekstowe -> Klasyfikator LLM."""
 
     def __init__(self, client: AsyncOpenAI | None = None) -> None:
-        self.client = client or AsyncOpenAI(
+        self._owns_client = client is None
+        self._client = client or AsyncOpenAI(
             base_url=LLM_BASE_URL,
             api_key=LLM_API_KEY,
             timeout=120.0,
         )
 
+    @property
+    def client(self) -> AsyncOpenAI:
+        """Publiczny dostęp do klienta HTTP (testy / monkeypatch)."""
+        return self._client
+
     def injection_blocked_response(self, language: str = "pl") -> dict[str, Any]:
-        """Zwraca spójną odpowiedź blokującą próbę wstrzyknięcia promptu."""
+        """Formułuje standardową odpowiedź blokującą wykrytą próbę ataku."""
         is_en = language == "en"
         return {
             "answer": (
@@ -108,45 +116,56 @@ class SecurityService:
         }
 
     @staticmethod
-    def matches_forbidden(user_input: str) -> bool:
-        return bool(_FORBIDDEN_RE.search(user_input))
+    def matches_forbidden(text: str) -> bool:
+        """Weryfikuje, czy tekst zawiera ewidentne frazy jailbreakowe."""
+        return bool(_FORBIDDEN_PATTERNS.search(text))
 
     @staticmethod
-    def is_benign_lab_context(user_input: str) -> bool:
-        if _JAILBREAK_SIGNAL_RE.search(user_input):
+    def is_benign_lab_context(text: str) -> bool:
+        """Sprawdza, czy zapytanie to bezpieczne odwołanie do kodu z laboratoriów."""
+        if _SUSPICIOUS_SIGNALS.search(text):
             return False
-        return bool(_LAB_ALLOWLIST_RE.search(user_input))
+        return bool(_BENIGN_CONTEXT_PATTERNS.search(text))
 
     async def is_prompt_safe(self, user_input: str) -> bool:
-        """Ocenia bezpieczeństwo wiadomości użytkownika w architekturze kaskadowej."""
-        # Krok 1: Twarda blokada wzorców znanych ataków
+        """Kaskadowa ocena promptu pod kątem bezpieczeństwa."""
+        # Poziom 1: Szybkie odrzucenie zakazanych ciągów
         if self.matches_forbidden(user_input):
             return False
 
-        # Krok 2: Obejście klasyfikatora LLM dla bezpiecznego kontekstu zadań dydaktycznych
+        # Poziom 2: Szybkie zatwierdzenie bezpiecznego kontekstu edukacyjnego (oszczędność zapytań LLM)
         if self.is_benign_lab_context(user_input):
             return True
 
-        # Krok 3: Analiza semantyczna modelem LLM
+        # Poziom 3: Klasyfikacja semantyczna modelem
         messages: list[ChatCompletionMessageParam] = [
             {"role": "system", "content": _SECURITY_SYSTEM_PROMPT},
             {"role": "user", "content": user_input},
         ]
 
         try:
-            response = await self.client.chat.completions.create(
+            response = await self._client.chat.completions.create(
                 model=SECURITY_MODEL,
                 messages=messages,
                 temperature=0.0,
             )
-            verdict = (response.choices[0].message.content or "").strip().upper()
+            raw_content = response.choices[0].message.content or ""
+            verdict = raw_content.strip().upper()
 
             if "DANGER" not in verdict:
                 return True
 
-            # DANGER wymaga potwierdzenia sygnałem słownikowym
-            return not bool(_JAILBREAK_SIGNAL_RE.search(user_input))
+            # Weryfikacja werdyktu DANGER regexem – minimalizuje ryzyko false-positive
+            has_injection_signal = bool(_SUSPICIOUS_SIGNALS.search(user_input))
+            return not has_injection_signal
 
         except Exception as exc:
             logger.error("Błąd zapytania do klasyfikatora bezpieczeństwa: %s", exc)
+            # W razie awarii API LLM decyzja zależy od flagi konfiguracyjnej:
+            # SECURITY_FAIL_CLOSED=True oznacza blokadę ruchu (bezpiecznie, false-negative = 0)
             return not SECURITY_FAIL_CLOSED
+
+    async def close(self) -> None:
+        """Zamyka własny klient OpenAI (no-op, gdy współdzielony z LLM)."""
+        if self._owns_client:
+            await self._client.close()
