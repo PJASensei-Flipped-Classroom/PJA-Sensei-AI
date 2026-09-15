@@ -1,4 +1,4 @@
-"""Map domain exceptions to HTTP responses."""
+"""Translacja wyjątków domenowych aplikacji na ustrukturyzowane odpowiedzi HTTP."""
 
 from __future__ import annotations
 
@@ -17,38 +17,50 @@ from app.domain.exceptions import (
 
 
 class BlockReason(str, Enum):
-    """Powody wczesnego zablokowania czatu mapowane na spójny payload MessageResponse."""
+    """Powody wczesnego zablokowania czatu mapowane na kontrakt MessageResponse."""
 
     PRELAB = "prelab"
     TOKEN_BUDGET = "token_budget"
 
 
-def build_blocked_payload(language: str, reason: BlockReason) -> dict[str, Any]:
-    """Generuje spójny z MessageResponse payload błędu dla klienta czatu."""
-    is_en = language == "en"
+_MESSAGES_CONFIG: dict[BlockReason, dict[str, dict[str, str]]] = {
+    BlockReason.PRELAB: {
+        "en": {
+            "message_id": "prelab_required",
+            "answer": "Complete the pre-lab quiz before chatting about the assignment.",
+            "feedback": "Pre-lab not passed.",
+        },
+        "pl": {
+            "message_id": "prelab_required",
+            "answer": "Ukończ quiz pre-lab, zanim zaczniesz czat o zadaniu.",
+            "feedback": "Pre-lab niezaliczony.",
+        },
+    },
+    BlockReason.TOKEN_BUDGET: {
+        "en": {
+            "message_id": "token_budget_exceeded",
+            "answer": "Token budget for this session has been exhausted.",
+            "feedback": "maxTokensPerSession exceeded",
+        },
+        "pl": {
+            "message_id": "token_budget_exceeded",
+            "answer": "Budżet tokenów dla tej sesji został wyczerpany.",
+            "feedback": "maxTokensPerSession exceeded",
+        },
+    },
+}
 
-    if reason == BlockReason.PRELAB:
-        answer = (
-            "Complete the pre-lab quiz before chatting about the assignment."
-            if is_en
-            else "Ukończ quiz pre-lab, zanim zaczniesz czat o zadaniu."
-        )
-        feedback = "Pre-lab not passed." if is_en else "Pre-lab niezaliczony."
-        message_id = "prelab_required"
-    else:
-        answer = (
-            "Token budget for this session has been exhausted."
-            if is_en
-            else "Budżet tokenów dla tej sesji został wyczerpany."
-        )
-        feedback = "maxTokensPerSession exceeded"
-        message_id = "token_budget_exceeded"
+
+def build_blocked_payload(language: str, reason: BlockReason) -> dict[str, Any]:
+    """Generuje ustrukturyzowany słownik blokady, w pełni zgodny ze schematem MessageResponse."""
+    lang_key = "en" if language == "en" else "pl"
+    text_data = _MESSAGES_CONFIG[reason][lang_key]
 
     return {
-        "message_id": message_id,
-        "answer": answer,
+        "message_id": text_data["message_id"],
+        "answer": text_data["answer"],
         "prompt_score": 1,
-        "prompt_feedback": feedback,
+        "prompt_feedback": text_data["feedback"],
         "tokens_used": 0,
         "penalty_applied": False,
         "sources": [],
@@ -58,22 +70,24 @@ def build_blocked_payload(language: str, reason: BlockReason) -> dict[str, Any]:
     }
 
 
-def _resolve_language(request: Request) -> str:
-    """Bezpiecznie wyznacza język bez ponownego odpytywania serwisów domenowych."""
-    # Opcja 1: Pobranie z nagłówka żądania (szybkie i odporne na błędy)
+def _resolve_language(request: Request, exc: object | None = None) -> str:
+    """Język z wyjątku sesji, potem request.state, na końcu Accept-Language / pl."""
+    lang = getattr(exc, "language", None)
+    if lang in ("en", "pl"):
+        return lang
+
+    state_lang = getattr(request.state, "language", None)
+    if state_lang in ("en", "pl"):
+        return state_lang
+
     accept_lang = request.headers.get("Accept-Language", "").lower()
-    if "en" in accept_lang:
+    if accept_lang.startswith("en"):
         return "en"
-
-    # Opcja 2: Fallback na stan sesji, jeśli dostępny w request.state
-    if hasattr(request.state, "language"):
-        return request.state.language
-
     return "pl"
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    """Rejestruje globalne translatory wyjątków domenowych na kody HTTP."""
+    """Rejestruje globalne procedury przechwytywania wyjątków domenowych w instancji FastAPI."""
 
     @app.exception_handler(UnknownConversation)
     async def _handle_unknown_conversation(_request: Request, _exc: UnknownConversation) -> JSONResponse:
@@ -83,24 +97,23 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(PrelabRequired)
-    async def _handle_prelab_required(request: Request, _exc: PrelabRequired) -> JSONResponse:
-        payload = build_blocked_payload(_resolve_language(request), BlockReason.PRELAB)
+    async def _handle_prelab_required(request: Request, exc: PrelabRequired) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
-            content=payload,
+            content=build_blocked_payload(_resolve_language(request, exc), BlockReason.PRELAB),
         )
 
     @app.exception_handler(TokenBudgetExceeded)
-    async def _handle_token_budget(request: Request, _exc: TokenBudgetExceeded) -> JSONResponse:
-        payload = build_blocked_payload(_resolve_language(request), BlockReason.TOKEN_BUDGET)
+    async def _handle_token_budget(request: Request, exc: TokenBudgetExceeded) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
-            content=payload,
+            content=build_blocked_payload(_resolve_language(request, exc), BlockReason.TOKEN_BUDGET),
         )
 
     @app.exception_handler(RevealNotAllowed)
     async def _handle_reveal_not_allowed(_request: Request, exc: RevealNotAllowed) -> JSONResponse:
+        detail_msg = getattr(exc, "detail", "Hint reveal not allowed")
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
-            content={"detail": getattr(exc, "detail", "Hint reveal not allowed")},
+            content={"detail": detail_msg},
         )

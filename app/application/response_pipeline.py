@@ -27,6 +27,19 @@ EMPTY_ANSWER_FALLBACK_EN = (
     "Hi! Ask a concrete question about the assignment or paste the code you're working on."
 )
 
+# Cyrillic (Russian/Ukrainian/etc.) — typowy drift lokalnych modeli w sesjach PL
+_CYRILLIC_RE = re.compile(r"[\u0400-\u04FF]")
+
+_LANGUAGE_RETRY_NOTE_PL = (
+    "[System] Poprzednia odpowiedź zawierała cyrylicę / wtrącenia obcego języka. "
+    "Powtórz całą odpowiedź WYŁĄCZNIE po polsku, alfabetem łacińskim "
+    "(np. „napisaniu”, nigdy „написании”). Kod i nazwy API zostaw po angielsku."
+)
+_LANGUAGE_RETRY_NOTE_EN = (
+    "[System] Previous answer mixed non-English script. "
+    "Repeat the full answer in English only (Latin alphabet). Keep code identifiers unchanged."
+)
+
 _CODE_BLOCK_RE = re.compile(r"```([a-zA-Z0-9_-]*)\n(.*?)```", re.DOTALL)
 _ANSWER_KEY_RE = re.compile(r'"answer"\s*:\s*"')
 
@@ -141,6 +154,22 @@ def _decode_partial_json_string_field(raw: str) -> str:
         i += 1
 
     return "".join(out)
+
+
+def contains_cyrillic(text: str) -> bool:
+    """True, gdy tekst zawiera litery cyrylicy (np. drift RU w odpowiedzi PL)."""
+    return bool(text and _CYRILLIC_RE.search(text))
+
+
+def answer_has_language_drift(answer: str, language: str) -> bool:
+    """Wykrywa mieszanie skryptów względem języka sesji (dziś: cyrylica)."""
+    if language not in ("pl", "en"):
+        return False
+    return contains_cyrillic(answer)
+
+
+def language_retry_note(language: str) -> str:
+    return _LANGUAGE_RETRY_NOTE_EN if language == "en" else _LANGUAGE_RETRY_NOTE_PL
 
 
 def contains_revealed_code(answer_text: str) -> bool:
@@ -298,6 +327,13 @@ def process_model_response(
         )
         answer_text, score, penalty_applied = fallback, 1, True
 
+    if answer_has_language_drift(answer_text, lang):
+        logger.warning(
+            "Odpowiedź nadal zawiera cyrylicę po pipeline (lang=%s, message_id=%s)",
+            lang,
+            message_id,
+        )
+
     # Standaryzacja celów dydaktycznych
     goal_progress: list[dict[str, str]] = []
     raw_progress = result_data.get("goal_progress")
@@ -352,18 +388,64 @@ def process_model_response(
     }
 
 
-def llm_error_fallback(message_id: str, language: str) -> dict[str, Any]:
-    """Przyjazna odpowiedź zastępcza przy nie-429 błędzie dostawcy LLM."""
+def llm_error_fallback(
+    message_id: str,
+    language: str,
+    *,
+    exc: BaseException | None = None,
+) -> dict[str, Any]:
+    """Przyjazna odpowiedź dla studenta, gdy LLM nie zwrócił normalnej odpowiedzi."""
     is_en = language == "en"
+    kind = type(exc).__name__ if exc is not None else ""
+    text = str(exc or "").lower()
+
+    connection_like = (
+        "APIConnectionError" in kind
+        or "connection" in text
+        or "connect" in text
+        or "refused" in text
+    )
+    timeout_like = "Timeout" in kind or "timeout" in text or "timed out" in text
+
+    if connection_like:
+        answer = (
+            "I can't answer right now — the model server is unreachable "
+            "(check that Ollama/LM Studio is running), then send your question again."
+            if is_en
+            else "Nie mogę teraz odpowiedzieć — brak połączenia z modelem "
+            "(sprawdź, czy Ollama lub LM Studio działa), a potem wyślij pytanie ponownie."
+        )
+        feedback = (
+            "No connection to the local model."
+            if is_en
+            else "Brak połączenia z lokalnym modelem."
+        )
+    elif timeout_like:
+        answer = (
+            "The model took too long to respond. Please wait a moment and try again."
+            if is_en
+            else "Model zbyt długo nie odpowiadał. Poczekaj chwilę i spróbuj ponownie."
+        )
+        feedback = "Model request timed out." if is_en else "Przekroczono czas oczekiwania na model."
+    else:
+        answer = (
+            "Sorry — I couldn't get an answer from the model this time. "
+            "Please try sending your question again in a moment."
+            if is_en
+            else "Przepraszam — tym razem nie dostałem odpowiedzi od modelu. "
+            "Spróbuj za chwilę wysłać pytanie ponownie."
+        )
+        feedback = (
+            "The model service returned an error."
+            if is_en
+            else "Usługa modelu zwróciła błąd."
+        )
+
     return {
         "message_id": message_id,
-        "answer": (
-            "Sorry, the model server hit a temporary technical issue. Please try asking again."
-            if is_en
-            else "Przepraszam, serwer modelu napotkał chwilowy problem techniczny. Spróbuj powtórzyć pytanie."
-        ),
+        "answer": answer,
         "prompt_score": 5,
-        "prompt_feedback": "External LLM API error." if is_en else "Błąd zewnętrznego API LLM.",
+        "prompt_feedback": feedback,
         "penalty_applied": False,
         "tokens_used": 0,
         "is_cached": False,

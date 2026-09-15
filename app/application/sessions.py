@@ -104,13 +104,13 @@ class SessionService:
         """Bramka: czat zablokowany, dopóki prelab niezaliczony (gdy włączony)."""
         prelab = getattr(conversation.config, "pre_lab", None) or getattr(conversation.config, "preLab", None)
         if prelab and getattr(prelab, "enabled", False) and not conversation.prelab_passed:
-            raise PrelabRequired()
+            raise PrelabRequired(language=conversation.config.language)
 
     def ensure_token_budget(self, conversation: Conversation) -> None:
         """Bramka: wyczerpany max_tokens_per_session → TokenBudgetExceeded."""
         limit = conversation.config.max_tokens_per_session
         if limit is not None and conversation.tokens_used_total >= limit:
-            raise TokenBudgetExceeded()
+            raise TokenBudgetExceeded(language=conversation.config.language)
 
     def get_session_state(self, conversation_id: str) -> dict[str, Any]:
         """Publiczny snapshot stanu sesji dla GET /conversations/{id}."""
@@ -138,6 +138,7 @@ class SessionService:
             "ide_event_count": len(conv.ide_events),
             "mode": getattr(conv.config.agent_behavior, "mode", "debug"),
             "unlocked_checkpoints": list(conv.unlocked_checkpoints),
+            "goal_progress": list(conv.goal_progress),
             "prelab_attempts": conv.prelab_attempts,
             "last_prelab_score": conv.last_prelab_score,
         }

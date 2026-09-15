@@ -2,16 +2,15 @@
 Unified test entrypoint for PJA-Sensei AI Module.
 
 Runs:
-  1) Offline: pytest (tests/) + code-penalty unit checks
-  2) Live HTTP suite (S1–S33) when the API is up
+  1) Offline: pytest (tests/) — warstwy happy / struggle / cheat / edges
+  2) Live HTTP suite (S1–S9) when the API is up
 
 Usage:
-    .venv\\Scripts\\python.exe -m tests.live.test_all
     python -m tests.live.test_all
     python -m tests.live.test_all --offline-only
     python -m tests.live.test_all --require-live
-    python -m tests.live.test_all --only 14,15,23,24
-    python -m tests.live.test_all --group roi,gates
+    python -m tests.live.test_all --only 1,4,7
+    python -m tests.live.test_all --group happy,cheat
 """
 
 from __future__ import annotations
@@ -28,10 +27,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def project_python() -> Path | None:
-    """Return project .venv interpreter if it exists."""
     candidates = [
-        ROOT / ".venv" / "Scripts" / "python.exe",  # Windows
-        ROOT / ".venv" / "bin" / "python",  # Unix
+        ROOT / ".venv" / "Scripts" / "python.exe",
+        ROOT / ".venv" / "bin" / "python",
     ]
     for path in candidates:
         if path.is_file():
@@ -40,7 +38,6 @@ def project_python() -> Path | None:
 
 
 def _ensure_project_venv() -> None:
-    """Re-exec under .venv when current interpreter lacks app deps (e.g. openai)."""
     if os.environ.get("PJA_TEST_ALL_VENV") == "1":
         return
     venv_py = project_python()
@@ -68,9 +65,8 @@ _ensure_project_venv()
 
 import httpx
 
-from app.application.response_pipeline import contains_revealed_code
 from tests.live.helpers import API_BASE
-from tests.live.registry import SPECS, parse_groups, parse_only, select_scenarios
+from tests.live.registry import parse_groups, parse_only, select_scenarios
 from tests.live.test_scenarios import run_suite
 
 
@@ -88,191 +84,76 @@ class BlockResult:
 
 
 def run_offline_block() -> list[BlockResult]:
-    results: list[BlockResult] = []
-
-    # --- unit: code penalty (smoke; full matrix via pytest below) ---
-    try:
-        assert contains_revealed_code(
-            "Rozważ adnotację @RestController nad klasą."
-        ) is False
-        assert contains_revealed_code(
-            """```java
-public class HelloController {
-    public String hello() { return "hi"; }
-}
-```"""
-        ) is True
-        assert contains_revealed_code(
-            """
-public String hello() {
-    return new ResponseEntity<>(body, HttpStatus.OK);
-}
-private void helper() {
-    if (x) {
-        return;
-    }
-}
-"""
-        ) is True
-        results.append(
-            BlockResult("unit:code_penalty", True, "contains_revealed_code OK")
-        )
-        print("[PASS] offline unit:code_penalty")
-    except Exception as exc:
-        results.append(BlockResult("unit:code_penalty", False, str(exc)))
-        print(f"[FAIL] offline unit:code_penalty — {exc}")
-
-    # --- pytest: tests/ (prefer project venv) ---
     py = resolve_pytest_python()
-    if Path(py).resolve() != Path(sys.executable).resolve():
-        print(f"(pytest interpreter: {py})")
-    cmd = [
-        py,
-        "-m",
-        "pytest",
-        "-q",
-        str(ROOT / "tests"),
-    ]
-    print(f"\n>>> Offline pytest: {' '.join(cmd)}")
-    proc = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True)
+    proc = subprocess.run(
+        [py, "-m", "pytest", "-q", str(ROOT / "tests")],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+    )
     out = (proc.stdout or "") + (proc.stderr or "")
     tail = "\n".join(out.strip().splitlines()[-8:]) if out.strip() else "(no output)"
-    ok = proc.returncode == 0
-    if not ok and "No module named" in out:
-        tail = (
-            "Brak zależności w interpreterze pytest. "
-            "Użyj: .venv\\Scripts\\python.exe -m tests.live.test_all "
-            f"| {tail}"
-        )
-    results.append(
+    return [
         BlockResult(
-            "pytest:tests/",
-            ok,
-            f"exit={proc.returncode}; {tail.replace(chr(10), ' | ')}",
+            "offline pytest (happy/struggle/cheat/edges)",
+            proc.returncode == 0,
+            tail,
         )
-    )
-    print(f"[{'PASS' if ok else 'FAIL'}] offline pytest:tests/")
-    if not ok:
-        print(out)
-    return results
-
-
-async def api_is_up() -> bool:
-    try:
-        async with httpx.AsyncClient(base_url=API_BASE, timeout=3.0) as client:
-            r = await client.get("/health")
-            return r.status_code == 200
-    except Exception:
-        return False
-
-
-async def run_live_block(only: list[int], require_live: bool) -> list[BlockResult]:
-    up = await api_is_up()
-    if not up:
-        msg = f"API niedostępne pod {API_BASE}"
-        if require_live:
-            print(f"[FAIL] live skipped — {msg} (--require-live)")
-            return [BlockResult("live:suite", False, msg)]
-        print(f"[SKIP] live suite — {msg} (uruchom uvicorn lub użyj --require-live)")
-        return [BlockResult("live:suite", True, msg, skipped=True)]
-
-    print("\n>>> Live HTTP suite")
-    code, scenario_results = await run_suite(only)
-    blocks = [
-        BlockResult(
-            f"live:S{r.number}:{r.name}",
-            r.passed,
-            r.details,
-            skipped=r.skipped,
-        )
-        for r in scenario_results
     ]
-    if not scenario_results and code != 0:
-        blocks.append(BlockResult("live:suite", False, "suite failed to start"))
-    return blocks
 
 
-def print_summary(blocks: list[BlockResult]) -> int:
-    print("\n" + "=" * 60)
-    print(f"PODSUMOWANIE test_all (offline + live S1-S{max(SPECS)})")
-    print("=" * 60)
-    offline = [b for b in blocks if b.name.startswith(("unit:", "pytest:"))]
-    live = [b for b in blocks if b.name.startswith("live:")]
-    executed = [b for b in blocks if not b.skipped]
-    skipped = [b for b in blocks if b.skipped]
-    passed = sum(1 for b in executed if b.passed)
+async def run_live_block(
+    *,
+    require_live: bool,
+    only: list[int] | None,
+    groups: frozenset[str] | None,
+) -> BlockResult:
+    nums = select_scenarios(only, groups)
+    try:
+        async with httpx.AsyncClient(base_url=API_BASE, timeout=5.0) as client:
+            health = await client.get("/health")
+            if health.status_code != 200:
+                raise httpx.ConnectError("health not 200")
+    except Exception as exc:
+        if require_live:
+            return BlockResult("live", False, f"API niedostępne: {exc}")
+        return BlockResult("live", True, f"SKIP — API niedostępne ({exc})", skipped=True)
 
-    def _section(title: str, items: list[BlockResult]) -> None:
-        if not items:
-            return
-        print(f"\n-- {title} --")
-        for b in items:
-            if b.skipped:
-                mark = "SKIP"
-            else:
-                mark = "PASS" if b.passed else "FAIL"
-            print(f"  [{mark}] {b.name} — {b.details}")
-
-    _section("OFFLINE", offline)
-    _section("LIVE", live)
-    print("-" * 60)
-    print(
-        f"Wynik: {passed}/{len(executed)} PASS"
-        + (f", {len(skipped)} SKIP" if skipped else "")
-    )
-    print("=" * 60)
-    failed = [b for b in executed if not b.passed]
-    return 0 if not failed else 1
+    code, results = await run_suite(nums)
+    failed = [r for r in results if not r.skipped and not r.passed]
+    details = f"{len(results)} scenariuszy; failed={len(failed)}"
+    return BlockResult("live", code == 0, details)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Pełny suite PJA-Sensei (offline + live)"
-    )
-    parser.add_argument(
-        "--offline-only",
-        action="store_true",
-        help="Tylko pytest + unit (bez HTTP live)",
-    )
-    parser.add_argument(
-        "--require-live",
-        action="store_true",
-        help="FAIL jeśli API nie działa (domyślnie SKIP live)",
-    )
-    parser.add_argument(
-        "--only",
-        type=str,
-        default=None,
-        help="Numery scenariuszy live, np. 14,15,16 (przekazywane do test_scenarios)",
-    )
-    parser.add_argument(
-        "--group",
-        type=str,
-        default=None,
-        help="Tagi scenariuszy live, np. roi,gates",
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--offline-only", action="store_true")
+    parser.add_argument("--require-live", action="store_true")
+    parser.add_argument("--only", default=None)
+    parser.add_argument("--group", default=None)
     args = parser.parse_args()
 
-    print("=== PJA-Sensei test_all ===")
-    blocks: list[BlockResult] = []
-    blocks.extend(run_offline_block())
-
+    blocks = run_offline_block()
     if not args.offline_only:
-        only = select_scenarios(parse_only(args.only), parse_groups(args.group))
-        if not only:
-            print("[FAIL] live — brak scenariuszy pasujących do --only/--group")
-            blocks.append(
-                BlockResult("live:suite", False, "empty --only/--group selection")
+        live = asyncio.run(
+            run_live_block(
+                require_live=args.require_live,
+                only=parse_only(args.only),
+                groups=parse_groups(args.group),
             )
-        else:
-            blocks.extend(asyncio.run(run_live_block(only, args.require_live)))
-    else:
-        print("\n[SKIP] live suite — --offline-only")
-        blocks.append(
-            BlockResult("live:suite", True, "--offline-only", skipped=True)
         )
+        blocks.append(live)
 
-    raise SystemExit(print_summary(blocks))
+    print("\n" + "=" * 60)
+    print("PODSUMOWANIE test_all")
+    print("=" * 60)
+    for b in blocks:
+        mark = "SKIP" if b.skipped else ("PASS" if b.passed else "FAIL")
+        print(f"  [{mark}] {b.name}: {b.details}")
+    print("=" * 60)
+
+    hard_fail = [b for b in blocks if not b.passed and not b.skipped]
+    raise SystemExit(1 if hard_fail else 0)
 
 
 if __name__ == "__main__":

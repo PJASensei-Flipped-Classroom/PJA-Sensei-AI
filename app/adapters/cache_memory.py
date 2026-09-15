@@ -1,45 +1,54 @@
-"""In-memory exact-match response cache (LRU + TTL) implementing CachePort."""
+from __future__ import annotations
 
-import hashlib
-import json
-import threading
-import time
 from collections import OrderedDict
-from copy import deepcopy
-from typing import Any
+import copy
+import hashlib
+from threading import Lock
+import time
+from typing import Any, NamedTuple
 
 from app.core.config import CACHE_MAX_ENTRIES, CACHE_TTL_SECONDS
 
 
+class _CacheEntry(NamedTuple):
+    timestamp: float
+    data: dict[str, Any]
+
+
+def _clone_dict(data: dict[str, Any]) -> dict[str, Any] | None:
+    try:
+        return copy.deepcopy(data)
+    except (TypeError, AttributeError, RecursionError):
+        return None
+
+
+def _build_cache_key(
+    conversation_id: str,
+    question: str,
+    error_logs: str | None,
+    current_code: str,
+) -> str:
+    raw_payload = "\n".join([
+        conversation_id,
+        question.strip(),
+        (error_logs or "").strip(),
+        (current_code or "").strip(),
+    ])
+    return hashlib.sha256(raw_payload.encode("utf-8")).hexdigest()
+
+
 class ExactMatchCache:
-    """Wątkowo-bezpieczny cache LRU w pamięci z obsługą wygasania TTL."""
+    """Wątkowo-bezpieczny cache in-memory z polityką LRU oraz wygasaniem TTL."""
 
     def __init__(
         self,
         max_entries: int = CACHE_MAX_ENTRIES,
         ttl_seconds: int = CACHE_TTL_SECONDS,
-    ) -> None:
-        self._cache: OrderedDict[str, tuple[float, dict[str, Any]]] = OrderedDict()
+    ):
         self.max_entries = max_entries
         self.ttl_seconds = ttl_seconds
-        self._lock = threading.Lock()
-
-    def _generate_key(
-        self,
-        conversation_id: str,
-        question: str,
-        error_logs: str | None,
-        current_code: str,
-    ) -> str:
-        # Serializacja JSON eliminuje ryzyko przypadkowego łączenia separatorów
-        payload = [
-            conversation_id,
-            question.strip(),
-            (error_logs or "").strip(),
-            (current_code or "").strip(),
-        ]
-        raw = json.dumps(payload, ensure_ascii=False)
-        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        self._lock = Lock()
+        self._store: OrderedDict[str, _CacheEntry] = OrderedDict()
 
     def get_cached_response(
         self,
@@ -48,25 +57,28 @@ class ExactMatchCache:
         error_logs: str | None,
         current_code: str,
     ) -> dict[str, Any] | None:
-        """Zwraca głęboką kopię odpowiedzi lub None przy braku / wygaśnięciu wpisu."""
-        key = self._generate_key(conversation_id, question, error_logs, current_code)
+        key = _build_cache_key(conversation_id, question, error_logs, current_code)
 
         with self._lock:
-            entry = self._cache.get(key)
-            if not entry:
+            entry = self._store.get(key)
+            if entry is None:
                 return None
 
-            ts, data = entry
-            if time.monotonic() - ts > self.ttl_seconds:
-                del self._cache[key]
+            # Sprawdzenie wygaśnięcia wpisu (TTL)
+            if (time.monotonic() - entry.timestamp) > self.ttl_seconds:
+                del self._store[key]
                 return None
 
-            self._cache.move_to_end(key)
-            result = deepcopy(data)
+            # Przesunięcie na koniec kolejki LRU
+            self._store.move_to_end(key)
 
-        # Flaga ustawiona na True dla konsumenta
-        result["is_cached"] = True
-        return result
+            cloned_data = _clone_dict(entry.data)
+            if cloned_data is None:
+                del self._store[key]
+                return None
+
+        cloned_data["is_cached"] = True
+        return cloned_data
 
     def save_to_cache(
         self,
@@ -76,24 +88,33 @@ class ExactMatchCache:
         current_code: str,
         response_data: dict[str, Any],
     ) -> None:
-        """Zapisuje odpowiedź pod kluczem SHA-256; przy przepełnieniu wyrzuca najstarszy wpis."""
-        key = self._generate_key(conversation_id, question, error_logs, current_code)
-        payload = deepcopy(response_data)
+        cloned_payload = _clone_dict(response_data)
+        if cloned_payload is None:
+            return
+
+        key = _build_cache_key(conversation_id, question, error_logs, current_code)
 
         with self._lock:
-            # Jeśli nadpisujemy istniejący klucz, nie wyrzucamy innego z powodu limitu
-            if key not in self._cache and len(self._cache) >= self.max_entries:
-                self._cache.popitem(last=False)
+            # Eksmisja najstarszego elementu (LRU), jeśli osiągnięto limit pojemności
+            if key not in self._store and len(self._store) >= self.max_entries:
+                self._store.popitem(last=False)
 
-            self._cache[key] = (time.monotonic(), payload)
-            self._cache.move_to_end(key)
+            self._store[key] = _CacheEntry(
+                timestamp=time.monotonic(),
+                data=cloned_payload,
+            )
+            self._store.move_to_end(key)
+
+    def _evict_expired_entries(self) -> None:
+        cutoff_time = time.monotonic() - self.ttl_seconds
+        expired_keys = [
+            k for k, entry in self._store.items() if entry.timestamp < cutoff_time
+        ]
+        for k in expired_keys:
+            del self._store[k]
 
     @property
     def size(self) -> int:
-        """Liczba aktywnych wpisów po usunięciu wygasłych (lazy TTL sweep)."""
         with self._lock:
-            now = time.monotonic()
-            expired = [k for k, (ts, _) in self._cache.items() if now - ts > self.ttl_seconds]
-            for k in expired:
-                del self._cache[k]
-            return len(self._cache)
+            self._evict_expired_entries()
+            return len(self._store)

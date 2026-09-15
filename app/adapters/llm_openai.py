@@ -1,12 +1,12 @@
-"""OpenAI-compatible LLM client (Ollama / LM Studio)."""
+"""Asynchroniczny klient LLM zgodny ze standardem OpenAI (np. Ollama, LM Studio)."""
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Sequence
+import logging
 from typing import Any
 
-from openai import AsyncOpenAI, APIError, APITimeoutError, RateLimitError
+from openai import APIError, APITimeoutError, AsyncOpenAI, RateLimitError
 from openai.types import CompletionUsage
 from openai.types.chat import ChatCompletion
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAICompatibleClient:
-    """Odporny na błędy klient asynchroniczny dla endpointów OpenAI-compatible."""
+    """Wątkowo i asynchronicznie bezpieczny wrapper na oficjalnego klienta AsyncOpenAI."""
 
     def __init__(
         self,
@@ -35,11 +35,11 @@ class OpenAICompatibleClient:
 
     @property
     def client(self) -> AsyncOpenAI:
-        """Expose AsyncOpenAI for tests / monkeypatch."""
+        """Udostępnia wewnętrzną instancję AsyncOpenAI (przydatne do testów jednostkowych i mockowania)."""
         return self._client
 
     async def close(self) -> None:
-        """Zwalnia pulę połączeń HTTP."""
+        """Zwalnia pulę połączeń klienta HTTP."""
         await self._client.close()
 
     async def __aenter__(self) -> OpenAICompatibleClient:
@@ -49,36 +49,32 @@ class OpenAICompatibleClient:
         await self.close()
 
     def model_for(self, conversation: Conversation) -> str:
-        """Wybiera skonfigurowany model dla danej sesji lub stosuje fallback."""
-        agent_config = getattr(conversation.config, "agent_behavior", None) or getattr(
-            conversation.config, "agentBehavior", None
-        )
-        custom_model = getattr(agent_config, "model", None) if agent_config else None
-        return custom_model or MAIN_MODEL
+        """Pobiera model przypisany do danej konwersacji lub stosuje domyślny fallback."""
+        config = getattr(conversation, "config", None)
+        agent = getattr(config, "agent_behavior", None) or getattr(config, "agentBehavior", None)
+        return getattr(agent, "model", None) or MAIN_MODEL
 
     @staticmethod
     def tokens_from_usage(
         usage: CompletionUsage | dict[str, Any] | None,
         *text_parts: str,
     ) -> int:
-        """Wyznacza liczbę tokenów na podstawie odpowiedzi lub heurystyki znakowej."""
-        if usage:
-            if isinstance(usage, dict):
-                total = usage.get("total_tokens")
-                prompt = usage.get("prompt_tokens", 0) or 0
-                completion = usage.get("completion_tokens", 0) or 0
-            else:
-                total = getattr(usage, "total_tokens", None)
-                prompt = getattr(usage, "prompt_tokens", 0) or 0
-                completion = getattr(usage, "completion_tokens", 0) or 0
+        """Odczytuje liczbę zużytych tokenów lub szacuje ją heurystycznie (1 token ≈ 4 znaki)."""
+        if usage is not None:
+            # Ujednolicenie odczytu niezależnie od tego, czy dostaliśmy dict, czy obiekt Pydantic/OpenAI
+            get_val = usage.get if isinstance(usage, dict) else lambda k, d=0: getattr(usage, k, d)
 
+            total = get_val("total_tokens", None)
             if total:
                 return int(total)
+
+            prompt = get_val("prompt_tokens", 0) or 0
+            completion = get_val("completion_tokens", 0) or 0
             if prompt or completion:
                 return int(prompt) + int(completion)
 
-        chars = sum(len(t or "") for t in text_parts)
-        return max(1, chars // 4)
+        total_characters = sum(len(text or "") for text in text_parts)
+        return max(1, total_characters // 4)
 
     async def create_chat_completion(
         self,
@@ -87,7 +83,7 @@ class OpenAICompatibleClient:
         temperature: float = 0.7,
         **kwargs: Any,
     ) -> ChatCompletion:
-        """Wysyła zapytanie chat completion z jawnym typowaniem i obsługą błędów."""
+        """Wysyła zapytanie chat completion z jawnym logowaniem wyjątków sieciowych i limitów API."""
         try:
             return await self._client.chat.completions.create(
                 model=model,
@@ -95,12 +91,14 @@ class OpenAICompatibleClient:
                 temperature=temperature,
                 **kwargs,
             )
-        except RateLimitError as e:
-            logger.error("Przekroczono rate limit dostawcy LLM: %s", e)
+        except RateLimitError as exc:
+            logger.error("Przekroczono limit zapytań (Rate Limit) dostawcy LLM: %s", exc)
             raise
-        except APITimeoutError as e:
-            logger.error("Upłynął limit czasu zapytania do LLM: %s", e)
+        except APITimeoutError as exc:
+            logger.error("Upłynął limit czasu (Timeout) oczekiwania na odpowiedź LLM: %s", exc)
             raise
-        except APIError as e:
-            logger.error("Błąd API LLM: status=%s, msg=%s", e.status_code, e.message)
+        except APIError as exc:
+            http_code = getattr(exc, "status_code", None)
+            detail = getattr(exc, "message", None) or str(exc)
+            logger.error("Błąd API LLM [kod HTTP: %s]: %s", http_code, detail)
             raise

@@ -1,4 +1,4 @@
-"""Shared telemetry helpers for API routers (binds request_id from context)."""
+"""Pomocnicze funkcje telemetrii dla warstwy API (automatyczne wiązanie request_id z kontekstu)."""
 
 from __future__ import annotations
 
@@ -14,9 +14,11 @@ async def send_request_telemetry(
     *,
     request_id: str | None = None,
 ) -> None:
-    """Fire-and-forget webhook with X-Request-Id from middleware context."""
+    """Wysyła asynchroniczny webhook telemetryczny z powiązanym identyfikatorem śledzenia (Request-ID)."""
+    resolved_request_id = request_id or request_id_var.get("-")
+
     await send_telemetry_webhook(
-        payload,
+        payload=payload,
         url=url,
-        request_id=request_id if request_id is not None else request_id_var.get("-"),
+        request_id=resolved_request_id,
     )

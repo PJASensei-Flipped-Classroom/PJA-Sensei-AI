@@ -22,6 +22,7 @@ from app.api.routers import (
 from app.application.container import AppContainer
 from app.core.auth import require_auth
 from app.core.config import CORS_ORIGINS
+from app.core.rate_limit import start_rate_limit_cleanup, stop_rate_limit_cleanup
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +34,12 @@ def create_app(container: AppContainer | None = None) -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # 1. Start serwera: wstrzyknięcie kontenera zależności
         app.state.container = container or AppContainer()
+        start_rate_limit_cleanup()
         logger.info("Kontener aplikacji został pomyślnie zainicjalizowany.")
         try:
             yield
         finally:
+            stop_rate_limit_cleanup()
             await app.state.container.close()
             logger.info("Zasoby kontenera aplikacji zostały zwolnione.")
 

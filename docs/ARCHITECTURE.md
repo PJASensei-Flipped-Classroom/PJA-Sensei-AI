@@ -15,7 +15,7 @@ api  →  application  →  ports / domain / core
 
 | Warstwa | Rola | Może importować |
 |---------|------|-----------------|
-| `app/api` | HTTP: routery, deps, middleware, schematy FastAPI | `application`, `domain`, `core`; webhooks z routerów (tło) |
+| `app/api` | HTTP: routery, deps, middleware, schematy FastAPI | `application`, `domain`, `core`; **wyjątek:** `adapters.webhooks` z `telemetry` / BackgroundTasks |
 | `app/application` | Use-case’y (chat, sessions, …); DI przez konstruktory | `ports`, `domain`, `core`, własne `dto` |
 | `app/ports` | Protocoly (LLM, RAG, cache, security, summary, ConversationRepository) | `domain` (typy) |
 | `app/adapters` | I/O: LLM (OpenAI-compatible), Chroma, cache, security, webhooks, sesje w RAM | `domain`, `core` |
@@ -32,7 +32,7 @@ api  →  application  →  ports / domain / core
 
 | | Ścieżki | Middleware |
 |--|--------|------------|
-| **Publiczne** | `/`, `/health`, `/healthz`, `/metrics`, `/metrics/prometheus` | bez JWT / rate limit |
+| **Publiczne** | `/`, `/scenarios`, `/health`, `/healthz`, `/metrics`, `/metrics/prometheus` | bez JWT / rate limit |
 | **Chronione** | `/conversations…`, `/validate-config` | `require_auth` + `enforce_rate_limit` |
 
 `GET /health` to sonda stanu (bez GC sesji). Purge TTL jest przy `POST /conversations`.
@@ -86,6 +86,8 @@ Kolejność w `validate_message_request` (`app/api/deps.py`):
 Rate limit i JWT na chronionym routerze działają **przed** handlerem.
 
 ## Webhooki
+
+Webhooki woła warstwa **API** (`app/api/telemetry.py` → `adapters/webhooks`), nie `AppContainer` — celowo poza DI use-case’ów.
 
 | Zdarzenie | URL |
 |-----------|-----|

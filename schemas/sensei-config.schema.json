@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://pja-sensei.local/schemas/sensei-config.schema.json",
   "title": "SenseiConfig",
-  "description": "Validation schema for PJA-Sensei lab configuration manifests.",
+  "description": "Validation schema for PJA-Sensei lab configuration manifests (camelCase, aligned with SenseiConfig).",
   "type": "object",
   "additionalProperties": false,
   "required": ["learningContext", "agentBehavior"],
@@ -27,9 +27,9 @@
       "additionalProperties": false,
       "required": ["id", "prompt"],
       "properties": {
-        "id": { "type": "string" },
+        "id": { "type": "string", "minLength": 1 },
         "prompt": { "type": "string", "minLength": 1 },
-        "expected_keywords": {
+        "expectedKeywords": {
           "type": "array",
           "items": { "type": "string" }
         }
@@ -40,8 +40,8 @@
       "additionalProperties": false,
       "required": ["id"],
       "properties": {
-        "id": { "type": "string" },
-        "after_goal": { "type": ["string", "null"] },
+        "id": { "type": "string", "minLength": 1 },
+        "afterGoal": { "type": ["string", "null"] },
         "hint": { "type": ["string", "null"] }
       }
     }
@@ -120,8 +120,8 @@
       "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean", "default": false },
-        "max_attempts": { "type": ["integer", "null"], "minimum": 1 },
-        "hint_after_fail": { "type": ["string", "null"] },
+        "maxAttempts": { "type": ["integer", "null"], "minimum": 1 },
+        "hintAfterFail": { "type": ["string", "null"] },
         "questions": {
           "type": "array",
           "items": { "$ref": "#/$defs/preLabQuestion" }

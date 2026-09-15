@@ -619,6 +619,7 @@
         .meta-strip .meta-item { white-space: nowrap; }
         .final-metrics .meta-accent { color: var(--accent); font-weight: 600; }
         .final-metrics .progress-block { margin: 0; }
+        .final-metrics .progress-block.lab-complete .meta-accent { color: var(--ok); }
         .final-metrics .score-bar-bg {
             height: 3px;
             background: #e2e8f0;
@@ -787,6 +788,7 @@
 <header class="hero">
     <h1>PJA-Sensei</h1>
     <p>Sokratyczny mentor do labu — konfiguracja wykładowcy i czat studenta.</p>
+    <p style="margin-top:12px"><a href="/scenarios" style="color:#fff;font-weight:600;text-decoration:underline">Scenariusze testowe →</a></p>
 </header>
 
 <nav class="tabs" role="tablist">
@@ -1284,7 +1286,15 @@ async function validateConfig() {
         if (data.valid) {
             showValidate(true, "SenseiConfig OK");
         } else {
-            showValidate(false, "Błędy: " + JSON.stringify(data.errors || data));
+            const parts = [];
+            if (data.schema_unavailable) parts.push("schema_unavailable");
+            if (data.pydantic_errors && data.pydantic_errors.length) {
+                parts.push("pydantic: " + data.pydantic_errors.join("; "));
+            }
+            if (data.schema_errors && data.schema_errors.length) {
+                parts.push("schema: " + data.schema_errors.join("; "));
+            }
+            showValidate(false, "Błędy: " + (parts.join(" | ") || JSON.stringify(data)));
         }
     } catch (e) {
         showValidate(false, "Brak połączenia z API (" + apiUrl + ")");
@@ -1591,19 +1601,21 @@ function appendFeedbackAndMetrics(container, data, backendMsgId, duration) {
     const goals = Array.isArray(data.goal_progress) ? data.goal_progress : [];
     const totalGoals = goals.length;
     const doneGoals = goals.filter((g) => g && g.status === "done").length;
-    const progressPct = totalGoals ? Math.round((doneGoals / totalGoals) * 100) : 0;
+    const labScore = totalGoals ? Math.round((doneGoals / totalGoals) * 10) : 0;
+    const progressPct = labScore * 10;
     const progressLabel = totalGoals
-        ? `Postęp labu: ${doneGoals}/${totalGoals} celów`
-        : "Postęp labu: brak celów";
-    const score = data.prompt_score || 5;
+        ? `Cel labu: ${labScore}/10 (${doneGoals}/${totalGoals} celów)`
+        : "Cel labu: brak celów w konfiguracji";
+    const quality = data.prompt_score != null ? data.prompt_score : "—";
     const bar = totalGoals
         ? `<div class="score-bar-bg"><div class="score-bar-fill" style="width:${progressPct}%;background-color:hsl(${Math.min(120, progressPct * 1.2)},70%,40%);"></div></div>`
         : "";
+    const labDoneClass = labScore === 10 ? " lab-complete" : "";
     container.innerHTML = [
         renderBadges(data),
-        `<div class="progress-block"><span class="meta-accent">${esc(progressLabel)}</span>${bar}</div>`,
+        `<div class="progress-block${labDoneClass}"><span class="meta-accent">${esc(progressLabel)}</span>${bar}</div>`,
         `<div class="meta-strip">` +
-            `<span class="meta-item">Jakość: <span class="meta-accent">${score}/10</span></span>` +
+            `<span class="meta-item">Jakość pytania: <span class="meta-accent">${quality}/10</span></span>` +
             `<span class="meta-item">Czas: <span class="meta-accent">${duration} s</span></span>` +
             (data.tokens_used != null
                 ? `<span class="meta-item">Tokeny: <span class="meta-accent">${data.tokens_used}</span></span>`

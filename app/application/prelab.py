@@ -1,9 +1,9 @@
-"""Ewaluacja quizu pre-lab: odblokowanie czatu po zaliczeniu lub wyczerpaniu prób."""
+"""Ewaluacja quizu pre-lab: weryfikacja odpowiedzi i odblokowanie czatu po zaliczeniu."""
 
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass
 import re
-from dataclasses import dataclass
 from typing import Any
 
 from app.application.dto import PreLabSubmitRequest
@@ -24,31 +24,31 @@ class PreLabEvaluationResult:
     hint_after_fail: str | None
 
     def to_dict(self) -> dict[str, Any]:
-        """Mapuje wynik na payload odpowiedzi HTTP (z aliasami feedback/unlocked)."""
-        return {
-            "passed": self.passed,
-            "score": self.score,
-            "detail": self.detail,
-            "feedback": self.detail,
-            "unlocked": self.passed,
-            "failed_ids": self.failed_ids,
-            "attempts": self.attempts,
-            "max_attempts": self.max_attempts,
-            "hint_after_fail": self.hint_after_fail,
-        }
+        """Konwertuje wynik na słownik odpowiedzi HTTP ze zduplikowanymi polami kontraktu."""
+        data = asdict(self)
+        data["feedback"] = self.detail
+        data["unlocked"] = self.passed
+        return data
 
 
 class PrelabService:
-    """Serwis weryfikacji i ewaluacji przygotowania wstępnego studenta."""
+    """Serwis weryfikacji i oceny przygotowania wstępnego studenta."""
 
     def __init__(self, sessions: SessionService) -> None:
         self._sessions = sessions
 
-    def get_prelab_public(self, conversation_id: str) -> dict[str, Any]:
-        """Zwraca publiczne pytania bez ujawniania klucza odpowiedzi."""
-        conversation = self._sessions.get_conversation_or_404(conversation_id)
-        prelab = getattr(conversation.config, "pre_lab", None) or getattr(conversation.config, "preLab", None)
+    @staticmethod
+    def _extract_prelab_config(conversation: Conversation) -> Any | None:
+        """Pobiera konfigurację pre-labu niezależnie od konwencji nazewnictwa (snake_case vs camelCase)."""
+        cfg = conversation.config
+        return getattr(cfg, "pre_lab", None) or getattr(cfg, "preLab", None)
 
+    def get_prelab_public(self, conversation_id: str) -> dict[str, Any]:
+        """Zwraca pytania quizowe widoczne dla studenta bez ujawniania słów kluczowych."""
+        conversation = self._sessions.get_conversation_or_404(conversation_id)
+        prelab = self._extract_prelab_config(conversation)
+
+        # Jeśli pre-lab jest wyłączony lub nieobecny, oznaczamy go jako domyślnie zaliczony
         if not prelab or not getattr(prelab, "enabled", False):
             return {
                 "enabled": False,
@@ -62,7 +62,7 @@ class PrelabService:
         return {
             "enabled": True,
             "passed": conversation.prelab_passed,
-            "questions": [{"id": q.id, "prompt": q.prompt} for q in prelab.questions],
+            "questions": [{"id": q.id, "question": q.prompt} for q in prelab.questions],
             "attempts": conversation.prelab_attempts,
             "max_attempts": prelab.max_attempts,
             "score": conversation.last_prelab_score,
@@ -71,23 +71,27 @@ class PrelabService:
 
     @staticmethod
     def _is_keyword_present(keyword: str, text: str) -> bool:
-        """Sprawdza obecność słowa kluczowego z poszanowaniem granic wyrazów."""
+        """Sprawdza obecność słowa kluczowego z poszanowaniem granic słów (\b)."""
         pattern = rf"\b{re.escape(keyword.lower())}\b"
         return bool(re.search(pattern, text, re.IGNORECASE))
 
     def _evaluate_question(self, question: Any, student_answer: str) -> bool:
-        """Ocenia pojedyncze pytanie quizowe."""
-        cleaned = student_answer.strip()
-        if not question.expected_keywords:
-            return bool(cleaned)
+        """Ocenia odpowiedź na pojedyncze pytanie na podstawie listy expected_keywords."""
+        cleaned_answer = student_answer.strip()
+        expected_keywords = getattr(question, "expected_keywords", None) or []
 
-        return any(self._is_keyword_present(kw, cleaned) for kw in question.expected_keywords)
+        # Pytanie otwarte bez zdefiniowanych słów kluczowych: akceptuje każdą niepustą odpowiedź
+        if not expected_keywords:
+            return bool(cleaned_answer)
+
+        return any(self._is_keyword_present(kw, cleaned_answer) for kw in expected_keywords)
 
     def submit_prelab(self, conversation_id: str, payload: PreLabSubmitRequest) -> dict[str, Any]:
-        """Weryfikuje nadesłane odpowiedzi i aktualizuje uprawnienia sesji."""
+        """Weryfikuje nadesłane odpowiedzi, nalicza próbę i odblokowuje dostęp do czatu po zaliczeniu."""
         conversation = self._sessions.get_conversation_or_404(conversation_id)
-        prelab = getattr(conversation.config, "pre_lab", None) or getattr(conversation.config, "preLab", None)
+        prelab = self._extract_prelab_config(conversation)
 
+        # Scenariusz 1: Pre-lab nie jest wymagany w konfiguracji tego zadania
         if not prelab or not getattr(prelab, "enabled", False):
             conversation.prelab_passed = True
             self._sessions.save_conversation(conversation_id, conversation)
@@ -99,12 +103,9 @@ class PrelabService:
                 "unlocked": True,
             }
 
-        # Blokada po przekroczeniu liczby prób
-        if (
-            prelab.max_attempts is not None
-            and conversation.prelab_attempts >= prelab.max_attempts
-            and not conversation.prelab_passed
-        ):
+        # Scenariusz 2: Blokada po wyczerpaniu limitu podejść
+        has_max_attempts = prelab.max_attempts is not None
+        if has_max_attempts and conversation.prelab_attempts >= prelab.max_attempts and not conversation.prelab_passed:
             return PreLabEvaluationResult(
                 passed=False,
                 score=conversation.last_prelab_score or 0.0,
@@ -115,31 +116,42 @@ class PrelabService:
                 hint_after_fail=prelab.hint_after_fail,
             ).to_dict()
 
+        # Scenariusz 3: Ocena nadesłanych odpowiedzi
         conversation.prelab_attempts += 1
-        answers_by_id = {a.id: a.answer for a in payload.answers}
-        failures: list[str] = []
-        matched = 0
-        total = len(prelab.questions) or 1
+        answers_by_id = {item.id: item.answer for item in payload.answers}
 
-        for q in prelab.questions:
-            student_ans = answers_by_id.get(q.id, "")
-            if self._evaluate_question(q, student_ans):
-                matched += 1
+        failed_question_ids: list[str] = []
+        correct_count = 0
+        total_questions = len(prelab.questions) or 1
+
+        for question in prelab.questions:
+            student_answer = answers_by_id.get(question.id, "")
+            if self._evaluate_question(question, student_answer):
+                correct_count += 1
             else:
-                failures.append(q.id)
+                failed_question_ids.append(question.id)
 
-        score = round(matched / total, 3)
+        is_passed = len(failed_question_ids) == 0
+        score = round(correct_count / total_questions, 3)
+
+        # Aktualizacja agregatu rozmowy
         conversation.last_prelab_score = score
-        conversation.prelab_passed = len(failures) == 0
+        conversation.prelab_passed = is_passed
         conversation.touch()
         self._sessions.save_conversation(conversation_id, conversation)
 
+        status_detail = (
+            "Quiz zaliczony pomyślnie."
+            if is_passed
+            else f"Błędne pytania: {', '.join(failed_question_ids)}"
+        )
+
         return PreLabEvaluationResult(
-            passed=conversation.prelab_passed,
+            passed=is_passed,
             score=score,
-            detail="Quiz zaliczony pomyślnie." if conversation.prelab_passed else f"Błędne pytania: {', '.join(failures)}",
-            failed_ids=failures,
+            detail=status_detail,
+            failed_ids=failed_question_ids,
             attempts=conversation.prelab_attempts,
             max_attempts=prelab.max_attempts,
-            hint_after_fail=None if conversation.prelab_passed else prelab.hint_after_fail,
+            hint_after_fail=None if is_passed else prelab.hint_after_fail,
         ).to_dict()
