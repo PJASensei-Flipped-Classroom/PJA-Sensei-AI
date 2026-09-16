@@ -1,36 +1,34 @@
 # AGENTS.md — PJA-Sensei AI Module
 
-Short rules for humans and coding agents working in this repo.
+Krótkie reguły dla ludzi i agentów Cursor.
 
 ## Architecture (do)
 
-- Keep import direction: `api` → `application` → `ports` / `domain` / `core`.
-- Wire concrete `adapters` **only** in `AppContainer` (composition root).
-- Inject ports/services via constructors — never pass `AppContainer` into use-cases.
-- Put shared request DTOs in `app/application/dto.py` (not `app.api`).
-- Raise domain exceptions in application/domain; map HTTP in `app/api/errors.py` (+ thin guards).
-- Resolve DI with `Depends(get_container)` → `request.app.state.container` (set in lifespan).
-- Tests: `create_app(container=AppContainer())` + `TestClient` — no global container.
+- Kierunek importów: `api` → `application` → `ports` / `domain` / `core`.
+- Konkretne `adapters` wiruj **tylko** w `AppContainer` (composition root).
+- Use-case’y: zależności przez konstruktor — nigdy `AppContainer` w use-case.
+- Wspólne DTO request: `app/application/dto.py` (nie `app.api`).
+- Wyjątki domenowe w application/domain; HTTP w `app/api/errors.py` (+ cienkie guards).
+- DI: `Depends(get_container)` → `request.app.state.container` (lifespan).
+- Testy: `create_app(container=AppContainer())` + `TestClient` — bez globalnego kontenera.
 
 ## Do not
 
-- Import `app.api` from `application`.
-- Teach a second container source (`deps` module singleton).
-- Put business mutation in routers (e.g. feedback → `SessionService`).
-- Change SenseiConfig **camelCase** without syncing the IDE client.
-- Revive line-by-line file catalogs under `docs/catalog` or `docs/flows`.
-- Add Postgres / durable sessions here without an explicit product decision.
+- Import `app.api` z `application`.
+- Drugi singleton kontenera w `deps`.
+- Mutacja biznesowa w routerach (np. feedback → `SessionService`).
+- Zmiana SenseiConfig **camelCase** bez synchronizacji z klientem IDE.
+- Postgres / trwałe sesje bez jawnej decyzji produktowej.
 
-## OpenAPI & tests
+## OpenAPI i testy
 
-- After HTTP/schema changes: `python -m scripts.export_openapi`
+- Po zmianie HTTP/schematów: `python -m scripts.export_openapi`
 - Offline: `python -m pytest -q`
-- Live scenarios need uvicorn + local Ollama (or other OpenAI-compatible URL in `.env`) (`tests/live/`).
+- Live: uvicorn + Ollama (lub inny URL w `.env`) — `tests/live/`
 
-## More detail
+## Dokumentacja
 
-- Layers & happy-path: `docs/ARCHITECTURE.md`
-- Endpoints & examples: `docs/API.md`
-- Package map: `docs/CODEMAP.md`
-- Tests / scenarios / edges: `docs/TESTING.md`
-- Setup / PR checklist: `CONTRIBUTING.md`
+- Uruchomienie: `docs/URUCHOMIENIE.md`
+- Mapa plików: `docs/MAPA_PLIKOW.md`
+- Endpointy: `docs/API.md`
+- Testy (pliki + komendy): `docs/TESTY.md`
