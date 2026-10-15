@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SenseiConfig",
+  "type": "object",
+  "properties": {
+    "language": { "type": "string", "enum": ["pl", "en"] },
+    "learningContext": {
+      "type": "object",
+      "properties": {
+        "goals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "id": { "type": "string" }, "description": { "type": "string" } },
+            "required": ["id", "description"]
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["goals"]
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": { "id": { "type": "string" }, "afterGoal": { "type": "string" }, "hint": { "type": "string" } },
+        "required": ["id", "afterGoal"]
+      }
+    }
+  },
+  "required": ["language", "learningContext"]
+}
