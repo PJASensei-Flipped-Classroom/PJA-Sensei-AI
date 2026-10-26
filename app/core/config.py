@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List
+from typing import List, Optional
+
 
 class Settings(BaseSettings):
     LLM_BASE_URL: str
@@ -17,6 +18,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["*"]
     TRUST_X_FORWARDED_FOR: bool = True
     SECURITY_FAIL_CLOSED: bool = True
+    MAIN_MODEL_FALLBACK: Optional[str] = "qwen2.5-coder:3b"
+    LLM_MAX_RETRIES: int = 2
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 settings = Settings()

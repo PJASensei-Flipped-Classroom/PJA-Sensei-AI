@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Response, status
-from app.core.config import settings
+
+from app.api.routers import conversations
 
 router = APIRouter(tags=["Health"])
 
@@ -9,7 +10,7 @@ def health_check():
 
 @router.get("/health")
 def health(response: Response):
-    llm_configured = bool(settings.LLM_BASE_URL and settings.MAIN_MODEL)
+    llm_configured = conversations.get_llm_port().is_configured()
 
     if not llm_configured:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
@@ -18,7 +19,7 @@ def health(response: Response):
         "status": "ok" if llm_configured else "error",
         "llm_configured": llm_configured,
         "chroma_ok": False,
-        "conversations": 0,
+        "conversations": len(conversations.repo._store),
         "cache_size": 0
     }
 

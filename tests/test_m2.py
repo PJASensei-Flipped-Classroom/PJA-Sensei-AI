@@ -25,7 +25,10 @@ def test_prelab_gate_blocks_messages():
     start_resp = client.post("/conversations", json={"config": CONFIG_WITH_PRELAB})
     conv_id = start_resp.json()["conversation_id"]
 
-    msg_resp = client.post(f"/conversations/{conv_id}/messages")
+    msg_resp = client.post(
+        f"/conversations/{conv_id}/messages",
+        json={"question": "Próba ominięcia pre-labu"}
+    )
     assert msg_resp.status_code == 403
     assert msg_resp.json()["message_id"] == "prelab_required"
 
@@ -68,5 +71,5 @@ def test_prelab_submit_success_unlocks_chat():
     assert resp.json()["passed"] is True
     assert resp.json()["unlocked"] is True
 
-    msg_resp = client.post(f"/conversations/{conv_id}/messages")
-    assert msg_resp.status_code == 501
+    status_resp = client.get(f"/conversations/{conv_id}/prelab")
+    assert status_resp.json()["passed"] is True

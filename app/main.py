@@ -3,10 +3,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.api.errors import prelab_required_handler
+from app.api.errors import prelab_required_handler, token_budget_exceeded_handler, unknown_conversation_handler, \
+    unknown_message_handler
 from app.api.routers import health, config, conversations
 from app.core.config import settings
-from app.domain.exceptions import PrelabRequired
+from app.domain.exceptions import PrelabRequired, TokenBudgetExceeded, UnknownConversation, UnknownMessage
 
 
 @asynccontextmanager
@@ -41,6 +42,9 @@ def create_app() -> FastAPI:
     )
 
     app.add_exception_handler(PrelabRequired, prelab_required_handler)
+    app.add_exception_handler(TokenBudgetExceeded, token_budget_exceeded_handler)
+    app.add_exception_handler(UnknownConversation, unknown_conversation_handler)
+    app.add_exception_handler(UnknownMessage, unknown_message_handler)
 
     app.include_router(health.router)
     app.include_router(config.router)

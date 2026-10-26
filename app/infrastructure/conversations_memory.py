@@ -31,3 +31,6 @@ class InMemoryConversationRepository(ConversationRepository):
         for cid in to_delete:
             del self._store[cid]
         return len(to_delete)
+
+    def count(self) -> int:
+        return len(self._store)

@@ -64,6 +64,9 @@ class SenseiConfig(DomainModel):
         return self
 
 class CodeContext(DomainModel):
+    current_file_name: Optional[str] = None
+    current_code: Optional[str] = None
+    error_logs: Optional[str] = None
     selection: Optional[str] = None
     diagnostics: List[str] = []
     open_files: List[str] = []

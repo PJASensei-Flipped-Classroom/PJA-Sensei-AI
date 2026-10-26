@@ -1,19 +1,35 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.application.dto import ConversationStartRequest, EventRequest
+from starlette.responses import StreamingResponse
+
+from app.application.chat_service import ChatService
+from app.application.dto import ConversationStartRequest, EventRequest, MessageRequest, MessageResponse, FeedbackRequest
 from app.application.session_service import SessionService
 from app.domain.exceptions import UnknownConversation
+from app.domain.ports import LlmPort
 from app.infrastructure.conversations_memory import InMemoryConversationRepository
+from app.infrastructure.llm_openai import OpenAiCompatibleLlmAdapter
 
 from app.application.prelab_service import PrelabService
 from app.application.dto import PrelabSubmitRequest
 
 router = APIRouter(prefix="/conversations", tags=["Conversations"])
 
+
+
 repo = InMemoryConversationRepository()
 def get_session_service() -> SessionService:
     return SessionService(repo)
 def get_prelab_service() -> PrelabService:
     return PrelabService(repo)
+
+llm_adapter = OpenAiCompatibleLlmAdapter()
+def get_llm_port() -> LlmPort:
+    return llm_adapter
+def get_chat_service(
+    svc: SessionService = Depends(get_session_service),
+    llm: LlmPort = Depends(get_llm_port),
+) -> ChatService:
+    return ChatService(repo=repo, session_svc=svc, llm=llm)
 
 @router.post("")
 def start_conversation(req: ConversationStartRequest, svc: SessionService = Depends(get_session_service)):
@@ -31,7 +47,10 @@ def get_conversation(conv_id: str, svc: SessionService = Depends(get_session_ser
         return {
             "id": conv.id,
             "goal_progress": conv.goal_progress,
+            "lab_score": conv.calculate_lab_score(),
+            "lab_completed": conv.all_goals_done(),
             "unlocked_checkpoints": conv.unlocked_checkpoints,
+            "token_usage": conv.token_usage,
         }
     except UnknownConversation:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
@@ -95,9 +114,33 @@ def submit_prelab(
     return prelab_svc.submit(conv, req)
 
 
-@router.post("/{conv_id}/messages")
-def send_message(conv_id: str, svc: SessionService = Depends(get_session_service)):
-    svc.ensure_prelab_passed(conv_id)
+@router.post("/{conv_id}/messages", response_model=MessageResponse)
+def send_message(
+    conv_id: str,
+    req: MessageRequest,
+    chat_svc: ChatService = Depends(get_chat_service),
+):
+    return chat_svc.send_message(conv_id, req)
 
-    from fastapi import HTTPException
-    raise HTTPException(status_code=501, detail="chat in M3")
+@router.get("/{conv_id}/messages")
+def get_messages(conv_id: str, chat_svc: ChatService = Depends(get_chat_service)):
+    return {"messages": chat_svc.list_messages(conv_id)}
+
+@router.post("/{conv_id}/messages/{message_id}/feedback")
+def submit_feedback(
+    conv_id: str,
+    message_id: str,
+    req: FeedbackRequest,
+    chat_svc: ChatService = Depends(get_chat_service),
+):
+    return chat_svc.add_feedback(conv_id, message_id, req)
+
+@router.post("/{conv_id}/messages/stream")
+def stream_message(
+    conv_id: str,
+    req: MessageRequest,
+    chat_svc: ChatService = Depends(get_chat_service),
+):
+    ndjson_iter = chat_svc.stream_message(conv_id, req)
+    return StreamingResponse(ndjson_iter, media_type="application/x-ndjson")
+
