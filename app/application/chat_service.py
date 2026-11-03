@@ -1,46 +1,144 @@
 import json
-import re
 import uuid
-from typing import Dict, List, Optional, Any, Tuple, Iterator
-
-from app.application.response_pipeline import ResponsePipeline
-from app.domain.conversation import Conversation, ChatMessage, MessageFeedback, GoalStatus
-from app.domain.ports import ConversationRepository, LlmPort, LlmResult
-from app.domain.exceptions import UnknownMessage, TokenBudgetExceeded
+from typing import Dict, List, Optional, Any, Iterator, Tuple
+from app.domain.conversation import Conversation, ChatMessage, MessageFeedback
+from app.domain.ports import (
+    ConversationRepository,
+    LlmPort,
+    LlmResult,
+    RagPort,
+    CachePort, WebhookPort,
+)
+from app.domain.exceptions import UnknownMessage, TokenBudgetExceeded, HintRevealForbidden
 from app.application.session_service import SessionService
 from app.application.prompts import build_system_prompt, build_user_prompt
+from app.application.response_pipeline import ResponsePipeline
+from app.application.security import SecurityGuard
+from app.application.pedagogy_gates import PedagogyGates
+from app.infrastructure.cache_memory import build_cache_key
+from app.core.config import settings
 from app.application.dto import (
     MessageRequest,
     MessageResponse,
     GoalProgressEntryDTO,
-    NextCheckpointDTO,
     FeedbackRequest,
     FeedbackResponse,
+    HintRevealResponse,
 )
 
-STATUS_RANK: Dict[GoalStatus, int] = {
-    "not_started": 0,
-    "in_progress": 1,
-    "done": 2,
-}
 
 class ChatService:
-    def __init__(self, repo: ConversationRepository, session_svc: SessionService, llm: LlmPort, pipeline: Optional[ResponsePipeline] = None,):
+    def __init__(
+        self,
+        repo: ConversationRepository,
+        session_svc: SessionService,
+        llm: LlmPort,
+        pipeline: Optional[ResponsePipeline] = None,
+        security_guard: Optional[SecurityGuard] = None,
+        pedagogy_gates: Optional[PedagogyGates] = None,
+        rag: Optional[RagPort] = None,
+        cache: Optional[CachePort] = None,
+        webhooks: Optional[WebhookPort] = None,
+    ):
         self.repo = repo
         self.session_svc = session_svc
         self.llm = llm
         self.pipeline = pipeline or ResponsePipeline()
+        self.security_guard = security_guard or SecurityGuard(llm=llm)
+        self.pedagogy_gates = pedagogy_gates or PedagogyGates()
+        self.rag = rag
+        self.cache = cache
+        self.webhooks = webhooks
 
     def list_messages(self, conv_id: str) -> List[Dict[str, Any]]:
         conv = self.session_svc.get_or_404(conv_id)
         return [m.model_dump() for m in conv.messages]
 
-    def _prepare_turn(self, conv_id: str, req: MessageRequest) -> Tuple[Conversation, Optional[MessageResponse], str, List[dict[str, str]]]:
+    def _emit_message_webhook(self, conv: Conversation, response_obj: MessageResponse) -> None:
+        if self.webhooks is not None:
+            self.webhooks.send_event(
+                "message",
+                {
+                    "conversation_id": conv.id,
+                    "message_id": response_obj.message_id,
+                    "prompt_score": response_obj.prompt_score,
+                    "lab_score": response_obj.lab_score,
+                    "penalty_applied": response_obj.penalty_applied,
+                    "tokens_used": response_obj.tokens_used,
+                    "model": response_obj.model,
+                },
+            )
+
+    def _build_gate_response(
+        self,
+        conv: Conversation,
+        req: MessageRequest,
+        gate_message_id: str,
+        answer: str,
+        feedback: str,
+        next_step: str,
+        penalty: bool,
+        debug_info: Dict[str, Any],
+    ) -> MessageResponse:
+        user_msg = ChatMessage(
+            message_id=str(uuid.uuid4()),
+            role="user",
+            content=req.question,
+            client_message_id=req.client_message_id,
+            code_context=req.code_context.model_dump(by_alias=True) if req.code_context else None,
+        )
+        assistant_msg = ChatMessage(
+            message_id=gate_message_id,
+            role="assistant",
+            content=answer,
+            prompt_score=1,
+            prompt_feedback=feedback,
+            penalty_applied=penalty,
+            suggested_next_step=next_step,
+            tokens_used=0,
+            model="gate",
+        )
+        conv.messages.append(user_msg)
+        conv.messages.append(assistant_msg)
+
+        goal_progress_list = [
+            GoalProgressEntryDTO(goal=g.id, status=conv.goal_progress.get(g.id, "not_started"))
+            for g in conv.config.learning_context.goals
+        ]
+        next_cp = self.pipeline.evaluate_checkpoints(conv)
+
+        response_obj = MessageResponse(
+            message_id=gate_message_id,
+            answer=answer,
+            prompt_score=1,
+            prompt_feedback=feedback,
+            tokens_used=0,
+            penalty_applied=penalty,
+            sources=[],
+            suggested_next_step=next_step,
+            goal_progress=goal_progress_list,
+            lab_score=conv.calculate_lab_score(),
+            next_checkpoint=next_cp,
+            model="gate",
+            debug_info=debug_info,
+        )
+
+        if req.client_message_id:
+            conv.idempotency_cache[req.client_message_id] = response_obj.model_dump()
+
+        self.repo.save(conv)
+        self._emit_message_webhook(conv, response_obj)
+        return response_obj
+
+    def _prepare_turn(
+        self, conv_id: str, req: MessageRequest
+    ) -> Tuple[Conversation, Optional[MessageResponse], str, List[Dict[str, str]], List[str]]:
         conv = self.session_svc.ensure_prelab_passed(conv_id)
 
         if req.client_message_id and req.client_message_id in conv.idempotency_cache:
             cached = MessageResponse(**conv.idempotency_cache[req.client_message_id])
-            return conv, cached, "", []
+            return conv, cached, "", [], []
+
         max_tokens = conv.config.max_tokens_per_session
         if max_tokens is not None and conv.token_usage >= max_tokens:
             raise TokenBudgetExceeded(
@@ -49,23 +147,78 @@ class ChatService:
                 used=conv.token_usage,
             )
 
-        system_prompt = build_system_prompt(conv.config, conv.goal_progress)
+        sec_verdict = self.security_guard.check(req.question)
+        if sec_verdict.blocked:
+            lang = conv.config.language
+            blocked_resp = self._build_gate_response(
+                conv=conv,
+                req=req,
+                gate_message_id="blocked",
+                answer=(
+                    "Wiadomość została zablokowana przez filtr bezpieczeństwa systemu. Skupmy się na merytorycznym rozwiązaniu zadania laboratoryjnego."
+                    if lang == "pl"
+                    else "Your message was blocked by the security filter. Let's focus on solving the lab assignment."
+                ),
+                feedback=sec_verdict.reason or "Security violation",
+                next_step=(
+                    "Zadaj pytanie dotyczące kodu lub problemu z laboratorium."
+                    if lang == "pl"
+                    else "Ask a question related to your lab code or problem."
+                ),
+                penalty=True,
+                debug_info={"security_blocked": True, "stage": sec_verdict.stage, "reason": sec_verdict.reason},
+            )
+            return conv, blocked_resp, "", [], []
+
+        ped_verdict = self.pedagogy_gates.evaluate(conv.config, req.question, req.code_context)
+        if ped_verdict.rejected:
+            conv.frustration_streak += 1
+            rejected_resp = self._build_gate_response(
+                conv=conv,
+                req=req,
+                gate_message_id="rejected",
+                answer=ped_verdict.answer or "Zapytanie odrzucone przez bramkę dydaktyczną.",
+                feedback=ped_verdict.prompt_feedback or "Pedagogy gate rejected",
+                next_step=ped_verdict.suggested_next_step or "Popraw zapytanie.",
+                penalty=ped_verdict.penalty_applied,
+                debug_info={
+                    "pedagogy_rejected": True,
+                    "reason_code": ped_verdict.reason_code,
+                    "frustration_streak": conv.frustration_streak,
+                },
+            )
+            return conv, rejected_resp, "", [], []
+
+        rag_chunks = []
+        rag_sources: List[str] = []
+        if self.rag is not None and conv.config.reference_materials:
+            rag_chunks = self.rag.retrieve(conv.id, req.question, top_k=settings.RAG_TOP_K)
+            for chunk in rag_chunks:
+                source_entry = f"{chunk.title} ({chunk.link})" if chunk.link else chunk.title
+                if source_entry not in rag_sources:
+                    rag_sources.append(source_entry)
+
+        system_prompt = build_system_prompt(conv.config, conv.goal_progress, rag_chunks=rag_chunks)
         history_messages = [
-            {"role": m.role, "content": m.content} for m in conv.messages[-10:]
+            {"role": m.role, "content": m.content}
+            for m in conv.messages[-10:]
         ]
         user_prompt_content = build_user_prompt(req.question, req.code_context)
         history_messages.append({"role": "user", "content": user_prompt_content})
 
-        return conv, None, system_prompt, history_messages
+        return conv, None, system_prompt, history_messages, rag_sources
 
     def _finalize_response(
-            self,
-            conv: Conversation,
-            req: MessageRequest,
-            system_prompt: str,
-            history_messages: List[Dict[str, str]],
-            llm_result: LlmResult,
+        self,
+        conv: Conversation,
+        req: MessageRequest,
+        system_prompt: str,
+        history_messages: List[Dict[str, str]],
+        llm_result: LlmResult,
+        sources: Optional[List[str]] = None,
     ) -> MessageResponse:
+        prev_done_count = sum(1 for s in conv.goal_progress.values() if s == "done")
+
         parsed, is_fallback = self.pipeline.extract_json(llm_result.raw_content)
         total_tokens = llm_result.tokens_used
         used_model = llm_result.model
@@ -97,6 +250,7 @@ class ChatService:
                     is_fallback = False
 
         goal_progress_list = self.pipeline.normalize_goals(conv, parsed.get("goal_progress", []))
+        new_done_count = sum(1 for s in conv.goal_progress.values() if s == "done")
         next_cp = self.pipeline.evaluate_checkpoints(conv)
         lab_score = conv.calculate_lab_score()
 
@@ -120,6 +274,14 @@ class ChatService:
         )
 
         prompt_score = 10 if (conv.all_goals_done() and not penalty_applied) else adjusted_score
+
+        has_errors = bool(
+            req.code_context and (req.code_context.error_logs or req.code_context.diagnostics)
+        )
+        if new_done_count > prev_done_count:
+            conv.frustration_streak = 0
+        elif penalty_applied or prompt_score <= 4 or has_errors:
+            conv.frustration_streak += 1
 
         user_msg = ChatMessage(
             message_id=str(uuid.uuid4()),
@@ -148,6 +310,8 @@ class ChatService:
         debug_info = dict(llm_result.debug_info or {})
         debug_info["fallback_json"] = is_fallback
         debug_info["language_drift_retried"] = drift_retried
+        debug_info["frustration_streak"] = conv.frustration_streak
+        debug_info.setdefault("cache_hit", False)
 
         response_obj = MessageResponse(
             message_id=assistant_msg_id,
@@ -156,7 +320,7 @@ class ChatService:
             prompt_feedback=prompt_feedback,
             tokens_used=total_tokens,
             penalty_applied=penalty_applied,
-            sources=[],
+            sources=sources or [],
             suggested_next_step=suggested_next_step,
             goal_progress=goal_progress_list,
             lab_score=lab_score,
@@ -169,26 +333,56 @@ class ChatService:
             conv.idempotency_cache[req.client_message_id] = response_obj.model_dump()
 
         self.repo.save(conv)
+        self._emit_message_webhook(conv, response_obj)
         return response_obj
 
     def send_message(self, conv_id: str, req: MessageRequest) -> MessageResponse:
-        conv, cached, system_prompt, history_messages = self._prepare_turn(conv_id, req)
-        if cached is not None:
-            return cached
-
-        llm_result = self.llm.generate_json(
-            system_prompt=system_prompt, messages=history_messages
+        conv, early_response, system_prompt, history_messages, rag_sources = self._prepare_turn(
+            conv_id, req
         )
-        return self._finalize_response(conv, req, system_prompt, history_messages, llm_result)
+        if early_response is not None:
+            return early_response
+
+        model_name = getattr(self.llm, "model", "default")
+        cache_key = build_cache_key(system_prompt, history_messages, model=model_name)
+        llm_result = self.cache.get(cache_key) if self.cache is not None else None
+
+        if llm_result is None:
+            llm_result = self.llm.generate_json(
+                system_prompt=system_prompt, messages=history_messages
+            )
+            if self.cache is not None:
+                self.cache.set(cache_key, llm_result)
+
+        return self._finalize_response(
+            conv, req, system_prompt, history_messages, llm_result, sources=rag_sources
+        )
 
     def stream_message(self, conv_id: str, req: MessageRequest) -> Iterator[str]:
-        conv, cached, system_prompt, history_messages = self._prepare_turn(conv_id, req)
+        conv, early_response, system_prompt, history_messages, rag_sources = self._prepare_turn(
+            conv_id, req
+        )
 
         def _ndjson_generator() -> Iterator[str]:
-            if cached is not None:
-                final_payload = {"type": "final", **cached.model_dump()}
-                yield json.dump(final_payload, ensure_ascii=False) + "\n"
+            if early_response is not None:
+                final_payload = {"type": "final", **early_response.model_dump()}
+                yield json.dumps(final_payload, ensure_ascii=False) + "\n"
                 return
+
+            model_name = getattr(self.llm, "model", "stream-model")
+            cache_key = build_cache_key(system_prompt, history_messages, model=model_name)
+            cached_llm = self.cache.get(cache_key) if self.cache is not None else None
+
+            if cached_llm is not None:
+                token_event = {"type": "token", "text": cached_llm.raw_content}
+                yield json.dumps(token_event, ensure_ascii=False) + "\n"
+                final_response = self._finalize_response(
+                    conv, req, system_prompt, history_messages, cached_llm, sources=rag_sources
+                )
+                final_payload = {"type": "final", **final_response.model_dump()}
+                yield json.dumps(final_payload, ensure_ascii=False) + "\n"
+                return
+
             collected_chunks: List[str] = []
             for chunk_text in self.llm.stream_json(
                 system_prompt=system_prompt, messages=history_messages
@@ -197,17 +391,83 @@ class ChatService:
                     collected_chunks.append(chunk_text)
                     token_event = {"type": "token", "text": chunk_text}
                     yield json.dumps(token_event, ensure_ascii=False) + "\n"
+
             full_raw = "".join(collected_chunks)
             estimated_tokens = max(1, len(full_raw) // 4)
             llm_result = LlmResult(
                 raw_content=full_raw,
                 tokens_used=estimated_tokens,
-                model=getattr(self.llm, "model", "stream-model"),
+                model=model_name,
             )
-            final_response = self._finalize_response(conv, req, system_prompt, history_messages, llm_result)
+            if self.cache is not None:
+                self.cache.set(cache_key, llm_result)
+
+            final_response = self._finalize_response(
+                conv, req, system_prompt, history_messages, llm_result, sources=rag_sources
+            )
             final_payload = {"type": "final", **final_response.model_dump()}
             yield json.dumps(final_payload, ensure_ascii=False) + "\n"
+
         return _ndjson_generator()
+
+    def reveal_hint(self, conv_id: str) -> HintRevealResponse:
+        conv = self.session_svc.ensure_prelab_passed(conv_id)
+        max_hints = conv.config.max_hints
+        required_streak = conv.config.frustration_threshold
+
+        if conv.hints_revealed >= max_hints:
+            raise HintRevealForbidden(
+                reason="quota_exceeded",
+                language=conv.config.language,
+                streak=conv.frustration_streak,
+                required_streak=required_streak,
+                hints_used=conv.hints_revealed,
+                max_hints=max_hints,
+            )
+
+        if conv.frustration_streak < required_streak:
+            raise HintRevealForbidden(
+                reason="insufficient_streak",
+                language=conv.config.language,
+                streak=conv.frustration_streak,
+                required_streak=required_streak,
+                hints_used=conv.hints_revealed,
+                max_hints=max_hints,
+            )
+
+        available_hints = list(conv.config.hints)
+        for cp in conv.config.checkpoints:
+            if cp.hint and cp.hint not in available_hints:
+                available_hints.append(cp.hint)
+
+        idx = conv.hints_revealed
+        if idx < len(available_hints):
+            hint_text = available_hints[idx]
+        else:
+            pending_goals = [
+                g.description
+                for g in conv.config.learning_context.goals
+                if conv.goal_progress.get(g.id) != "done"
+            ]
+            target_desc = pending_goals[0] if pending_goals else conv.config.evaluation_criteria
+            hint_text = (
+                f"Wskazówka #{idx + 1}: Skup się na kroku: {target_desc}."
+                if conv.config.language == "pl"
+                else f"Hint #{idx + 1}: Focus on completing: {target_desc}."
+            )
+
+        conv.hints_revealed += 1
+        conv.revealed_hints.append(hint_text)
+        conv.frustration_streak = 0
+        self.repo.save(conv)
+
+        return HintRevealResponse(
+            hint=hint_text,
+            hints_used=conv.hints_revealed,
+            max_hints=max_hints,
+            hints_remaining=max(0, max_hints - conv.hints_revealed),
+            frustration_streak_reset=True,
+        )
 
     def add_feedback(self, conv_id: str, message_id: str, req: FeedbackRequest) -> FeedbackResponse:
         conv = self.session_svc.get_or_404(conv_id)

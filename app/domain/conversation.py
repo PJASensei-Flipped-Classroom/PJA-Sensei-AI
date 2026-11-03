@@ -1,9 +1,14 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List, Any, Literal, Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time
 from app.domain.sensei import SenseiConfig
 
 GoalStatus = Literal["not_started", "in_progress", "done"]
+STATUS_WEIGHTS: Dict[GoalStatus, float] = {
+    "not_started": 0.0,
+    "in_progress": 0.5,
+    "done": 1.0,
+}
 
 class MessageFeedback(BaseModel):
     rating: int = Field(ge=1, le=5)
@@ -36,6 +41,14 @@ class Conversation(BaseModel):
     last_activity: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     prelab_attempts: int = 0
     idempotency_cache: Dict[str, Dict[str, Any]] = {}
+    frustration_streak: int = 0
+    hints_revealed: int = 0
+    revealed_hints: List[str] = []
+
+    events: List[Dict[str, Any]] = Field(default_factory=list)
+    summary: Optional[Dict[str, Any]] = None
+    is_deleted: bool = False
+    deleted_at: Optional[float] = None
 
     def touch(self):
         self.last_activity = datetime.now(timezone.utc)

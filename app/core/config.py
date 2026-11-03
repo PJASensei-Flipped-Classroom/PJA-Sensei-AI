@@ -10,16 +10,21 @@ class Settings(BaseSettings):
     AI_AUTH_ENABLED: bool = False
     AI_JWT_SECRET: str = ""
     RATE_LIMIT_PER_MINUTE: int = 60
-    CACHE_SIZE: int = 1000
-    CACHE_TTL: int = 60*60
     CONVERSATION_TTL_SECONDS: int = 7200
-    TELEMETRY_URL: str = ""
-    SUMMARY_WEBHOOK_URL: str = ""
     CORS_ORIGINS: List[str] = ["*"]
     TRUST_X_FORWARDED_FOR: bool = True
     SECURITY_FAIL_CLOSED: bool = True
     MAIN_MODEL_FALLBACK: Optional[str] = "qwen2.5-coder:3b"
     LLM_MAX_RETRIES: int = 2
+    CACHE_SIZE: int = 128
+    CACHE_TTL_SECONDS: int = 3600
+    RAG_TOP_K: int = 3
+    RAG_FETCH_TIMEOUT: float = 5.0
+
+    TELEMETRY_URL: str = ""
+    SUMMARY_WEBHOOK_URL: str = ""
+    WEBHOOK_URL: str = ""
+    WEBHOOK_TIMEOUT: float = 3.0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 settings = Settings()

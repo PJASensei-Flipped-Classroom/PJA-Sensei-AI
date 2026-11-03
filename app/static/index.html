@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>PJA-Sensei – Laboratorium AI</title>
+  <style>
+    :root {
+      --bg-color: #1e293b;
+      --card-bg: #0f172a;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text);
+      margin: 0;
+      padding: 24px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    h2, h3 { margin-top: 0; }
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: var(--accent-hover); }
+    button.secondary { background-color: var(--border); }
+    button.secondary:hover { background-color: #475569; }
+    textarea, input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      background: #020617;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .badges {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .badge {
+      background: var(--accent);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .chat-box {
+      height: 250px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .chat-msg {
+      padding: 8px 12px;
+      border-radius: 6px;
+      max-width: 85%;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .chat-msg.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: white;
+    }
+    .chat-msg.assistant {
+      align-self: flex-start;
+      background: var(--border);
+      color: var(--text);
+    }
+    pre {
+      background: #020617;
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 12px;
+      color: #38bdf8;
+      max-height: 220px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- SEKCJA WYKŁADOWCY -->
+  <div class="card" id="teacher-panel">
+    <h2>Panel Wykładowcy – Konfiguracja Laboratorium</h2>
+    <p style="color: var(--text-muted); font-size: 14px;">Wczytaj preset konfiguracji lub dostosuj JSON przed uruchomieniem sesji dla studenta.</p>
+    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+      <button onclick="loadPreset()">Wczytaj preset Spring Boot (PL)</button>
+      <button class="secondary" onclick="validateConfig()">Waliduj JSON</button>
+    </div>
+    <textarea id="config-json" rows="12"></textarea>
+    <div style="margin-top: 14px;">
+      <button onclick="startSession()">Uruchom sesję laboratoryjną</button>
+    </div>
+  </div>
+
+  <!-- SEKCJA STUDENTA -->
+  <div class="card" id="student-panel" style="display: none;">
+    <h2>Panel Studenta – Stanowisko Laboratoryjne</h2>
+    <div class="badges">
+      <span class="badge" id="badge-session">Sesja: -</span>
+      <span class="badge" id="badge-score">Wynik labu: 0%</span>
+      <span class="badge" id="badge-cp">Checkpoint: -</span>
+    </div>
+
+    <!-- BRAMKA PRE-LAB -->
+    <div class="card" id="prelab-card" style="margin-bottom: 20px; background: #131d31;">
+      <h3 style="margin-bottom: 6px;">Bramka Pre-Lab</h3>
+      <p id="prelab-question" style="color: #cbd5e1; font-size: 14px; margin-top: 0;">Sprawdzanie stanu...</p>
+      <div id="prelab-form">
+        <input type="text" id="prelab-answer" placeholder="Wpisz odpowiedź na pytanie Pre-Lab..." style="margin-bottom: 10px;" />
+        <button onclick="submitPrelab()">Wyślij odpowiedź Pre-Lab</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- KOD -->
+      <div>
+        <h3>Twój Kod (Code Context)</h3>
+        <textarea id="code-context" rows="12" placeholder="Wklej aktualny kod z IDE..."></textarea>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button class="secondary" onclick="sendEvent('compile_error')">Symuluj błąd kompilacji</button>
+          <button class="secondary" onclick="revealHint()">Odkryj wskazówkę (Hint)</button>
+        </div>
+      </div>
+
+      <!-- CZAT -->
+      <div>
+        <h3>Czat z PJA-Sensei</h3>
+        <div class="chat-box" id="chat-messages">
+          <div class="chat-msg assistant">Witaj! W czym mogę Ci dzisiaj pomóc w ramach laboratorium?</div>
+        </div>
+        <input type="text" id="chat-input" placeholder="Zadaj pytanie mentorowi..." style="margin-bottom: 10px;" onkeydown="if(event.key==='Enter') sendMessage()" />
+        <div style="display: flex; gap: 10px;">
+          <button onclick="sendMessage()">Wyślij wiadomość</button>
+          <button class="secondary" onclick="generateSummary()">Zakończ i wygeneruj Summary</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KONSOLA PODGLĄDU JSON -->
+  <div class="card">
+    <h3 style="margin-bottom: 6px; font-size: 14px;">Podgląd odpowiedzi API (Ostatnia odpowiedź JSON)</h3>
+    <pre id="json-output">// Wyniki zapytań pojawią się tutaj...</pre>
+  </div>
+</div>
+
+<script>
+  let currentConvId = null;
+
+  function showJson(data) {
+    document.getElementById('json-output').textContent = JSON.stringify(data, null, 2);
+  }
+
+  async function loadPreset() {
+    try {
+      const res = await fetch('/config/presets');
+      const data = await res.json();
+      if (data.presets && data.presets.length > 0) {
+        document.getElementById('config-json').value = JSON.stringify(data.presets[0].config, null, 2);
+        showJson({ status: "Preset załadowany pomyślnie" });
+      }
+    } catch (e) {
+      showJson({ error: e.toString() });
+    }
+  }
+
+  async function validateConfig() {
+    const raw = document.getElementById('config-json').value.trim();
+    if (!raw) {
+      alert("Pole konfiguracji nie może być puste!");
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      const res = await fetch('/validate-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: parsed })
+      });
+      const data = await res.json();
+      showJson(data);
+    } catch (e) {
+      showJson({ parse_error: e.toString() });
+    }
+  }
+
+  async function startSession() {
+    const raw = document.getElementById('config-json').value.trim();
+    if (!raw) {
+      alert("Najpierw wczytaj lub wklej konfigurację!");
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      const res = await fetch('/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: parsed })
+      });
+      const data = await res.json();
+      showJson(data);
+
+      if (res.ok && data.conversation_id) {
+        currentConvId = data.conversation_id;
+        document.getElementById('badge-session').textContent = `Sesja: ${currentConvId}`;
+        document.getElementById('student-panel').style.display = 'block';
+
+        const prelabCard = document.getElementById('prelab-card');
+        const prelabQ = document.getElementById('prelab-question');
+        const prelabForm = document.getElementById('prelab-form');
+
+        if (data.prelab_required) {
+          prelabCard.style.display = 'block';
+          prelabForm.style.display = 'block';
+          prelabQ.textContent = data.prelab_question || "Odpowiedz na pytanie wstępne:";
+        } else {
+          prelabQ.textContent = "Pre-Lab nie jest wymagany w tej konfiguracji.";
+          prelabForm.style.display = 'none';
+        }
+
+        window.scrollTo({ top: document.getElementById('student-panel').offsetTop, behavior: 'smooth' });
+      }
+    } catch (e) {
+      showJson({ error: e.toString() });
+    }
+  }
+
+  async function submitPrelab() {
+    if (!currentConvId) return;
+    const ans = document.getElementById('prelab-answer').value.trim();
+    if (!ans) {
+      alert("Wpisz odpowiedź na pytanie Pre-Lab!");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/conversations/${currentConvId}/prelab`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: [{ id: "q1", answer: ans }] })
+      });
+      const data = await res.json();
+      showJson(data);
+
+      if (res.ok && (data.passed || data.status === "completed" || data.prelab_completed)) {
+        document.getElementById('prelab-question').textContent = "Pre-Lab zaliczony pomyślnie! Czat jest odblokowany.";
+        document.getElementById('prelab-form').style.display = 'none';
+      }
+    } catch (e) {
+      showJson({ error: e.toString() });
+    }
+  }
+
+  async function sendMessage() {
+    if (!currentConvId) {
+      alert("Najpierw uruchom sesję!");
+      return;
+    }
+    const input = document.getElementById('chat-input');
+    const question = input.value.trim();
+    if (!question) {
+      alert("Wiadomość nie może być pusta!");
+      return;
+    }
+
+    appendChatMessage('user', question);
+    input.value = '';
+
+    const code = document.getElementById('code-context').value;
+    const payload = { question: question };
+    if (code.trim()) {
+      payload.codeContext = { codeSnippet: code };
+    }
+
+    try {
+      const res = await fetch(`/conversations/${currentConvId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      showJson(data);
+
+      if (res.ok) {
+        appendChatMessage('assistant', data.answer);
+
+        let score = (data.lab_score !== undefined && data.lab_score !== null) ? data.lab_score : 0;
+        if (score > 0 && score <= 1) {
+          score = Math.round(score * 100);
+        } else if (score > 1 && score <= 10 && data.goal_progress) {
+          score = score * 10;
+        }
+
+        document.getElementById('badge-score').textContent = `Wynik labu: ${score}%`;
+
+        if (data.next_checkpoint) {
+          const cpId = typeof data.next_checkpoint === 'object'
+            ? (data.next_checkpoint.id || JSON.stringify(data.next_checkpoint))
+            : data.next_checkpoint;
+          document.getElementById('badge-cp').textContent = `Checkpoint: ${cpId}`;
+        }
+      } else {
+        appendChatMessage('assistant', `Błąd: ${data.detail || 'Nie udało się przetworzyć wiadomości.'}`);
+      }
+    } catch (e) {
+      showJson({ error: e.toString() });
+    }
+  }
+
+  function appendChatMessage(role, text) {
+    const box = document.getElementById('chat-messages');
+    const msg = document.createElement('div');
+    msg.className = `chat-msg ${role}`;
+    msg.textContent = text;
+    box.appendChild(msg);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function sendEvent(type) {
+    if (!currentConvId) return;
+    try {
+      const res = await fetch(`/conversations/${currentConvId}/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: type, meta: { line: 1 } })
+      });
+      const data = await res.json();
+      showJson(data);
+    } catch (e) {
+      showJson({ error: e.toString() });
+    }
+  }
+
+  async function revealHint() {
+    if (!currentConvId) return;
+    try {
+      const res = await fetch(`/conversations/${currentConvId}/hints/reveal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      showJson(data);
+      if (res.ok && data.hint) {
+        appendChatMessage('assistant', `💡 WSKAZÓWKA: ${data.hint}`);
+      }
+    } catch (e) {
+      showJson({ error: e.toString() });
+    }
+  }
+
+  async function generateSummary() {
+    if (!currentConvId) return;
+    try {
+      const res = await fetch(`/conversations/${currentConvId}/summary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      showJson(data);
+      if (res.ok && data.summary) {
+        appendChatMessage('assistant', `📋 PODSUMOWANIE SESJI:\n${data.summary}`);
+      }
+    } catch (e) {
+      showJson({ error: e.toString() });
+    }
+  }
+</script>
+
+</body>
+</html>

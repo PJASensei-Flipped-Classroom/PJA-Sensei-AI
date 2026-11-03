@@ -8,6 +8,7 @@ class DomainModel(BaseModel):
 class ReferenceMaterial(DomainModel):
     title: str
     link: str
+    content: Optional[str] = None
 
 class Goal(DomainModel):
     id: str
@@ -26,6 +27,8 @@ class AgentBehavior(DomainModel):
 class IdeRestrictions(DomainModel):
     allowed_files: Optional[List[str]] = None
     blocked_files: Optional[List[str]] = None
+    require_file_context: bool = False
+    pinned_identifiers: List[str] = []
 
 class Checkpoint(DomainModel):
     id: str
@@ -54,6 +57,11 @@ class SenseiConfig(DomainModel):
     ide_restrictions: IdeRestrictions = Field(default_factory=IdeRestrictions)
     checkpoints: List[Checkpoint] = []
     pre_lab: PreLabConfig = Field(default_factory=PreLabConfig)
+    require_file_context: bool = False
+    pinned_identifiers: List[str] = []
+    hints: List[str] = []
+    max_hints: int = 3
+    frustration_threshold: int = 2
 
     @model_validator(mode='after')
     def validate_checkpoints(self) -> 'SenseiConfig':
@@ -61,6 +69,10 @@ class SenseiConfig(DomainModel):
         for cp in self.checkpoints:
             if cp.after_goal not in goal_ids:
                 raise ValueError(f"Checkpoint '{cp.id}' odnosi się do nieistniejącego celu '{cp.after_goal}'")
+        if self.ide_restrictions.require_file_context:
+            self.require_file_context = True
+        if self.ide_restrictions.pinned_identifiers and not self.pinned_identifiers:
+            self.pinned_identifiers = list(self.ide_restrictions.pinned_identifiers)
         return self
 
 class CodeContext(DomainModel):

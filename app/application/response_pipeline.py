@@ -12,7 +12,6 @@ STATUS_RANK: Dict[GoalStatus, int] = {
 
 PL_DIACRITICS_RE = re.compile(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]")
 
-# Usunięto kolizyjne słowa (to, do, w, na), które występują powszechnie w języku angielskim
 PL_WORDS_RE = re.compile(
     r"\b(jest|nie|się|oraz|czy|jak|kod|że|aby|przez|tylko|funkcj\w*|klas\w*)\b",
     re.IGNORECASE,
@@ -32,13 +31,8 @@ CODE_BLOCK_RE = re.compile(r"```(?:[a-zA-Z0-9_+-]+)?\s*\n(.*?)```", re.DOTALL)
 
 
 class ResponsePipeline:
-    """Deterministyczny potok przetwarzania odpowiedzi LLM współdzielony przez sync i stream."""
 
     def extract_json(self, raw_text: str) -> Tuple[Optional[Dict[str, Any]], bool]:
-        """
-        Wyciąga słownik JSON z surowego tekstu.
-        Zwraca krotkę: (słownik_lub_None, czy_wystąpił_błąd_parsowania).
-        """
         if not raw_text or not raw_text.strip():
             return None, True
 
@@ -67,7 +61,6 @@ class ResponsePipeline:
         return None, True
 
     def build_fallback_payload(self, raw_text: str, conv: Conversation) -> Dict[str, Any]:
-        """Buduje bezpieczną strukturę, gdy LLM zwróci niepoprawny JSON (zły JSON != 500)."""
         clean_msg = (raw_text or "").strip()
         if not clean_msg or clean_msg.startswith("{"):
             clean_msg = (
@@ -101,7 +94,6 @@ class ResponsePipeline:
         }
 
     def has_language_drift(self, answer: str, expected_language: str) -> bool:
-        """Wykrywa, czy odpowiedź modelu została wygenerowana w innym języku niż wymaga sesja."""
         if not answer or len(answer.strip()) < 12:
             return False
 
@@ -116,13 +108,11 @@ class ResponsePipeline:
         print(f"[DEBUG DRIFT] Punkty PL: {pl_score} | Punkty EN: {en_score}")
 
         if expected_language == "pl":
-            # Wykrycie angielskiego: co najmniej 2 słowa angielskie i brak (lub maks 1 fałszywe) słowo polskie
             is_drift = en_score >= 2 and pl_score <= 1
             print(f"[DEBUG DRIFT] Wykryto drift: {is_drift}")
             return is_drift
 
         if expected_language == "en":
-            # Wykrycie polskiego przy oczekiwanym angielskim
             is_drift = pl_score >= 2 and en_score <= 1
             print(f"[DEBUG DRIFT] Wykryto drift: {is_drift}")
             return is_drift
@@ -136,10 +126,6 @@ class ResponsePipeline:
         prompt_score: int,
         penalty_applied: bool,
     ) -> Tuple[int, bool]:
-        """
-        Narzuca karę (code-penalty), jeśli odpowiedź zawiera wielolinijkowy gotowy kod
-        lub gdy student jawnie zażądał gotowca.
-        """
         has_large_code_block = False
         for match in CODE_BLOCK_RE.findall(answer or ""):
             non_empty_lines = [line for line in match.strip().splitlines() if line.strip()]
@@ -160,13 +146,9 @@ class ResponsePipeline:
     def normalize_goals(
         self, conv: Conversation, raw_goals: Any
     ) -> List[GoalProgressEntryDTO]:
-        """
-        Aktualizuje statusy celów w sesji (nigdy nie cofając postępu)
-        i zwraca pełną, znormalizowaną listę wszystkich celów z konfiguracji.
-        """
         valid_statuses = {"not_started", "in_progress", "done"}
         desc_to_id = {
-            g.description.lower(): g.id for g in conv.config.learning_context.goals
+            goal.description.lower(): goal.id for goal in conv.config.learning_context.goals
         }
         valid_ids = {g.id for g in conv.config.learning_context.goals}
 
@@ -200,16 +182,25 @@ class ResponsePipeline:
         ]
 
     def evaluate_checkpoints(self, conv: Conversation) -> Optional[NextCheckpointDTO]:
-        """Odblokowuje checkpointy, których warunek `after_goal` osiągnął status `done`."""
-        for cp in conv.config.checkpoints:
-            if conv.goal_progress.get(cp.after_goal) == "done":
-                if cp.id not in conv.unlocked_checkpoints:
-                    conv.unlocked_checkpoints.append(cp.id)
+        newly_unlocked = None
+        for checkpoint in conv.config.checkpoints:
+            if conv.goal_progress.get(checkpoint.after_goal) == "done":
+                if checkpoint.id not in conv.unlocked_checkpoints:
+                    conv.unlocked_checkpoints.append(checkpoint.id)
+                    newly_unlocked = checkpoint
 
-        for cp in conv.config.checkpoints:
-            if cp.id not in conv.unlocked_checkpoints:
+        if newly_unlocked is not None:
+            return NextCheckpointDTO(
+                id=newly_unlocked.id,
+                after_goal=newly_unlocked.after_goal,
+                hint=newly_unlocked.hint,
+                unlocked=True,
+            )
+
+        for checkpoint in conv.config.checkpoints:
+            if checkpoint.id not in conv.unlocked_checkpoints:
                 return NextCheckpointDTO(
-                    id=cp.id, after_goal=cp.after_goal, hint=None, unlocked=False
+                    id=checkpoint.id, after_goal=checkpoint.after_goal, hint=None, unlocked=False
                 )
 
         if conv.config.checkpoints:

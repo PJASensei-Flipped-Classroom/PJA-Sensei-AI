@@ -1,5 +1,7 @@
 import json
-from typing import Optional
+from typing import Optional, List
+
+from app.domain.ports import RagChunk
 from app.domain.sensei import SenseiConfig, CodeContext
 from app.domain.conversation import GoalStatus
 from typing import Dict
@@ -16,7 +18,7 @@ MODE_INSTRUCTIONS_EN = {
     "review": "Review the student's code against evaluation criteria and clean code principles.",
 }
 
-def build_system_prompt(config: SenseiConfig, current_progress: Dict[str, GoalStatus]) -> str:
+def build_system_prompt(config: SenseiConfig, current_progress: Dict[str, GoalStatus], rag_chunks: Optional[List[RagChunk]] = None,) -> str:
     goals_spec = [
         {
             "goal": g.id,
@@ -27,12 +29,21 @@ def build_system_prompt(config: SenseiConfig, current_progress: Dict[str, GoalSt
     ]
     goals_json = json.dumps(goals_spec, ensure_ascii=False, indent=2)
 
+    rag_section_pl = ""
+    rag_section_en = ""
+    if rag_chunks:
+        formatted_chunks = "\n".join(
+            f"- [{c.title} ({c.link})]: {c.snippet}" for c in rag_chunks
+        )
+        rag_section_pl = f"\nMATERIAŁY REFERENCYJNE LABU (RAG):\n{formatted_chunks}\n"
+        rag_section_en = f"\nLAB REFERENCE MATERIALS (RAG):\n{formatted_chunks}\n"
+
     if config.language == "pl":
         mode_desc = MODE_INSTRUCTIONS_PL.get(config.agent_behavior.mode, MODE_INSTRUCTIONS_PL["theory"])
         return f"""Jesteś sokratycznym mentorem programowania o imieniu {config.agent_persona.name} (ton: {config.agent_persona.tone}).
 Tryb pracy: {config.agent_behavior.mode.upper()} — {mode_desc}
 Kryteria ewaluacji laboratorium: {config.evaluation_criteria}
-
+{rag_section_pl}
 ZASADY DYDAKTYCZNE (BEZWZGLĘDNE):
 1. NIGDY nie podawaj gotowego, pełnego rozwiązania ani kompletnego kodu do skopiowania.
 2. Jeśli student prosi o gotowca ("napisz za mnie", "daj cały kod"), odmów uprzejmie, ustaw "penalty_applied": true, obniż "prompt_score" i zadaj pytanie naprowadzające.
@@ -64,7 +75,7 @@ ZWRÓĆ WYŁĄCZNIE POPRAWNY OBIEKT JSON (bez bloków markdown) o dokładnie tak
     return f"""You are a Socratic programming mentor named {config.agent_persona.name} (tone: {config.agent_persona.tone}).
 Mode: {config.agent_behavior.mode.upper()} — {mode_desc}
 Evaluation criteria: {config.evaluation_criteria}
-
+{rag_section_en}
 PEDAGOGICAL RULES (STRICT):
 1. NEVER provide a complete, copy-pasteable solution or write the full code for the student.
 2. If the student asks for a ready solution, politely refuse, set "penalty_applied": true, lower "prompt_score", and ask a guiding question.

@@ -8,9 +8,16 @@ router = APIRouter(tags=["Health"])
 def health_check():
     return {"status": "ok"}
 
+
 @router.get("/health")
 def health(response: Response):
+    from app.api.routers import conversations
     llm_configured = conversations.get_llm_port().is_configured()
+    chroma_ok = conversations.get_rag_port().is_healthy()
+    cache_size = conversations.get_cache_port().size()
+    active_convs = sum(
+        1 for c in conversations.repo._store.values() if not getattr(c, "is_deleted", False)
+    )
 
     if not llm_configured:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
@@ -18,9 +25,9 @@ def health(response: Response):
     return {
         "status": "ok" if llm_configured else "error",
         "llm_configured": llm_configured,
-        "chroma_ok": False,
+        "chroma_ok": chroma_ok,
         "conversations": len(conversations.repo._store),
-        "cache_size": 0
+        "cache_size": cache_size,
     }
 
 @router.get("/metrics")

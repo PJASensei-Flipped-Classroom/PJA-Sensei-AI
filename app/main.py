@@ -4,10 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.api.errors import prelab_required_handler, token_budget_exceeded_handler, unknown_conversation_handler, \
-    unknown_message_handler
-from app.api.routers import health, config, conversations
+    unknown_message_handler, hint_reveal_forbidden_handler, ssrf_blocked_handler
+from app.api.middleware import RequestIdMiddleware
+from app.api.routers import health, config, conversations, ui
 from app.core.config import settings
-from app.domain.exceptions import PrelabRequired, TokenBudgetExceeded, UnknownConversation, UnknownMessage
+from app.domain.exceptions import PrelabRequired, TokenBudgetExceeded, UnknownConversation, UnknownMessage, \
+    HintRevealForbidden, SsrfBlockedError
 
 
 @asynccontextmanager
@@ -33,6 +35,8 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
 
+    app.add_middleware(RequestIdMiddleware)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
@@ -45,7 +49,10 @@ def create_app() -> FastAPI:
     app.add_exception_handler(TokenBudgetExceeded, token_budget_exceeded_handler)
     app.add_exception_handler(UnknownConversation, unknown_conversation_handler)
     app.add_exception_handler(UnknownMessage, unknown_message_handler)
+    app.add_exception_handler(HintRevealForbidden, hint_reveal_forbidden_handler)
+    app.add_exception_handler(SsrfBlockedError, ssrf_blocked_handler)
 
+    app.include_router(ui.router)
     app.include_router(health.router)
     app.include_router(config.router)
     app.include_router(conversations.router)
