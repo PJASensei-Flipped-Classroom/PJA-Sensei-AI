@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from datetime import datetime, timezone
 from app.domain.conversation import Conversation
 from app.domain.ports import ConversationRepository
@@ -32,5 +32,10 @@ class InMemoryConversationRepository(ConversationRepository):
             del self._store[cid]
         return len(to_delete)
 
-    def count(self) -> int:
-        return len(self._store)
+    def list_active(self) -> List[Conversation]:
+        return [c for c in self._store.values() if not c.is_deleted]
+
+    def count_active(self) -> int:
+        return sum(1 for c in self._store.values() if not c.is_deleted)
+
+    # OLD: def count(self) -> int: return len(self._store)

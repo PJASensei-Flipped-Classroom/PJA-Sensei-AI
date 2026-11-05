@@ -29,9 +29,23 @@ class ConversationRepository(ABC):
     @abstractmethod
     def purge_expired(self, ttl_seconds: int) -> int: pass
 
+    @abstractmethod
+    def list_active(self) -> List[Conversation]:
+        pass
+
+    @abstractmethod
+    def count_active(self) -> int:
+        pass
+
 class LlmPort(ABC):
     @abstractmethod
-    def generate_json(self, system_prompt: str, messages: List[Dict[str, str]]) -> LlmResult:
+    # OLD: def generate_json(self, system_prompt: str, messages: List[Dict[str, str]]) -> LlmResult:
+    def generate_json(
+        self,
+        system_prompt: str,
+        messages: List[Dict[str, str]],
+        model_override: Optional[str] = None,
+    ) -> LlmResult:
         pass
 
     def stream_json(self, system_prompt: str, messages: List[Dict[str, str]], model_override: Optional[str] = None) -> Iterator[str]:

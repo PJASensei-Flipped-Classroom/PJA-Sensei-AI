@@ -4,6 +4,35 @@ from app.domain.exceptions import PrelabRequired, TokenBudgetExceeded, UnknownCo
     HintRevealForbidden, SsrfBlockedError
 
 
+# Upstream LLM rate-limit exhausted after fallback → 503 (not client 429).
+_LLM_RATE_LIMIT_RETRY_AFTER = "5"
+
+
+async def llm_rate_limited_handler(request: Request, exc: Exception):
+    from app.application.metrics import metrics
+
+    metrics.inc_llm_rate_limited()
+    return JSONResponse(
+        status_code=503,
+        content={
+            "message_id": "llm_rate_limited",
+            "detail": "Language model is temporarily rate-limited. Please retry shortly.",
+        },
+        headers={"Retry-After": _LLM_RATE_LIMIT_RETRY_AFTER},
+    )
+
+
+async def llm_unavailable_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=503,
+        content={
+            "message_id": "llm_unavailable",
+            "detail": "Language model is temporarily unavailable. Please retry shortly.",
+        },
+        headers={"Retry-After": _LLM_RATE_LIMIT_RETRY_AFTER},
+    )
+
+
 async def prelab_required_handler(request: Request, exc: PrelabRequired):
     message = "Wymagane ukończenie pre-labu." if exc.language == "pl" else "Pre-lab completion required."
     return JSONResponse(

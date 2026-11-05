@@ -1,12 +1,26 @@
-from typing import List, Dict, Any, Optional
+import re
+from typing import List, Dict, Any
 
 from app.application.dto import (
     PrelabStatusResponse,
     PrelabSubmitRequest,
     PrelabQuestionDTO,
+    PrelabSubmitResponse,
 )
 from app.domain.conversation import Conversation
 from app.domain.ports import ConversationRepository
+
+
+def _msg(language: str, pl: str, en: str) -> str:
+    return pl if language == "pl" else en
+
+
+def _keyword_hit(keyword: str, answer: str) -> bool:
+    kw = keyword.strip().lower()
+    if not kw:
+        return False
+    # Word-boundary match; escape regex metacharacters in keywords.
+    return re.search(rf"\b{re.escape(kw)}\b", answer, flags=re.IGNORECASE) is not None
 
 
 class PrelabService:
@@ -14,43 +28,36 @@ class PrelabService:
         self.repo = repo
 
     def get_status(self, conv: Conversation) -> PrelabStatusResponse:
-        prelab_cfg = getattr(conv.config, "pre_lab", None) or getattr(conv.config, "preLab", None)
-        enabled = bool(prelab_cfg and getattr(prelab_cfg, "enabled", False))
+        # OLD getattr/legacy path (kept for reference):
+        # prelab_cfg = getattr(conv.config, "pre_lab", None) or getattr(conv.config, "preLab", None)
+        # enabled = bool(prelab_cfg and getattr(prelab_cfg, "enabled", False))
+        # ... SingleQuestion / camelCase expectedKeywords fallbacks ...
+        prelab_cfg = conv.config.pre_lab
+        enabled = bool(prelab_cfg.enabled)
 
         questions: List[PrelabQuestionDTO] = []
         hint_after_fail = None
 
-        if enabled and prelab_cfg:
-            hint_after_fail = getattr(prelab_cfg, "hint_after_fail", None)
-
-            cfg_questions = getattr(prelab_cfg, "questions", [])
-            if cfg_questions:
-                for q in cfg_questions:
-                    questions.append(
-                        PrelabQuestionDTO(
-                            id=getattr(q, "id", "q1"),
-                            question=getattr(q, "question", ""),
-                            hint=getattr(q, "hint", None),
-                        )
-                    )
-            elif getattr(prelab_cfg, "question", None):
+        if enabled:
+            hint_after_fail = prelab_cfg.hint_after_fail
+            for q in prelab_cfg.questions:
                 questions.append(
                     PrelabQuestionDTO(
-                        id="q1",
-                        question=getattr(prelab_cfg, "question", ""),
-                        hint=hint_after_fail,
+                        id=q.id,
+                        question=q.question,
+                        hint=None,
                     )
                 )
 
-        max_attempts = getattr(prelab_cfg, "max_attempts", 2) if prelab_cfg else 2
-        attempts = getattr(conv, "prelab_attempts", 0)
+        max_attempts = prelab_cfg.max_attempts if enabled else 2
+        attempts = conv.prelab_attempts
         remaining_attempts = max(0, max_attempts - attempts) if max_attempts else None
         show_hint = attempts > 0
 
         return PrelabStatusResponse(
             enabled=enabled,
-            passed=getattr(conv, "prelab_completed", False),
-            completed=getattr(conv, "prelab_completed", False),
+            passed=conv.prelab_completed,
+            completed=conv.prelab_completed,
             questions=questions,
             attempts=attempts,
             max_attempts=max_attempts,
@@ -59,49 +66,51 @@ class PrelabService:
         )
 
     def submit(self, conv: Conversation, req: PrelabSubmitRequest) -> Dict[str, Any]:
-        prelab_cfg = getattr(conv.config, "pre_lab", None) or getattr(conv.config, "preLab", None)
-        enabled = bool(prelab_cfg and getattr(prelab_cfg, "enabled", False))
+        # OLD: getattr(conv.config, "pre_lab", None) or getattr(conv.config, "preLab", None)
+        prelab_cfg = conv.config.pre_lab
+        enabled = bool(prelab_cfg.enabled)
+        lang = conv.config.language
 
         if not enabled:
             conv.prelab_completed = True
             self.repo.save(conv)
-            return {
-                "passed": True,
-                "unlocked": True,
-                "failed_ids": [],
-                "attempts": getattr(conv, "prelab_attempts", 0),
-                "remaining_attempts": None,
-                "feedback": "Pre-Lab nie jest wymagany.",
-                "prelab_completed": True,
-            }
+            response = PrelabSubmitResponse(
+                passed=True,
+                unlocked=True,
+                failed_ids=[],
+                attempts=conv.prelab_attempts,
+                remaining_attempts=None,
+                feedback=_msg(lang, "Pre-Lab nie jest wymagany.", "Pre-Lab is not required."),
+                prelab_completed=True,
+            )
+            return response.model_dump()
 
-        max_attempts = getattr(prelab_cfg, "max_attempts", 2) if prelab_cfg else 2
-        attempts = getattr(conv, "prelab_attempts", 0)
+        max_attempts = prelab_cfg.max_attempts
+        attempts = conv.prelab_attempts
 
         if attempts >= max_attempts:
-            return {
-                "passed": False,
-                "unlocked": False,
-                "failed_ids": [],
-                "attempts": attempts,
-                "remaining_attempts": 0,
-                "feedback": "Wyczerpano limit prób.",
-                "detail": "Wyczerpano limit prób.",
-                "prelab_completed": False,
-            }
+            exhausted = _msg(lang, "Wyczerpano limit prób.", "Attempt limit exhausted.")
+            response = PrelabSubmitResponse(
+                passed=False,
+                unlocked=False,
+                failed_ids=[],
+                attempts=attempts,
+                remaining_attempts=0,
+                feedback=exhausted,
+                prelab_completed=False,
+            )
+            payload = response.model_dump()
+            payload["detail"] = exhausted
+            return payload
 
         conv.prelab_attempts = attempts + 1
 
-        cfg_questions = getattr(prelab_cfg, "questions", [])
-        if not cfg_questions and getattr(prelab_cfg, "question", None):
-            class SingleQuestion:
-                id = "q1"
-                question = getattr(prelab_cfg, "question")
-                expected_keywords = getattr(prelab_cfg, "expected_keywords", []) or getattr(
-                    prelab_cfg, "expectedKeywords", []
-                )
-
-            cfg_questions = [SingleQuestion()]
+        # OLD legacy single-question shape:
+        # cfg_questions = getattr(prelab_cfg, "questions", [])
+        # if not cfg_questions and getattr(prelab_cfg, "question", None):
+        #     class SingleQuestion: ...
+        #     cfg_questions = [SingleQuestion()]
+        cfg_questions = list(prelab_cfg.questions)
 
         answers_dict: Dict[str, str] = {
             a.id: a.answer.strip().lower() for a in req.answers
@@ -110,19 +119,22 @@ class PrelabService:
         failed_ids: List[str] = []
 
         for q in cfg_questions:
-            q_id = getattr(q, "id", "q1")
+            q_id = q.id
             user_answer = answers_dict.get(q_id, "")
-
-            expected = getattr(q, "expected_keywords", []) or getattr(
-                q, "expectedKeywords", []
-            )
+            # OLD: expected = getattr(q, "expected_keywords", []) or getattr(q, "expectedKeywords", [])
+            expected = q.expected_keywords
 
             if not expected:
                 if not user_answer:
                     failed_ids.append(q_id)
                 continue
 
-            has_match = any(str(kw).strip().lower() in user_answer for kw in expected)
+            # OLD: substring match (e.g. "Rest" inside "Forest")
+            # has_match = any(str(kw).strip().lower() in user_answer for kw in expected)
+            # Why: students could pass prelab with unrelated words that merely contain the keyword.
+            # Wrong: `kw in answer` is substring, not token match.
+            # Better: word-boundary regex (`_keyword_hit`) so "Forest" ≠ "Rest".
+            has_match = any(_keyword_hit(str(kw), user_answer) for kw in expected)
             if not has_match:
                 failed_ids.append(q_id)
 
@@ -131,22 +143,33 @@ class PrelabService:
 
         if passed:
             conv.prelab_completed = True
-            feedback = "Gratulacje! Odpowiedzi poprawne, czat został odblokowany."
-        else:
-            hint = getattr(prelab_cfg, "hint_after_fail", None)
-            feedback = (
-                f"Niepoprawne odpowiedzi dla pytań: {', '.join(failed_ids)}."
-                + (f" Wskazówka: {hint}" if hint else "")
+            feedback = _msg(
+                lang,
+                "Gratulacje! Odpowiedzi poprawne, czat został odblokowany.",
+                "Congratulations! Answers are correct; chat is unlocked.",
             )
+        else:
+            hint = prelab_cfg.hint_after_fail
+            if lang == "pl":
+                feedback = (
+                    f"Niepoprawne odpowiedzi dla pytań: {', '.join(failed_ids)}."
+                    + (f" Wskazówka: {hint}" if hint else "")
+                )
+            else:
+                feedback = (
+                    f"Incorrect answers for questions: {', '.join(failed_ids)}."
+                    + (f" Hint: {hint}" if hint else "")
+                )
 
         self.repo.save(conv)
 
-        return {
-            "passed": passed,
-            "unlocked": passed,
-            "failed_ids": failed_ids,
-            "attempts": conv.prelab_attempts,
-            "remaining_attempts": remaining,
-            "feedback": feedback,
-            "prelab_completed": conv.prelab_completed,
-        }
+        response = PrelabSubmitResponse(
+            passed=passed,
+            unlocked=passed,
+            failed_ids=failed_ids,
+            attempts=conv.prelab_attempts,
+            remaining_attempts=remaining,
+            feedback=feedback,
+            prelab_completed=conv.prelab_completed,
+        )
+        return response.model_dump()

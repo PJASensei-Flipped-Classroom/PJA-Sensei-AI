@@ -1,14 +1,17 @@
+import time
 from pydantic import BaseModel, Field
 from typing import Dict, List, Any, Literal, Optional
-from datetime import datetime, timezone, time
+from datetime import datetime, timezone
+# OLD: from datetime import datetime, timezone, time  # unused `time`
 from app.domain.sensei import SenseiConfig
 
 GoalStatus = Literal["not_started", "in_progress", "done"]
-STATUS_WEIGHTS: Dict[GoalStatus, float] = {
-    "not_started": 0.0,
-    "in_progress": 0.5,
-    "done": 1.0,
-}
+# OLD: unused partial-credit weights — calculate_lab_score counts only "done"
+# STATUS_WEIGHTS: Dict[GoalStatus, float] = {
+#     "not_started": 0.0,
+#     "in_progress": 0.5,
+#     "done": 1.0,
+# }
 
 class MessageFeedback(BaseModel):
     rating: int = Field(ge=1, le=5)
@@ -44,11 +47,29 @@ class Conversation(BaseModel):
     frustration_streak: int = 0
     hints_revealed: int = 0
     revealed_hints: List[str] = []
+    # Anti-hint-farming: last time frustration_streak was incremented
+    last_frustration_at: Optional[float] = None
+    # Focus mode ends at this unix timestamp (soft penalties after IDE errors).
+    focus_until: Optional[float] = None
+    # Highest hint ladder level revealed in this session.
+    highest_hint_level: Optional[str] = None
+    # Professor-only intervention notes (never sent to student chat UI by default).
+    intervention_notes: List[Dict[str, Any]] = Field(default_factory=list)
+    # Prepared Spring grade-sync payload (schema_versioned); not auto-POSTed yet.
+    grade_payload: Optional[Dict[str, Any]] = None
+
+    # JWT binding (set when AI_AUTH_ENABLED at session create)
+    owner_sub: Optional[str] = None
+    lab_id: Optional[str] = None
 
     events: List[Dict[str, Any]] = Field(default_factory=list)
     summary: Optional[Dict[str, Any]] = None
     is_deleted: bool = False
     deleted_at: Optional[float] = None
+
+    def in_focus_mode(self, now: Optional[float] = None) -> bool:
+        ts = now if now is not None else time.time()
+        return bool(self.focus_until and ts < self.focus_until)
 
     def touch(self):
         self.last_activity = datetime.now(timezone.utc)

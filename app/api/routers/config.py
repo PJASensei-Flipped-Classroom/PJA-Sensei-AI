@@ -1,13 +1,18 @@
 import json
+from pathlib import Path
 from typing import Dict, Any
 
 from jsonschema import validate, ValidationError as JsonSchemaError
 from pydantic import ValidationError as PydanticError
 from fastapi import APIRouter
-from app.application.dto import ConfigValidationRequest
+from app.application.config_dry_run import run_config_dry_run
+from app.application.dto import ConfigValidationRequest, ConversationStartRequest
 from app.domain.sensei import SenseiConfig
 
 router = APIRouter(tags=["config"])
+
+# Repo root: app/api/routers/config.py → parents[3]
+_SCHEMA_PATH = Path(__file__).resolve().parents[3] / "schemas" / "sensei-config.schema.json"
 
 @router.get("/config/schema")
 def get_config_schema() -> Dict[str, Any]:
@@ -78,7 +83,13 @@ def validate_config(req: ConfigValidationRequest):
     }
 
     try:
-        with open("schemas/sensei-config.schema.json", "r") as f:
+        # OLD:
+        # with open("schemas/sensei-config.schema.json", "r") as f:
+        #     schema = json.load(f)
+        # Why: validate-config must work regardless of process CWD (systemd, Docker, IDE).
+        # Wrong: relative path → FileNotFoundError → schema_unavailable=true false negative.
+        # Better: resolve schema from repo root via Path(__file__).parents[3].
+        with _SCHEMA_PATH.open("r", encoding="utf-8") as f:
             schema = json.load(f)
         validate(instance=req.config, schema=schema)
     except FileNotFoundError:
@@ -96,3 +107,12 @@ def validate_config(req: ConfigValidationRequest):
         response["valid"] = True
 
     return response
+
+
+@router.post("/config/dry-run")
+def config_dry_run(req: ConversationStartRequest):
+    """
+    Feature 8: simulate student path (prelab/gates/security/hints) without LLM.
+    Body: { "config": SenseiConfig } — same shape as conversation start.
+    """
+    return run_config_dry_run(req.config)

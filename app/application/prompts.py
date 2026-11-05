@@ -18,7 +18,12 @@ MODE_INSTRUCTIONS_EN = {
     "review": "Review the student's code against evaluation criteria and clean code principles.",
 }
 
-def build_system_prompt(config: SenseiConfig, current_progress: Dict[str, GoalStatus], rag_chunks: Optional[List[RagChunk]] = None,) -> str:
+def build_system_prompt(
+    config: SenseiConfig,
+    current_progress: Dict[str, GoalStatus],
+    rag_chunks: Optional[List[RagChunk]] = None,
+    mode_override: Optional[str] = None,
+) -> str:
     goals_spec = [
         {
             "goal": g.id,
@@ -38,10 +43,13 @@ def build_system_prompt(config: SenseiConfig, current_progress: Dict[str, GoalSt
         rag_section_pl = f"\nMATERIAŁY REFERENCYJNE LABU (RAG):\n{formatted_chunks}\n"
         rag_section_en = f"\nLAB REFERENCE MATERIALS (RAG):\n{formatted_chunks}\n"
 
+    # OLD: effective_mode = config.agent_behavior.mode
+    effective_mode = mode_override or config.agent_behavior.mode
+
     if config.language == "pl":
-        mode_desc = MODE_INSTRUCTIONS_PL.get(config.agent_behavior.mode, MODE_INSTRUCTIONS_PL["theory"])
+        mode_desc = MODE_INSTRUCTIONS_PL.get(effective_mode, MODE_INSTRUCTIONS_PL["theory"])
         return f"""Jesteś sokratycznym mentorem programowania o imieniu {config.agent_persona.name} (ton: {config.agent_persona.tone}).
-Tryb pracy: {config.agent_behavior.mode.upper()} — {mode_desc}
+Tryb pracy: {effective_mode.upper()} — {mode_desc}
 Kryteria ewaluacji laboratorium: {config.evaluation_criteria}
 {rag_section_pl}
 ZASADY DYDAKTYCZNE (BEZWZGLĘDNE):
@@ -71,9 +79,9 @@ ZWRÓĆ WYŁĄCZNIE POPRAWNY OBIEKT JSON (bez bloków markdown) o dokładnie tak
   ]
 }}"""
 
-    mode_desc = MODE_INSTRUCTIONS_EN.get(config.agent_behavior.mode, MODE_INSTRUCTIONS_EN["theory"])
+    mode_desc = MODE_INSTRUCTIONS_EN.get(effective_mode, MODE_INSTRUCTIONS_EN["theory"])
     return f"""You are a Socratic programming mentor named {config.agent_persona.name} (tone: {config.agent_persona.tone}).
-Mode: {config.agent_behavior.mode.upper()} — {mode_desc}
+Mode: {effective_mode.upper()} — {mode_desc}
 Evaluation criteria: {config.evaluation_criteria}
 {rag_section_en}
 PEDAGOGICAL RULES (STRICT):

@@ -1,223 +1,231 @@
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 
+from app.domain.sensei import (
+    CodeContext,
+    SenseiConfig,
+    MAX_CODE_CONTEXT_CHARS,
+    MAX_DIAGNOSTICS,
+    MAX_OPEN_FILES,
+    MAX_QUESTION_CHARS,
+)
 
-# --- DTO: Kontekst Kodu ---
 
-class CodeContextDTO(BaseModel):
-    # Kod programu i zaznaczenia (obsługa camelCase i snake_case)
-    code_snippet: Optional[str] = Field(default=None, alias="codeSnippet")
-    current_code: Optional[str] = Field(default=None, alias="currentCode")
-    selection: Optional[str] = None
-    selected_text: Optional[str] = Field(default=None, alias="selectedText")
+class ApiModel(BaseModel):
+    """Accept camelCase aliases on input; serialize with Python field names (snake_case)."""
 
-    # Ścieżki i nazwy plików
-    file_path: Optional[str] = Field(default=None, alias="filePath")
-    current_file_name: Optional[str] = Field(default=None, alias="currentFileName")
-    language: Optional[str] = None
-    cursor_position: Optional[int] = Field(default=None, alias="cursorPosition")
-    active_tab: Optional[str] = Field(default=None, alias="activeTab")
-    open_files: Optional[List[str]] = Field(default=None, alias="openFiles")
+    model_config = ConfigDict(
+        populate_by_name=True,
+        extra="ignore",
+        # Keep response JSON snake_case for existing clients/tests.
+        ser_json_by_alias=False,
+    )
 
-    # Diagnostyka i błędy kompilacji
-    error_logs: Optional[str] = Field(default=None, alias="errorLogs")
-    diagnostics: Optional[List[str]] = None
-    compiler_output: Optional[str] = Field(default=None, alias="compilerOutput")
 
-    model_config = ConfigDict(populate_by_name=True, extra="allow")
+class CodeContextDTO(ApiModel):
+    """IDE code context. Accepts currentCode / codeSnippet and file name aliases."""
 
-    def __getattr__(self, item: str) -> Any:
-        return None
+    # OLD: current_code: Optional[str] = Field(default=None, alias="currentCode")
+    # OLD: code_snippet: Optional[str] = Field(default=None, alias="codeSnippet")
+    # OLD: current_file_name: Optional[str] = Field(default=None, alias="currentFileName")
+    # OLD: file_path: Optional[str] = Field(default=None, alias="filePath")
+    # OLD: selection: Optional[str] = None
+    # OLD: selected_text: Optional[str] = Field(default=None, alias="selectedText")
+    # OLD: error_logs: Optional[str] = Field(default=None, alias="errorLogs")
+    # OLD: diagnostics: List[str] = Field(default_factory=list)
+    # OLD: open_files: List[str] = Field(default_factory=list, alias="openFiles")
+    # Why: API boundary must reject oversized IDE payloads before they hit the LLM/session store.
+    # Wrong: any size was accepted → memory + prompt-cost abuse.
+    # Better: Field(max_length=...) aligned with domain caps → HTTP 422 on abuse.
+    current_code: Optional[str] = Field(
+        default=None, alias="currentCode", max_length=MAX_CODE_CONTEXT_CHARS
+    )
+    code_snippet: Optional[str] = Field(
+        default=None, alias="codeSnippet", max_length=MAX_CODE_CONTEXT_CHARS
+    )
+    current_file_name: Optional[str] = Field(default=None, alias="currentFileName", max_length=500)
+    file_path: Optional[str] = Field(default=None, alias="filePath", max_length=500)
+    selection: Optional[str] = Field(default=None, max_length=MAX_CODE_CONTEXT_CHARS)
+    selected_text: Optional[str] = Field(
+        default=None, alias="selectedText", max_length=MAX_CODE_CONTEXT_CHARS
+    )
+    error_logs: Optional[str] = Field(
+        default=None, alias="errorLogs", max_length=MAX_CODE_CONTEXT_CHARS
+    )
+    diagnostics: List[str] = Field(default_factory=list, max_length=MAX_DIAGNOSTICS)
+    open_files: List[str] = Field(
+        default_factory=list, alias="openFiles", max_length=MAX_OPEN_FILES
+    )
 
     @model_validator(mode="after")
-    def sync_aliases(self) -> "CodeContextDTO":
-        code = self.current_code or self.code_snippet
-        self.current_code = code
-        self.code_snippet = code
-
-        fname = self.current_file_name or self.file_path
-        self.current_file_name = fname
-        self.file_path = fname
-
-        sel = self.selection or self.selected_text
-        self.selection = sel
-        self.selected_text = sel
-
+    def normalize(self) -> "CodeContextDTO":
+        self.current_code = self.current_code or self.code_snippet
+        self.current_file_name = self.current_file_name or self.file_path
+        self.selection = self.selection or self.selected_text
         return self
 
+    def to_domain(self) -> CodeContext:
+        return CodeContext(
+            current_code=self.current_code,
+            current_file_name=self.current_file_name,
+            selection=self.selection,
+            error_logs=self.error_logs,
+            diagnostics=list(self.diagnostics or []),
+            open_files=list(self.open_files or []),
+        )
 
-# --- DTO: Pre-Lab ---
 
-class PrelabQuestionDTO(BaseModel):
+class PrelabQuestionDTO(ApiModel):
     id: str
     question: str
     hint: Optional[str] = None
 
-    model_config = ConfigDict(populate_by_name=True, extra="allow")
 
-
-class PrelabStatusResponse(BaseModel):
+class PrelabStatusResponse(ApiModel):
     enabled: bool = False
     passed: bool = False
     completed: bool = False
-    questions: List[PrelabQuestionDTO] = []
+    questions: List[PrelabQuestionDTO] = Field(default_factory=list)
     attempts: int = 0
     max_attempts: Optional[int] = None
     remaining_attempts: Optional[int] = None
     hint_after_fail: Optional[str] = None
 
-    model_config = ConfigDict(populate_by_name=True, extra="allow")
 
-
-class PrelabSubmitResponse(BaseModel):
+class PrelabSubmitResponse(ApiModel):
     passed: bool
     unlocked: bool = False
-    failed_ids: List[str] = []
-    score: Optional[float] = None
+    failed_ids: List[str] = Field(default_factory=list)
     feedback: Optional[str] = None
     attempts: int = 0
     remaining_attempts: Optional[int] = None
     prelab_completed: bool = False
 
-    model_config = ConfigDict(populate_by_name=True, extra="allow")
 
-
-class PrelabAnswerItem(BaseModel):
+class PrelabAnswerItem(ApiModel):
     id: str = "q1"
-    answer: str
+    # OLD: answer: str
+    # Why: prelab answers could be huge strings with no pedagogical value.
+    # Wrong: uncapped answer field.
+    # Better: same char cap as chat questions.
+    answer: str = Field(max_length=MAX_QUESTION_CHARS)
 
     @field_validator("answer", mode="before")
     @classmethod
     def validate_answer_text(cls, v: Any) -> str:
         if not isinstance(v, str) or not v.strip():
-            raise ValueError("Odpowiedź Pre-Lab nie może być pusta.")
+            raise ValueError("Pre-Lab answer cannot be empty.")
         return v.strip()
 
 
-class PrelabSubmitRequest(BaseModel):
+class PrelabSubmitRequest(ApiModel):
     answers: List[PrelabAnswerItem]
 
     @model_validator(mode="before")
     @classmethod
     def normalize_answers(cls, data: Any) -> Any:
         if not isinstance(data, dict):
-            raise ValueError("Nieprawidłowy format żądania.")
-
-        raw = data.get("answers") if "answers" in data else data.get("answer")
-        if raw is None:
-            raise ValueError("Brak pola 'answers' lub 'answer'.")
-
-        if isinstance(raw, str):
-            if not raw.strip():
-                raise ValueError("Odpowiedź Pre-Lab nie może być pusta.")
+            raise ValueError("Invalid request body.")
+        if "answers" in data:
+            return data
+        raw = data.get("answer")
+        if isinstance(raw, str) and raw.strip():
             return {"answers": [{"id": "q1", "answer": raw.strip()}]}
-
-        if isinstance(raw, list):
-            if not raw:
-                raise ValueError("Lista odpowiedzi Pre-Lab nie może być pusta.")
-            normalized = []
-            for idx, item in enumerate(raw, start=1):
-                if isinstance(item, str):
-                    if not item.strip():
-                        raise ValueError("Odpowiedź Pre-Lab nie może być pusta.")
-                    normalized.append({"id": f"q{idx}", "answer": item.strip()})
-                elif isinstance(item, dict):
-                    ans_text = str(item.get("answer", item.get("text", ""))).strip()
-                    if not ans_text:
-                        raise ValueError("Odpowiedź Pre-Lab nie może być pusta.")
-                    normalized.append({"id": item.get("id", f"q{idx}"), "answer": ans_text})
-                else:
-                    normalized.append(item)
-            return {"answers": normalized}
-
-        return data
+        raise ValueError("Missing 'answers' (or legacy 'answer').")
 
 
-# --- DTO: Konfiguracja i Start Sesji ---
-
-class ConfigValidationRequest(BaseModel):
+class ConfigValidationRequest(ApiModel):
     config: Dict[str, Any]
 
 
-class ConversationStartRequest(BaseModel):
-    config: Dict[str, Any]
+class ConversationStartRequest(ApiModel):
+    # OLD: config: Dict[str, Any]
+    # Why: invalid SenseiConfig (e.g. empty prelab keywords) used to fail deep inside the service as 500.
+    # Wrong: Dict skipped FastAPI/Pydantic request validation.
+    # Better: type as SenseiConfig → HTTP 422 with field errors at the edge.
+    config: SenseiConfig
 
 
-# --- DTO: Czat i Wiadomości ---
-
-class MessageRequest(BaseModel):
-    question: str
+class MessageRequest(ApiModel):
+    # OLD: question: str
+    # OLD: client_message_id: Optional[str] = Field(default=None, alias="clientMessageId")
+    # Why: unbounded questions / ids inflate prompts and storage.
+    # Wrong: only “non-empty” was checked on question; no length caps.
+    # Better: max_length rejects abuse with 422.
+    question: str = Field(max_length=MAX_QUESTION_CHARS)
     code_context: Optional[CodeContextDTO] = Field(default=None, alias="codeContext")
-    client_message_id: Optional[str] = Field(default=None, alias="clientMessageId")
-
-    model_config = ConfigDict(populate_by_name=True, extra="allow")
+    client_message_id: Optional[str] = Field(default=None, alias="clientMessageId", max_length=200)
 
     @field_validator("question", mode="before")
     @classmethod
     def validate_non_empty_question(cls, v: Any) -> str:
         if not isinstance(v, str) or not v.strip():
-            raise ValueError("Wiadomość nie może być pusta.")
+            raise ValueError("Message cannot be empty.")
         return v.strip()
 
 
-class GoalProgressEntryDTO(BaseModel):
+class GoalProgressEntryDTO(ApiModel):
     goal: str
     status: str
 
 
-class NextCheckpointDTO(BaseModel):
+class NextCheckpointDTO(ApiModel):
     id: str
     hint: Optional[str] = None
     after_goal: Optional[str] = Field(default=None, alias="afterGoal")
     unlocked: bool = False
-    status: Optional[str] = "locked"
-
-    model_config = ConfigDict(populate_by_name=True, extra="allow")
 
 
-class MessageResponse(BaseModel):
+class MessageResponse(ApiModel):
     message_id: str
     answer: str
     prompt_score: int
     prompt_feedback: str
     tokens_used: int
     penalty_applied: bool
-    sources: List[str] = []
+    sources: List[str] = Field(default_factory=list)
     suggested_next_step: Optional[str] = None
-    goal_progress: List[GoalProgressEntryDTO] = []
+    goal_progress: List[GoalProgressEntryDTO] = Field(default_factory=list)
     lab_score: int = 0
-    next_checkpoint: Optional[Union[NextCheckpointDTO, str]] = None
+    next_checkpoint: Optional[NextCheckpointDTO] = None
     model: str = "default"
     debug_info: Optional[Dict[str, Any]] = None
+    # NEW feature fields (optional for backward-compatible clients)
+    tutoring_mode: Optional[str] = None
+    checkpoint_celebration: Optional[str] = None
+    concept_card: Optional[Dict[str, Any]] = None
+    in_focus_mode: bool = False
 
 
-# --- DTO: Zdarzenia IDE, Wskazówki, Feedback, Podsumowanie ---
-
-class EventRequest(BaseModel):
-    type: str
+class EventRequest(ApiModel):
+    # OLD: type: str
+    type: str = Field(max_length=100)
     meta: Optional[Dict[str, Any]] = None
 
 
-class HintRevealResponse(BaseModel):
+class HintRevealResponse(ApiModel):
     hint: str
     hints_used: int
     max_hints: int
     hints_remaining: int
     frustration_streak_reset: bool = True
+    forced: bool = False
+    hint_level: Optional[str] = None
 
 
-class FeedbackRequest(BaseModel):
+class FeedbackRequest(ApiModel):
     rating: int = Field(..., ge=1, le=5)
-    comment: Optional[str] = None
+    # OLD: comment: Optional[str] = None
+    comment: Optional[str] = Field(default=None, max_length=2000)
 
 
-class FeedbackResponse(BaseModel):
+class FeedbackResponse(ApiModel):
     status: str
     message_id: str
     rating: int
 
 
-class SessionSummaryResponse(BaseModel):
+class SessionSummaryResponse(ApiModel):
     conversation_id: str
     summary: str
     lab_score: int
@@ -227,3 +235,13 @@ class SessionSummaryResponse(BaseModel):
     hints_used: int
     events_count: int
     completed: bool
+
+
+class RagMaterialPreviewDTO(ApiModel):
+    title: str
+    link: str
+
+
+class RagPreviewDTO(ApiModel):
+    chunks_ingested: int = 0
+    materials: List[RagMaterialPreviewDTO] = Field(default_factory=list)

@@ -15,7 +15,11 @@ CONFIG_WITH_PRELAB = {
         "hintAfterFail": "Przeczytaj dokumentację Spring IOC.",
         "questions": [
             {"id": "q1", "question": "Co to jest DI?", "expectedKeywords": ["Dependency", "Injection"]},
-            {"id": "q2", "question": "Jakieś pytanie bez słów?", "expectedKeywords": []}
+            # OLD: {"id": "q2", ..., "expectedKeywords": []}
+            # Why: domain now rejects enabled prelab with empty keywords.
+            # Wrong: empty list made any non-empty answer pass — accidental open gate.
+            # Better: real keyword ("Spring") so the question actually checks knowledge.
+            {"id": "q2", "question": "Podaj przykład kontenera IoC?", "expectedKeywords": ["Spring"]},
         ]
     }
 }
@@ -52,7 +56,7 @@ def test_prelab_submit_fail_and_limits():
     assert status.json()["hint_after_fail"] == "Przeczytaj dokumentację Spring IOC."
 
     resp3 = client.post(f"/conversations/{conv_id}/prelab",
-                        json={"answers": [{"id": "q1", "answer": "Dependency Injection"}]})
+                        json={"answers": [{"id": "q1", "answer": "Dependency Injection"}, {"id": "q2", "answer": "Spring"}]})
     assert resp3.json()["passed"] is False
     assert resp3.json()["detail"] == "Wyczerpano limit prób."
 
@@ -64,7 +68,7 @@ def test_prelab_submit_success_unlocks_chat():
     resp = client.post(f"/conversations/{conv_id}/prelab", json={
         "answers": [
             {"id": "q1", "answer": "To jest dependency injection w klasie"},
-            {"id": "q2", "answer": "Dowolny tekst"}
+            {"id": "q2", "answer": "Kontener Spring IoC"},
         ]
     })
 

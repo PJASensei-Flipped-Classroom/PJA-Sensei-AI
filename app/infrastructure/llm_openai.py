@@ -33,7 +33,8 @@ class OpenAiCompatibleLlmAdapter(LlmPort):
         def _call(chosen_model: Optional[str]) -> LlmResult:
             active_model = chosen_model or target_primary
             response = self._client.chat.completions.create(
-                model=self.model,
+                # OLD: model=self.model,  # ignored fallback / active_model on 429
+                model=active_model,
                 messages=full_messages,
                 temperature=0.2,
                 response_format={"type": "json_object"},
@@ -46,7 +47,7 @@ class OpenAiCompatibleLlmAdapter(LlmPort):
             return LlmResult(
                 raw_content=choice,
                 tokens_used=tokens_used,
-                model=response.model or self.model,
+                model=response.model or active_model,
                 debug_info={
                     "prompt_tokens": usage.prompt_tokens if usage else 0,
                     "completion_tokens": usage.completion_tokens if usage else 0,

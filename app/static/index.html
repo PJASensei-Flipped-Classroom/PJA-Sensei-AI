@@ -14,6 +14,7 @@
       --text-muted: #94a3b8;
       --success: #10b981;
       --danger: #ef4444;
+      --warn: #f59e0b;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -47,9 +48,11 @@
       transition: background 0.2s;
     }
     button:hover { background-color: var(--accent-hover); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
     button.secondary { background-color: var(--border); }
     button.secondary:hover { background-color: #475569; }
-    textarea, input[type="text"] {
+    button.danger { background-color: var(--danger); }
+    textarea, input[type="text"], select {
       width: 100%;
       box-sizing: border-box;
       background: #020617;
@@ -62,6 +65,7 @@
     }
     .badges {
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
       margin-bottom: 15px;
     }
@@ -72,10 +76,16 @@
       font-size: 12px;
       font-weight: 600;
     }
+    .badge.ok { background: var(--success); }
+    .badge.bad { background: var(--danger); }
+    .badge.warn { background: var(--warn); color: #111; }
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; }
     }
     .chat-box {
       height: 250px;
@@ -95,6 +105,7 @@
       max-width: 85%;
       font-size: 14px;
       line-height: 1.4;
+      white-space: pre-wrap;
     }
     .chat-msg.user {
       align-self: flex-end;
@@ -106,6 +117,12 @@
       background: var(--border);
       color: var(--text);
     }
+    .chat-msg.error {
+      align-self: stretch;
+      background: #450a0a;
+      border: 1px solid var(--danger);
+      max-width: 100%;
+    }
     pre {
       background: #020617;
       border: 1px solid var(--border);
@@ -116,35 +133,93 @@
       color: #38bdf8;
       max-height: 220px;
     }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; align-items: center; }
+    .muted { color: var(--text-muted); font-size: 14px; }
+    .goal-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .goal-chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .goal-chip.done { border-color: var(--success); color: #6ee7b7; }
+    .goal-chip.in_progress { border-color: var(--warn); color: #fcd34d; }
+    .session-list { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
+    .session-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 13px;
+    }
+    .session-row.active { border-color: var(--accent); }
+    .session-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    a { color: #38bdf8; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- SEKCJA WYKŁADOWCY -->
   <div class="card" id="teacher-panel">
-    <h2>Panel Wykładowcy – Konfiguracja Laboratorium</h2>
-    <p style="color: var(--text-muted); font-size: 14px;">Wczytaj preset konfiguracji lub dostosuj JSON przed uruchomieniem sesji dla studenta.</p>
-    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-      <button onclick="loadPreset()">Wczytaj preset Spring Boot (PL)</button>
-      <button class="secondary" onclick="validateConfig()">Waliduj JSON</button>
+    <div class="toolbar" style="justify-content: space-between;">
+      <h2 style="margin:0" data-i18n="teacherTitle">Panel Wykładowcy – Config Builder</h2>
+      <div>
+        <button class="secondary" type="button" onclick="setUiLang('pl')">PL</button>
+        <button class="secondary" type="button" onclick="setUiLang('en')">EN</button>
+      </div>
     </div>
-    <textarea id="config-json" rows="12"></textarea>
-    <div style="margin-top: 14px;">
-      <button onclick="startSession()">Uruchom sesję laboratoryjną</button>
+    <p class="muted"><span data-i18n="teacherHelp">Edytuj SenseiConfig (JSON), waliduj względem API, potem uruchom sesję.</span> <a href="/scenarios">Scenarios</a></p>
+
+    <div class="toolbar">
+      <select id="preset-select" style="max-width: 280px;"></select>
+      <button onclick="loadSelectedPreset()">Wczytaj preset</button>
+      <button class="secondary" onclick="loadSchemaHint()">Pokaż schema (klucze)</button>
+      <button class="secondary" onclick="formatConfig()">Formatuj JSON</button>
+      <button class="secondary" onclick="validateConfig()">Waliduj</button>
+      <span class="badge" id="badge-valid">Walidacja: —</span>
+    </div>
+
+    <textarea id="config-json" rows="14" placeholder='{"language":"pl", ...}'></textarea>
+    <p class="hint" id="schema-hint"></p>
+
+    <div class="toolbar" style="margin-top: 14px;">
+      <button onclick="startSession()" data-i18n="startSession">Uruchom sesję laboratoryjną</button>
+      <button class="secondary" onclick="refreshSessions()" data-i18n="refreshSessions">Odśwież listę sesji</button>
+    </div>
+    <p class="hint" id="rag-preview-hint"></p>
+  </div>
+
+  <div class="card" id="sessions-panel">
+    <h3 data-i18n="sessionsTitle">Inspector sesji (aktywne)</h3>
+    <p class="muted" id="sessions-count">Aktywne sesje: —</p>
+    <div class="session-list" id="session-list">
+      <div class="muted">Brak danych — kliknij „Odśwież listę sesji”.</div>
     </div>
   </div>
 
-  <!-- SEKCJA STUDENTA -->
   <div class="card" id="student-panel" style="display: none;">
     <h2>Panel Studenta – Stanowisko Laboratoryjne</h2>
     <div class="badges">
       <span class="badge" id="badge-session">Sesja: -</span>
-      <span class="badge" id="badge-score">Wynik labu: 0%</span>
+      <span class="badge" id="badge-score">Wynik labu: 0/10</span>
       <span class="badge" id="badge-cp">Checkpoint: -</span>
+      <span class="badge" id="badge-stream">Tryb: stream</span>
     </div>
 
-    <!-- BRAMKA PRE-LAB -->
+    <div class="goal-strip" id="goal-strip"></div>
+
     <div class="card" id="prelab-card" style="margin-bottom: 20px; background: #131d31;">
       <h3 style="margin-bottom: 6px;">Bramka Pre-Lab</h3>
       <p id="prelab-question" style="color: #cbd5e1; font-size: 14px; margin-top: 0;">Sprawdzanie stanu...</p>
@@ -155,66 +230,166 @@
     </div>
 
     <div class="grid-2">
-      <!-- KOD -->
       <div>
         <h3>Twój Kod (Code Context)</h3>
         <textarea id="code-context" rows="12" placeholder="Wklej aktualny kod z IDE..."></textarea>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <button class="secondary" onclick="sendEvent('compile_error')">Symuluj błąd kompilacji</button>
-          <button class="secondary" onclick="revealHint()">Odkryj wskazówkę (Hint)</button>
+        <div class="toolbar" style="margin-top: 10px;">
+          <button class="secondary" onclick="sendEvent('compile_error')" data-i18n="simCompile">Symuluj błąd kompilacji</button>
+          <button class="secondary" onclick="revealHint()" data-i18n="revealHint">Odkryj wskazówkę</button>
+          <button class="secondary" onclick="forceHint()" data-i18n="forceHint">Force hint (wykładowca)</button>
+          <button class="secondary" onclick="exportTranscript()" data-i18n="exportJson">Eksport JSON</button>
         </div>
       </div>
 
-      <!-- CZAT -->
       <div>
         <h3>Czat z PJA-Sensei</h3>
         <div class="chat-box" id="chat-messages">
           <div class="chat-msg assistant">Witaj! W czym mogę Ci dzisiaj pomóc w ramach laboratorium?</div>
         </div>
         <input type="text" id="chat-input" placeholder="Zadaj pytanie mentorowi..." style="margin-bottom: 10px;" onkeydown="if(event.key==='Enter') sendMessage()" />
-        <div style="display: flex; gap: 10px;">
-          <button onclick="sendMessage()">Wyślij wiadomość</button>
+        <div class="toolbar">
+          <button id="btn-send" onclick="sendMessage()">Wyślij (stream)</button>
           <button class="secondary" onclick="generateSummary()">Zakończ i wygeneruj Summary</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- KONSOLA PODGLĄDU JSON -->
   <div class="card">
-    <h3 style="margin-bottom: 6px; font-size: 14px;">Podgląd odpowiedzi API (Ostatnia odpowiedź JSON)</h3>
+    <h3 style="margin-bottom: 6px; font-size: 14px;">Podgląd odpowiedzi API</h3>
     <pre id="json-output">// Wyniki zapytań pojawią się tutaj...</pre>
   </div>
 </div>
 
 <script>
   let currentConvId = null;
+  let sending = false;
+  let presetsCache = [];
+  let uiLang = localStorage.getItem('pja_ui_lang') || 'pl';
+
+  const I18N = {
+    pl: {
+      teacherTitle: 'Panel Wykładowcy – Config Builder',
+      teacherHelp: 'Edytuj SenseiConfig (JSON), waliduj względem API, potem uruchom sesję.',
+      startSession: 'Uruchom sesję laboratoryjną',
+      refreshSessions: 'Odśwież listę sesji',
+      sessionsTitle: 'Inspector sesji (aktywne)',
+      simCompile: 'Symuluj błąd kompilacji',
+      revealHint: 'Odkryj wskazówkę',
+      forceHint: 'Force hint (wykładowca)',
+      exportJson: 'Eksport JSON',
+    },
+    en: {
+      teacherTitle: 'Professor panel – Config Builder',
+      teacherHelp: 'Edit SenseiConfig (JSON), validate against the API, then start a session.',
+      startSession: 'Start lab session',
+      refreshSessions: 'Refresh session list',
+      sessionsTitle: 'Session inspector (active)',
+      simCompile: 'Simulate compile error',
+      revealHint: 'Reveal hint',
+      forceHint: 'Force hint (professor)',
+      exportJson: 'Export JSON',
+    },
+  };
+
+  function setUiLang(lang) {
+    uiLang = (lang === 'en') ? 'en' : 'pl';
+    localStorage.setItem('pja_ui_lang', uiLang);
+    const dict = I18N[uiLang];
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.getAttribute('data-i18n');
+      if (dict[key]) el.textContent = dict[key];
+    });
+  }
 
   function showJson(data) {
     document.getElementById('json-output').textContent = JSON.stringify(data, null, 2);
   }
 
-  async function loadPreset() {
+  function setValidBadge(ok, detail) {
+    const el = document.getElementById('badge-valid');
+    if (ok === null) {
+      el.className = 'badge';
+      el.textContent = 'Walidacja: —';
+      return;
+    }
+    el.className = 'badge ' + (ok ? 'ok' : 'bad');
+    el.textContent = ok ? ('Walidacja: OK' + (detail ? ' — ' + detail : '')) : ('Walidacja: BŁĄD' + (detail ? ' — ' + detail : ''));
+  }
+
+  function parseConfigOrAlert() {
+    const raw = document.getElementById('config-json').value.trim();
+    if (!raw) {
+      alert('Pole konfiguracji nie może być puste!');
+      return null;
+    }
     try {
-      const res = await fetch('/config/presets');
-      const data = await res.json();
-      if (data.presets && data.presets.length > 0) {
-        document.getElementById('config-json').value = JSON.stringify(data.presets[0].config, null, 2);
-        showJson({ status: "Preset załadowany pomyślnie" });
-      }
+      return JSON.parse(raw);
     } catch (e) {
-      showJson({ error: e.toString() });
+      setValidBadge(false, 'JSON parse error');
+      showJson({ parse_error: String(e) });
+      return null;
     }
   }
 
-  async function validateConfig() {
-    const raw = document.getElementById('config-json').value.trim();
-    if (!raw) {
-      alert("Pole konfiguracji nie może być puste!");
-      return;
-    }
+  async function loadPresetsIntoSelect() {
+    const sel = document.getElementById('preset-select');
+    sel.innerHTML = '';
     try {
-      const parsed = JSON.parse(raw);
+      const res = await fetch('/config/presets');
+      const data = await res.json();
+      presetsCache = data.presets || [];
+      if (!presetsCache.length) {
+        const opt = document.createElement('option');
+        opt.textContent = '(brak presetów)';
+        sel.appendChild(opt);
+        return;
+      }
+      presetsCache.forEach((p, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = p.name || p.id || ('preset-' + i);
+        sel.appendChild(opt);
+      });
+    } catch (e) {
+      showJson({ error: String(e) });
+    }
+  }
+
+  function loadSelectedPreset() {
+    const idx = Number(document.getElementById('preset-select').value || 0);
+    const preset = presetsCache[idx];
+    if (!preset) return;
+    document.getElementById('config-json').value = JSON.stringify(preset.config, null, 2);
+    setValidBadge(null);
+    showJson({ status: 'Preset załadowany', id: preset.id || preset.name });
+  }
+
+  async function loadSchemaHint() {
+    try {
+      const res = await fetch('/config/schema');
+      const schema = await res.json();
+      const required = schema.required || [];
+      const props = Object.keys(schema.properties || {});
+      document.getElementById('schema-hint').textContent =
+        'Wymagane: ' + (required.join(', ') || '(brak)') +
+        ' | Pola: ' + props.slice(0, 20).join(', ') + (props.length > 20 ? '…' : '');
+      showJson({ schema_keys: props, required });
+    } catch (e) {
+      showJson({ error: String(e) });
+    }
+  }
+
+  function formatConfig() {
+    const parsed = parseConfigOrAlert();
+    if (!parsed) return;
+    document.getElementById('config-json').value = JSON.stringify(parsed, null, 2);
+  }
+
+  async function validateConfig() {
+    const parsed = parseConfigOrAlert();
+    if (!parsed) return;
+    try {
       const res = await fetch('/validate-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -222,19 +397,89 @@
       });
       const data = await res.json();
       showJson(data);
+      if (data.valid) {
+        setValidBadge(true, 'schema + pydantic');
+      } else {
+        const n = (data.pydantic_errors || []).length + (data.schema_errors || []).length;
+        setValidBadge(false, n + ' błędów');
+      }
     } catch (e) {
-      showJson({ parse_error: e.toString() });
+      setValidBadge(false, 'request failed');
+      showJson({ error: String(e) });
     }
   }
 
+  function renderGoals(goalProgress) {
+    const strip = document.getElementById('goal-strip');
+    strip.innerHTML = '';
+    if (!Array.isArray(goalProgress) || !goalProgress.length) return;
+    goalProgress.forEach((g) => {
+      const chip = document.createElement('span');
+      const status = (g.status || 'not_started');
+      chip.className = 'goal-chip ' + status;
+      chip.textContent = (g.goal || '?') + ': ' + status;
+      strip.appendChild(chip);
+    });
+  }
+
+  function applyMessageResult(data) {
+    const score = (data.lab_score !== undefined && data.lab_score !== null) ? data.lab_score : 0;
+    document.getElementById('badge-score').textContent = `Wynik labu: ${score}/10`;
+    if (data.next_checkpoint) {
+      const cpId = typeof data.next_checkpoint === 'object'
+        ? (data.next_checkpoint.id || JSON.stringify(data.next_checkpoint))
+        : data.next_checkpoint;
+      document.getElementById('badge-cp').textContent = `Checkpoint: ${cpId}`;
+    }
+    if (data.goal_progress) renderGoals(data.goal_progress);
+  }
+
+  function attachSession(convId, startPayload) {
+    currentConvId = convId;
+    document.getElementById('badge-session').textContent = `Sesja: ${convId}`;
+    document.getElementById('student-panel').style.display = 'block';
+    document.getElementById('chat-messages').innerHTML =
+      '<div class="chat-msg assistant">Witaj! W czym mogę Ci dzisiaj pomóc w ramach laboratorium?</div>';
+    document.getElementById('goal-strip').innerHTML = '';
+    document.getElementById('badge-score').textContent = 'Wynik labu: 0/10';
+    document.getElementById('badge-cp').textContent = 'Checkpoint: -';
+
+    const prelabCard = document.getElementById('prelab-card');
+    const prelabQ = document.getElementById('prelab-question');
+    const prelabForm = document.getElementById('prelab-form');
+
+    if (startPayload && startPayload.prelab_required) {
+      prelabCard.style.display = 'block';
+      prelabForm.style.display = 'block';
+      prelabQ.textContent = startPayload.prelab_question || 'Odpowiedz na pytanie wstępne:';
+    } else {
+      prelabQ.textContent = 'Pre-Lab nie jest wymagany w tej konfiguracji.';
+      prelabForm.style.display = 'none';
+    }
+
+    window.scrollTo({ top: document.getElementById('student-panel').offsetTop, behavior: 'smooth' });
+    refreshSessions();
+  }
+
   async function startSession() {
-    const raw = document.getElementById('config-json').value.trim();
-    if (!raw) {
-      alert("Najpierw wczytaj lub wklej konfigurację!");
+    const parsed = parseConfigOrAlert();
+    if (!parsed) return;
+
+    const validRes = await fetch('/validate-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: parsed })
+    });
+    const validData = await validRes.json();
+    if (!validData.valid) {
+      setValidBadge(false, 'napraw błędy przed startem');
+      showJson(validData);
+      alert('Konfiguracja jest niepoprawna — popraw JSON i waliduj ponownie.');
       return;
     }
+    setValidBadge(true);
+
     try {
-      const parsed = JSON.parse(raw);
       const res = await fetch('/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -244,27 +489,20 @@
       showJson(data);
 
       if (res.ok && data.conversation_id) {
-        currentConvId = data.conversation_id;
-        document.getElementById('badge-session').textContent = `Sesja: ${currentConvId}`;
-        document.getElementById('student-panel').style.display = 'block';
-
-        const prelabCard = document.getElementById('prelab-card');
-        const prelabQ = document.getElementById('prelab-question');
-        const prelabForm = document.getElementById('prelab-form');
-
-        if (data.prelab_required) {
-          prelabCard.style.display = 'block';
-          prelabForm.style.display = 'block';
-          prelabQ.textContent = data.prelab_question || "Odpowiedz na pytanie wstępne:";
+        attachSession(data.conversation_id, data);
+        if (data.rag_preview) {
+          const rp = data.rag_preview;
+          document.getElementById('rag-preview-hint').textContent =
+            'RAG preview: ' + (rp.chunks_ingested || 0) + ' chunks from ' +
+            ((rp.materials || []).map((m) => m.title).join(', ') || '(no materials)');
         } else {
-          prelabQ.textContent = "Pre-Lab nie jest wymagany w tej konfiguracji.";
-          prelabForm.style.display = 'none';
+          document.getElementById('rag-preview-hint').textContent = '';
         }
-
-        window.scrollTo({ top: document.getElementById('student-panel').offsetTop, behavior: 'smooth' });
+      } else {
+        alert((data && data.detail) || 'Nie udało się uruchomić sesji.');
       }
     } catch (e) {
-      showJson({ error: e.toString() });
+      showJson({ error: String(e) });
     }
   }
 
@@ -272,7 +510,7 @@
     if (!currentConvId) return;
     const ans = document.getElementById('prelab-answer').value.trim();
     if (!ans) {
-      alert("Wpisz odpowiedź na pytanie Pre-Lab!");
+      alert('Wpisz odpowiedź na pytanie Pre-Lab!');
       return;
     }
 
@@ -280,29 +518,55 @@
       const res = await fetch(`/conversations/${currentConvId}/prelab`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: [{ id: "q1", answer: ans }] })
+        body: JSON.stringify({ answers: [{ id: 'q1', answer: ans }] })
       });
       const data = await res.json();
       showJson(data);
 
-      if (res.ok && (data.passed || data.status === "completed" || data.prelab_completed)) {
-        document.getElementById('prelab-question').textContent = "Pre-Lab zaliczony pomyślnie! Czat jest odblokowany.";
+      if (res.ok && (data.passed || data.prelab_completed)) {
+        document.getElementById('prelab-question').textContent = 'Pre-Lab zaliczony pomyślnie! Czat jest odblokowany.';
         document.getElementById('prelab-form').style.display = 'none';
       }
     } catch (e) {
-      showJson({ error: e.toString() });
+      showJson({ error: String(e) });
     }
+  }
+
+  function appendChatMessage(role, text, extraClass) {
+    const box = document.getElementById('chat-messages');
+    const msg = document.createElement('div');
+    msg.className = 'chat-msg ' + role + (extraClass ? ' ' + extraClass : '');
+    msg.textContent = text;
+    box.appendChild(msg);
+    box.scrollTop = box.scrollHeight;
+    return msg;
+  }
+
+  function softErrorMessage(status, data) {
+    if (status === 503 && data && data.message_id === 'llm_rate_limited') {
+      const retry = '(spróbuj za chwilę — Retry-After)';
+      return 'Model jest przeciążony (503 llm_rate_limited). ' + retry;
+    }
+    if (status === 429 && data && data.message_id === 'rate_limit_exceeded') {
+      return 'Limit zapytań API (429). Odczekaj chwilę i spróbuj ponownie.';
+    }
+    if (status === 403 && data && data.message_id === 'prelab_required') {
+      return 'Najpierw ukończ Pre-Lab.';
+    }
+    return (data && (data.detail || data.message_id)) || ('Błąd HTTP ' + status);
   }
 
   async function sendMessage() {
     if (!currentConvId) {
-      alert("Najpierw uruchom sesję!");
+      alert('Najpierw uruchom sesję!');
       return;
     }
+    if (sending) return;
+
     const input = document.getElementById('chat-input');
     const question = input.value.trim();
     if (!question) {
-      alert("Wiadomość nie może być pusta!");
+      alert('Wiadomość nie może być pusta!');
       return;
     }
 
@@ -315,48 +579,73 @@
       payload.codeContext = { codeSnippet: code };
     }
 
+    sending = true;
+    document.getElementById('btn-send').disabled = true;
+    const assistantEl = appendChatMessage('assistant', '…');
+
     try {
-      const res = await fetch(`/conversations/${currentConvId}/messages`, {
+      const res = await fetch(`/conversations/${currentConvId}/messages/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
-      showJson(data);
 
-      if (res.ok) {
-        appendChatMessage('assistant', data.answer);
+      if (!res.ok) {
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
+        showJson(data);
+        assistantEl.classList.add('error');
+        assistantEl.textContent = softErrorMessage(res.status, data);
+        return;
+      }
 
-        let score = (data.lab_score !== undefined && data.lab_score !== null) ? data.lab_score : 0;
-        if (score > 0 && score <= 1) {
-          score = Math.round(score * 100);
-        } else if (score > 1 && score <= 10 && data.goal_progress) {
-          score = score * 10;
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let assembled = '';
+      let finalPayload = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n');
+        buffer = parts.pop();
+        for (const line of parts) {
+          if (!line.trim()) continue;
+          let ev;
+          try { ev = JSON.parse(line); } catch (_) { continue; }
+          if (ev.type === 'token' && typeof ev.text === 'string') {
+            assembled += ev.text;
+            // Prefer readable answer if token stream is raw JSON; show progressive text
+            assistantEl.textContent = assembled;
+          } else if (ev.type === 'final') {
+            finalPayload = ev;
+          }
         }
+      }
 
-        document.getElementById('badge-score').textContent = `Wynik labu: ${score}%`;
-
-        if (data.next_checkpoint) {
-          const cpId = typeof data.next_checkpoint === 'object'
-            ? (data.next_checkpoint.id || JSON.stringify(data.next_checkpoint))
-            : data.next_checkpoint;
-          document.getElementById('badge-cp').textContent = `Checkpoint: ${cpId}`;
+      if (finalPayload) {
+        showJson(finalPayload);
+        if (finalPayload.answer) {
+          assistantEl.textContent = finalPayload.answer;
         }
-      } else {
-        appendChatMessage('assistant', `Błąd: ${data.detail || 'Nie udało się przetworzyć wiadomości.'}`);
+        applyMessageResult(finalPayload);
+        if (finalPayload.message_id === 'blocked' || finalPayload.message_id === 'rejected') {
+          assistantEl.classList.add('error');
+        }
+      } else if (!assembled) {
+        assistantEl.classList.add('error');
+        assistantEl.textContent = 'Strumień zakończył się bez odpowiedzi.';
       }
     } catch (e) {
-      showJson({ error: e.toString() });
+      assistantEl.classList.add('error');
+      assistantEl.textContent = 'Błąd sieci: ' + e;
+      showJson({ error: String(e) });
+    } finally {
+      sending = false;
+      document.getElementById('btn-send').disabled = false;
     }
-  }
-
-  function appendChatMessage(role, text) {
-    const box = document.getElementById('chat-messages');
-    const msg = document.createElement('div');
-    msg.className = `chat-msg ${role}`;
-    msg.textContent = text;
-    box.appendChild(msg);
-    box.scrollTop = box.scrollHeight;
   }
 
   async function sendEvent(type) {
@@ -370,7 +659,7 @@
       const data = await res.json();
       showJson(data);
     } catch (e) {
-      showJson({ error: e.toString() });
+      showJson({ error: String(e) });
     }
   }
 
@@ -384,10 +673,32 @@
       const data = await res.json();
       showJson(data);
       if (res.ok && data.hint) {
-        appendChatMessage('assistant', `💡 WSKAZÓWKA: ${data.hint}`);
+        appendChatMessage('assistant', 'WSKAZÓWKA: ' + data.hint);
+      } else {
+        appendChatMessage('assistant', softErrorMessage(res.status, data), 'error');
       }
     } catch (e) {
-      showJson({ error: e.toString() });
+      showJson({ error: String(e) });
+    }
+  }
+
+  async function forceHint() {
+    if (!currentConvId) return;
+    try {
+      const res = await fetch(`/conversations/${currentConvId}/hints/force`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'ui_professor_override' })
+      });
+      const data = await res.json();
+      showJson(data);
+      if (res.ok && data.hint) {
+        appendChatMessage('assistant', 'FORCE HINT: ' + data.hint);
+      } else {
+        appendChatMessage('assistant', softErrorMessage(res.status, data), 'error');
+      }
+    } catch (e) {
+      showJson({ error: String(e) });
     }
   }
 
@@ -401,12 +712,137 @@
       const data = await res.json();
       showJson(data);
       if (res.ok && data.summary) {
-        appendChatMessage('assistant', `📋 PODSUMOWANIE SESJI:\n${data.summary}`);
+        appendChatMessage('assistant', 'PODSUMOWANIE SESJI:\n' + data.summary);
+        if (typeof data.lab_score === 'number') {
+          document.getElementById('badge-score').textContent = `Wynik labu: ${data.lab_score}/10`;
+        }
       }
     } catch (e) {
-      showJson({ error: e.toString() });
+      showJson({ error: String(e) });
     }
   }
+
+  async function exportTranscript() {
+    if (!currentConvId) return;
+    try {
+      const res = await fetch(`/conversations/${currentConvId}/export`);
+      const data = await res.json();
+      showJson(data);
+      if (!res.ok) {
+        alert(softErrorMessage(res.status, data));
+        return;
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'pja-sensei-' + currentConvId + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      showJson({ error: String(e) });
+    }
+  }
+
+  async function refreshSessions() {
+    try {
+      const res = await fetch('/conversations');
+      const data = await res.json();
+      const list = document.getElementById('session-list');
+      const items = data.conversations || [];
+      document.getElementById('sessions-count').textContent =
+        'Aktywne sesje: ' + (data.count != null ? data.count : items.length);
+
+      if (!items.length) {
+        list.innerHTML = '<div class="muted">Brak aktywnych sesji.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      items.forEach((item) => {
+        const row = document.createElement('div');
+        row.className = 'session-row' + (item.conversation_id === currentConvId ? ' active' : '');
+        const meta = document.createElement('div');
+        meta.innerHTML =
+          '<strong>' + item.conversation_id.slice(0, 8) + '…</strong> ' +
+          '<span class="muted">' + item.language +
+          ' | score ' + item.lab_score + '/10' +
+          ' | msgs ' + item.messages_count +
+          ' | goals ' + item.goals_done + '/' + item.goals_total +
+          (item.prelab_completed ? '' : ' | prelab!') +
+          '</span>';
+
+        const actions = document.createElement('div');
+        actions.className = 'session-actions';
+
+        const btnOpen = document.createElement('button');
+        btnOpen.className = 'secondary';
+        btnOpen.textContent = 'Otwórz';
+        btnOpen.onclick = async () => {
+          currentConvId = item.conversation_id;
+          document.getElementById('student-panel').style.display = 'block';
+          document.getElementById('badge-session').textContent = 'Sesja: ' + item.conversation_id;
+          document.getElementById('badge-score').textContent = 'Wynik labu: ' + item.lab_score + '/10';
+          const st = await fetch('/conversations/' + item.conversation_id);
+          const stData = await st.json();
+          showJson(stData);
+          if (stData.goal_progress) {
+            const gp = Object.entries(stData.goal_progress).map(([goal, status]) => ({ goal, status }));
+            renderGoals(gp);
+          }
+          refreshSessions();
+        };
+
+        const btnExport = document.createElement('button');
+        btnExport.className = 'secondary';
+        btnExport.textContent = 'Export';
+        btnExport.onclick = async () => {
+          currentConvId = item.conversation_id;
+          await exportTranscript();
+        };
+
+        const btnSum = document.createElement('button');
+        btnSum.className = 'secondary';
+        btnSum.textContent = 'Summary';
+        btnSum.onclick = async () => {
+          currentConvId = item.conversation_id;
+          await generateSummary();
+        };
+
+        const btnDel = document.createElement('button');
+        btnDel.className = 'danger';
+        btnDel.textContent = 'Usuń';
+        btnDel.onclick = async () => {
+          if (!confirm('Soft-delete sesji ' + item.conversation_id + '?')) return;
+          const r = await fetch('/conversations/' + item.conversation_id, { method: 'DELETE' });
+          const d = await r.json();
+          showJson(d);
+          if (currentConvId === item.conversation_id) {
+            currentConvId = null;
+            document.getElementById('student-panel').style.display = 'none';
+          }
+          refreshSessions();
+        };
+
+        actions.appendChild(btnOpen);
+        actions.appendChild(btnExport);
+        actions.appendChild(btnSum);
+        actions.appendChild(btnDel);
+        row.appendChild(meta);
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    } catch (e) {
+      showJson({ error: String(e) });
+    }
+  }
+
+  // Boot
+  setUiLang(uiLang);
+  loadPresetsIntoSelect().then(() => {
+    if (presetsCache.length) loadSelectedPreset();
+  });
+  refreshSessions();
 </script>
 
 </body>

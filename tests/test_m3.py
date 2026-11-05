@@ -1,5 +1,5 @@
 import json
-from typing import List, Dict
+from typing import List, Dict, Optional
 from fastapi.testclient import TestClient
 from app.main import app
 from app.domain.ports import LlmPort, LlmResult
@@ -15,7 +15,12 @@ class ScriptedMockLlm(LlmPort):
     def is_configured(self) -> bool:
         return True
 
-    def generate_json(self, system_prompt: str, messages: List[Dict[str, str]]) -> LlmResult:
+    def generate_json(
+        self,
+        system_prompt: str,
+        messages: List[Dict[str, str]],
+        model_override: Optional[str] = None,
+    ) -> LlmResult:
         self.turn += 1
         if self.turn == 1:
             payload = {

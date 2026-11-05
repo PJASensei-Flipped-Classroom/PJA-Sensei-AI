@@ -104,17 +104,18 @@ class ResponsePipeline:
         pl_score = pl_diacritics * 2 + pl_words
         en_score = en_words
 
-        print(f"\n[DEBUG DRIFT] Oczekiwany język sesji: '{expected_language}'")
-        print(f"[DEBUG DRIFT] Punkty PL: {pl_score} | Punkty EN: {en_score}")
+        # OLD debug noise (left for reference):
+        # print(f"\n[DEBUG DRIFT] Oczekiwany język sesji: '{expected_language}'")
+        # print(f"[DEBUG DRIFT] Punkty PL: {pl_score} | Punkty EN: {en_score}")
 
         if expected_language == "pl":
             is_drift = en_score >= 2 and pl_score <= 1
-            print(f"[DEBUG DRIFT] Wykryto drift: {is_drift}")
+            # OLD: print(f"[DEBUG DRIFT] Wykryto drift: {is_drift}")
             return is_drift
 
         if expected_language == "en":
             is_drift = pl_score >= 2 and en_score <= 1
-            print(f"[DEBUG DRIFT] Wykryto drift: {is_drift}")
+            # OLD: print(f"[DEBUG DRIFT] Wykryto drift: {is_drift}")
             return is_drift
 
         return False

@@ -1,25 +1,48 @@
 import re
-from typing import Optional
+from pathlib import PurePosixPath
+from typing import Optional, List
 
 from pydantic import BaseModel
 from app.domain.sensei import SenseiConfig, CodeContext
 
 GIVEAWAY_PATTERNS = [
-    re.compile(r"napisz\s+(za\s+mnie|mi)\s+(cały|kompletny|gotowy)\s+kod", re.IGNORECASE),
+    # OLD: r"napisz\s+(za\s+mnie|mi)\s+(cały|kompletny|gotowy)\s+kod"
+    re.compile(r"napisz\s+(za\s+mnie|mi)\s+(?:cały\s+)?(?:kompletny\s+|gotowy\s+)?kod", re.IGNORECASE),
     re.compile(r"(daj|podaj|wygeneruj)\s+(mi\s+)?(gotowca|gotowe\s+rozwiązanie|cały\s+kod)", re.IGNORECASE),
     re.compile(r"rozwiąż\s+(za\s+mnie\s+)?całe\s+zadanie", re.IGNORECASE),
     re.compile(r"(write|give\s+me)\s+the\s+(full|complete|entire)\s+(code|solution)", re.IGNORECASE),
     re.compile(r"solve\s+the\s+(whole|entire)\s+(task|lab|problem)\s+for\s+me", re.IGNORECASE),
-    re.compile(r"napisz\s+za\s+mnie\s+cały\s+(gotowy\s+)?kod", re.IGNORECASE), # Dodano brakujący match dla testu
 ]
+
+
+def _basename(path: Optional[str]) -> str:
+    if not path:
+        return ""
+    return PurePosixPath(path.replace("\\", "/")).name.lower()
+
+
+def _collect_file_names(code_context: Optional[CodeContext]) -> List[str]:
+    names: List[str] = []
+    if not code_context:
+        return names
+    primary = _basename(code_context.current_file_name)
+    if primary:
+        names.append(primary)
+    for path in code_context.open_files or []:
+        name = _basename(path)
+        if name and name not in names:
+            names.append(name)
+    return names
+
 
 class PedagogyGateResult(BaseModel):
     rejected: bool
-    reason_code: Optional[str] = None # "empty_file_context" | "missing_pinned_identifiers" | "giveaway_request"
+    reason_code: Optional[str] = None
     answer: Optional[str] = None
     prompt_feedback: Optional[str] = None
     suggested_next_step: Optional[str] = None
     penalty_applied: bool = False
+
 
 class PedagogyGates:
     def evaluate(
@@ -30,6 +53,81 @@ class PedagogyGates:
     ) -> PedagogyGateResult:
         lang = config.language
         current_code = (code_context.current_code if code_context else None) or ""
+        ide = config.ide_restrictions
+        file_names = _collect_file_names(code_context)
+
+        allowed = [a.lower() for a in (ide.allowed_files or []) if a]
+        blocked = [b.lower() for b in (ide.blocked_files or []) if b]
+
+        if blocked and file_names:
+            hit = [n for n in file_names if n in blocked]
+            if hit:
+                hit_str = ", ".join(hit)
+                return PedagogyGateResult(
+                    rejected=True,
+                    reason_code="blocked_file",
+                    answer=(
+                        f"Plik `{hit_str}` jest zablokowany w konfiguracji laboratorium. Otwórz dozwolony plik zadania."
+                        if lang == "pl"
+                        else f"File `{hit_str}` is blocked for this lab. Open an allowed assignment file."
+                    ),
+                    prompt_feedback=(
+                        f"Odrzucono: zablokowany plik ({hit_str})."
+                        if lang == "pl"
+                        else f"Rejected: blocked file ({hit_str})."
+                    ),
+                    suggested_next_step=(
+                        "Przełącz się na plik z listy dozwolonych i wyślij pytanie ponownie."
+                        if lang == "pl"
+                        else "Switch to an allowed file and resend your question."
+                    ),
+                    penalty_applied=False,
+                )
+
+        if allowed:
+            if not file_names:
+                return PedagogyGateResult(
+                    rejected=True,
+                    reason_code="file_not_allowed",
+                    answer=(
+                        "Do tej sesji wymagany jest plik z listy dozwolonych. Ustaw `currentFileName` / `openFiles` w kontekście IDE."
+                        if lang == "pl"
+                        else "This session requires a file from the allow-list. Set `currentFileName` / `openFiles` in the IDE context."
+                    ),
+                    prompt_feedback=(
+                        "Odrzucono: brak nazwy pliku przy aktywnej liście allowedFiles."
+                        if lang == "pl"
+                        else "Rejected: missing file name while allowedFiles is configured."
+                    ),
+                    suggested_next_step=(
+                        f"Otwórz jeden z plików: {', '.join(allowed)}."
+                        if lang == "pl"
+                        else f"Open one of: {', '.join(allowed)}."
+                    ),
+                    penalty_applied=False,
+                )
+            if not any(n in allowed for n in file_names):
+                names_str = ", ".join(file_names)
+                return PedagogyGateResult(
+                    rejected=True,
+                    reason_code="file_not_allowed",
+                    answer=(
+                        f"Plik `{names_str}` nie jest na liście dozwolonych. Dozwolone: {', '.join(allowed)}."
+                        if lang == "pl"
+                        else f"File `{names_str}` is not allow-listed. Allowed: {', '.join(allowed)}."
+                    ),
+                    prompt_feedback=(
+                        f"Odrzucono: plik poza allowedFiles ({names_str})."
+                        if lang == "pl"
+                        else f"Rejected: file outside allowedFiles ({names_str})."
+                    ),
+                    suggested_next_step=(
+                        f"Przełącz edytor na: {', '.join(allowed)}."
+                        if lang == "pl"
+                        else f"Switch the editor to: {', '.join(allowed)}."
+                    ),
+                    penalty_applied=False,
+                )
 
         if config.require_file_context and not current_code.strip():
             return PedagogyGateResult(

@@ -5,7 +5,15 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.domain.ports import LlmPort, LlmResult
 from app.domain.exceptions import SsrfBlockedError
-from app.infrastructure.rag_chroma import validate_safe_url
+from unittest.mock import patch
+import socket
+
+from app.infrastructure.rag_chroma import (
+    validate_safe_url,
+    _strip_html,
+    _decode_fetched_content,
+    _extract_pdf_text,
+)
 from app.api.routers.conversations import get_llm_port, get_cache_port, get_rag_port
 
 client = TestClient(app)
@@ -74,6 +82,59 @@ def test_m6_ssrf_protection_blocks_unsafe_urls():
     res = client.post("/conversations", json={"config": bad_config})
     assert res.status_code == 400
     assert res.json()["message_id"] == "ssrf_blocked"
+
+
+def test_m6_ssrf_dns_failure_is_fail_closed():
+    with patch(
+        "app.infrastructure.rag_chroma.socket.getaddrinfo",
+        side_effect=socket.gaierror("Name or service not known"),
+    ):
+        with pytest.raises(SsrfBlockedError) as exc_info:
+            validate_safe_url("https://example.com/docs")
+    assert "Cannot resolve hostname" in exc_info.value.reason
+
+
+def test_m6_html_and_pdf_material_extraction():
+    html = "<html><script>alert(1)</script><body><p>Spring <b>REST</b></p></body></html>"
+    cleaned = _strip_html(html)
+    assert "alert" not in cleaned
+    assert "Spring" in cleaned
+    assert "REST" in cleaned
+
+    html_bytes = b"<html><body><h1>Controller Guide</h1></body></html>"
+    decoded = _decode_fetched_content(
+        "https://example.com/guide.html", html_bytes, "text/html; charset=utf-8"
+    )
+    assert "Controller Guide" in decoded
+
+    # Minimal PDF containing the text HelloRAG
+    pdf_bytes = b"""%PDF-1.1
+1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
+2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
+3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources<< /Font<< /F1 5 0 R >> >> >>endobj
+4 0 obj<< /Length 44 >>stream
+BT /F1 12 Tf 10 100 Td (HelloRAG) Tj ET
+endstream
+endobj
+5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000266 00000 n 
+0000000361 00000 n 
+trailer<< /Size 6 /Root 1 0 R >>
+startxref
+440
+%%EOF
+"""
+    assert "HelloRAG" in _extract_pdf_text(pdf_bytes)
+    pdf_decoded = _decode_fetched_content(
+        "https://example.com/lab.pdf", pdf_bytes, "application/pdf"
+    )
+    assert "HelloRAG" in pdf_decoded
 
 
 def test_m6_rag_sources_cache_hit_and_checkpoint_unlock():

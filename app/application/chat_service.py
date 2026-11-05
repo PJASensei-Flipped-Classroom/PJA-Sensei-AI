@@ -1,4 +1,6 @@
 import json
+import re
+import time
 import uuid
 from typing import Dict, List, Optional, Any, Iterator, Tuple
 from app.domain.conversation import Conversation, ChatMessage, MessageFeedback
@@ -12,10 +14,11 @@ from app.domain.ports import (
 from app.domain.exceptions import UnknownMessage, TokenBudgetExceeded, HintRevealForbidden
 from app.application.session_service import SessionService
 from app.application.prompts import build_system_prompt, build_user_prompt
-from app.application.response_pipeline import ResponsePipeline
+from app.application.response_pipeline import ResponsePipeline, GIVEAWAY_REQUEST_RE
 from app.application.security import SecurityGuard
 from app.application.pedagogy_gates import PedagogyGates
-from app.infrastructure.cache_memory import build_cache_key
+# OLD: from app.infrastructure.cache_memory import build_cache_key  # hexagonal leak
+from app.application.cache_keys import build_cache_key
 from app.core.config import settings
 from app.application.dto import (
     MessageRequest,
@@ -24,6 +27,12 @@ from app.application.dto import (
     FeedbackRequest,
     FeedbackResponse,
     HintRevealResponse,
+)
+from app.application.metrics import metrics
+from app.application.grade_payload import build_grade_sync_payload
+
+_CONCEPT_Q_RE = re.compile(
+    r"(?i)\b(?:what\s+is|what's|czym\s+jest|co\s+to\s+(?:jest|znaczy)|co\s+oznacza|explain)\s+[`'\"]?(@?[A-Za-z_][\w.]*)"
 )
 
 
@@ -147,9 +156,11 @@ class ChatService:
                 used=conv.token_usage,
             )
 
-        sec_verdict = self.security_guard.check(req.question)
+        lang = conv.config.language
+        code_ctx = req.code_context.to_domain() if req.code_context else None
+
+        sec_verdict = self.security_guard.check(req.question, language=lang)
         if sec_verdict.blocked:
-            lang = conv.config.language
             blocked_resp = self._build_gate_response(
                 conv=conv,
                 req=req,
@@ -170,16 +181,31 @@ class ChatService:
             )
             return conv, blocked_resp, "", [], []
 
-        ped_verdict = self.pedagogy_gates.evaluate(conv.config, req.question, req.code_context)
+        ped_verdict = self.pedagogy_gates.evaluate(conv.config, req.question, code_ctx)
         if ped_verdict.rejected:
-            conv.frustration_streak += 1
+            # OLD: conv.frustration_streak += 1
+            # Focus mode: still punish giveaways; soften other pedagogy rejects.
+            if ped_verdict.reason_code == "giveaway_request" or not conv.in_focus_mode():
+                conv.frustration_streak += 1
             rejected_resp = self._build_gate_response(
                 conv=conv,
                 req=req,
                 gate_message_id="rejected",
-                answer=ped_verdict.answer or "Zapytanie odrzucone przez bramkę dydaktyczną.",
-                feedback=ped_verdict.prompt_feedback or "Pedagogy gate rejected",
-                next_step=ped_verdict.suggested_next_step or "Popraw zapytanie.",
+                answer=ped_verdict.answer or (
+                    "Zapytanie odrzucone przez bramkę dydaktyczną."
+                    if lang == "pl"
+                    else "Request rejected by the pedagogy gate."
+                ),
+                feedback=ped_verdict.prompt_feedback or (
+                    "Odrzucono przez bramkę dydaktyczną."
+                    if lang == "pl"
+                    else "Rejected by pedagogy gate."
+                ),
+                next_step=ped_verdict.suggested_next_step or (
+                    "Popraw zapytanie."
+                    if lang == "pl"
+                    else "Please revise your question."
+                ),
                 penalty=ped_verdict.penalty_applied,
                 debug_info={
                     "pedagogy_rejected": True,
@@ -198,12 +224,26 @@ class ChatService:
                 if source_entry not in rag_sources:
                     rag_sources.append(source_entry)
 
-        system_prompt = build_system_prompt(conv.config, conv.goal_progress, rag_chunks=rag_chunks)
+        # Feature 2: error-aware tutoring — force debug mode when logs/diagnostics present.
+        # OLD: system_prompt = build_system_prompt(conv.config, conv.goal_progress, rag_chunks=rag_chunks)
+        mode_override = None
+        if (
+            getattr(conv.config, "auto_debug_on_errors", True)
+            and code_ctx
+            and (code_ctx.error_logs or code_ctx.diagnostics)
+        ):
+            mode_override = "debug"
+        system_prompt = build_system_prompt(
+            conv.config,
+            conv.goal_progress,
+            rag_chunks=rag_chunks,
+            mode_override=mode_override,
+        )
         history_messages = [
             {"role": m.role, "content": m.content}
             for m in conv.messages[-10:]
         ]
-        user_prompt_content = build_user_prompt(req.question, req.code_context)
+        user_prompt_content = build_user_prompt(req.question, code_ctx)
         history_messages.append({"role": "user", "content": user_prompt_content})
 
         return conv, None, system_prompt, history_messages, rag_sources
@@ -254,11 +294,19 @@ class ChatService:
         next_cp = self.pipeline.evaluate_checkpoints(conv)
         lab_score = conv.calculate_lab_score()
 
-        answer_text = str(parsed.get("answer", "Przeanalizujmy ten krok jeszcze raz."))
-        prompt_feedback = str(parsed.get("prompt_feedback", "OK"))
-        suggested_next_step = str(
-            parsed.get("suggested_next_step", "Kontynuuj pracę nad kolejnym celem.")
+        default_answer = (
+            "Przeanalizujmy ten krok jeszcze raz."
+            if conv.config.language == "pl"
+            else "Let's review this step once more."
         )
+        default_next = (
+            "Kontynuuj pracę nad kolejnym celem."
+            if conv.config.language == "pl"
+            else "Continue working on the next goal."
+        )
+        answer_text = str(parsed.get("answer", default_answer))
+        prompt_feedback = str(parsed.get("prompt_feedback", "OK"))
+        suggested_next_step = str(parsed.get("suggested_next_step", default_next))
 
         try:
             raw_score = int(parsed.get("prompt_score", 5))
@@ -273,15 +321,66 @@ class ChatService:
             penalty_applied=raw_penalty,
         )
 
+        # Feature 6: focus mode softens non-giveaway penalties.
+        giveaway_q = bool(GIVEAWAY_REQUEST_RE.search(req.question or ""))
+        if conv.in_focus_mode() and penalty_applied and not giveaway_q:
+            # OLD: keep penalty_applied as computed
+            penalty_applied = False
+
         prompt_score = 10 if (conv.all_goals_done() and not penalty_applied) else adjusted_score
 
+        code_ctx_final = req.code_context.to_domain() if req.code_context else None
         has_errors = bool(
-            req.code_context and (req.code_context.error_logs or req.code_context.diagnostics)
+            code_ctx_final and (code_ctx_final.error_logs or code_ctx_final.diagnostics)
         )
+        tutoring_mode = (
+            "debug"
+            if (
+                getattr(conv.config, "auto_debug_on_errors", True)
+                and has_errors
+            )
+            else conv.config.agent_behavior.mode
+        )
+
+        # Feature 3: checkpoint celebration + reflective nudge when goals advance.
+        checkpoint_celebration = None
         if new_done_count > prev_done_count:
             conv.frustration_streak = 0
+            if conv.config.language == "pl":
+                checkpoint_celebration = (
+                    "Świetnie — widać postęp w celach laboratorium. "
+                    "Zanim pójdziesz dalej: jednym zdaniem powiedz, *dlaczego* ta zmiana działa."
+                )
+            else:
+                checkpoint_celebration = (
+                    "Nice progress on the lab goals. "
+                    "Before you continue: in one sentence, explain *why* that change works."
+                )
+            answer_text = f"{checkpoint_celebration}\n\n{answer_text}"
+            if next_cp and next_cp.unlocked and next_cp.hint:
+                # Reflect then point at newly unlocked checkpoint hint (conceptual, not full solution).
+                suggested_next_step = next_cp.hint
+        # OLD: elif penalty_applied or prompt_score <= 4 or has_errors:
+        #          conv.frustration_streak += 1
+        elif conv.in_focus_mode() and not giveaway_q:
+            pass  # soft window: do not grow frustration for low scores / errors
         elif penalty_applied or prompt_score <= 4 or has_errors:
             conv.frustration_streak += 1
+
+        # Feature 4: concept glossary card from RAG when question looks definitional.
+        concept_card = None
+        m = _CONCEPT_Q_RE.search(req.question or "")
+        if m and sources:
+            term = m.group(1)
+            concept_card = {
+                "term": term,
+                "sources": sources[:3],
+                "note": (
+                    "Wyjaśnienie oparte na materiałach laboratorium (RAG)."
+                    if conv.config.language == "pl"
+                    else "Explanation grounded in lab reference materials (RAG)."
+                ),
+            }
 
         user_msg = ChatMessage(
             message_id=str(uuid.uuid4()),
@@ -307,10 +406,18 @@ class ChatService:
         conv.messages.append(assistant_msg)
         conv.token_usage += total_tokens
 
+        if conv.all_goals_done() and conv.grade_payload is None:
+            grade = build_grade_sync_payload(conv, trigger="all_goals_done")
+            conv.grade_payload = grade
+            if self.webhooks is not None:
+                self.webhooks.send_event("grade_sync_prepared", grade)
+
         debug_info = dict(llm_result.debug_info or {})
         debug_info["fallback_json"] = is_fallback
         debug_info["language_drift_retried"] = drift_retried
         debug_info["frustration_streak"] = conv.frustration_streak
+        debug_info["tutoring_mode"] = tutoring_mode
+        debug_info["in_focus_mode"] = conv.in_focus_mode()
         debug_info.setdefault("cache_hit", False)
 
         response_obj = MessageResponse(
@@ -327,6 +434,10 @@ class ChatService:
             next_checkpoint=next_cp,
             model=used_model,
             debug_info=debug_info,
+            tutoring_mode=tutoring_mode,
+            checkpoint_celebration=checkpoint_celebration,
+            concept_card=concept_card,
+            in_focus_mode=conv.in_focus_mode(),
         )
 
         if req.client_message_id:
@@ -337,6 +448,7 @@ class ChatService:
         return response_obj
 
     def send_message(self, conv_id: str, req: MessageRequest) -> MessageResponse:
+        metrics.inc_messages()
         conv, early_response, system_prompt, history_messages, rag_sources = self._prepare_turn(
             conv_id, req
         )
@@ -359,6 +471,7 @@ class ChatService:
         )
 
     def stream_message(self, conv_id: str, req: MessageRequest) -> Iterator[str]:
+        metrics.inc_messages()
         conv, early_response, system_prompt, history_messages, rag_sources = self._prepare_turn(
             conv_id, req
         )
@@ -435,12 +548,17 @@ class ChatService:
                 max_hints=max_hints,
             )
 
-        available_hints = list(conv.config.hints)
+        # OLD: available_hints = list(conv.config.hints)
+        # Feature 9: prefer hint_ladder when present.
+        available_hints = conv.config.resolved_hint_texts()
+        available_levels = conv.config.resolved_hint_levels()
         for cp in conv.config.checkpoints:
             if cp.hint and cp.hint not in available_hints:
                 available_hints.append(cp.hint)
+                available_levels.append("concept")
 
         idx = conv.hints_revealed
+        hint_level = available_levels[idx] if idx < len(available_levels) else "nudge"
         if idx < len(available_hints):
             hint_text = available_hints[idx]
         else:
@@ -458,6 +576,7 @@ class ChatService:
 
         conv.hints_revealed += 1
         conv.revealed_hints.append(hint_text)
+        conv.highest_hint_level = hint_level
         conv.frustration_streak = 0
         self.repo.save(conv)
 
@@ -467,6 +586,86 @@ class ChatService:
             max_hints=max_hints,
             hints_remaining=max(0, max_hints - conv.hints_revealed),
             frustration_streak_reset=True,
+            forced=False,
+            hint_level=hint_level,
+        )
+
+    def force_reveal_hint(
+        self,
+        conv_id: str,
+        reason: Optional[str] = None,
+        custom_hint: Optional[str] = None,
+        hint_level: Optional[str] = None,
+    ) -> HintRevealResponse:
+        """Professor override: reveal next hint without frustration streak check."""
+        conv = self.session_svc.ensure_prelab_passed(conv_id)
+        max_hints = conv.config.max_hints
+
+        # Feature 11: custom intervention hint text from professor.
+        if custom_hint and custom_hint.strip():
+            text = custom_hint.strip()
+            level = hint_level or "concept"
+            conv.hints_revealed += 1
+            conv.revealed_hints.append(text)
+            conv.highest_hint_level = level
+            conv.frustration_streak = 0
+            conv.events.append(
+                {
+                    "type": "force_hint",
+                    "meta": {
+                        "reason": reason or "professor_override",
+                        "custom": True,
+                        "hint_level": level,
+                    },
+                    "timestamp": time.time(),
+                }
+            )
+            self.repo.save(conv)
+            return HintRevealResponse(
+                hint=text,
+                hints_used=conv.hints_revealed,
+                max_hints=max_hints,
+                hints_remaining=max(0, max_hints - conv.hints_revealed),
+                frustration_streak_reset=True,
+                forced=True,
+                hint_level=level,
+            )
+
+        if conv.hints_revealed >= max_hints:
+            raise HintRevealForbidden(
+                reason="quota_exceeded",
+                language=conv.config.language,
+                streak=conv.frustration_streak,
+                required_streak=conv.config.frustration_threshold,
+                hints_used=conv.hints_revealed,
+                max_hints=max_hints,
+            )
+
+        # Temporarily satisfy streak so reveal_hint path stays single source of truth
+        conv.frustration_streak = max(conv.frustration_streak, conv.config.frustration_threshold)
+        self.repo.save(conv)
+        result = self.reveal_hint(conv_id)
+        conv = self.session_svc.get_or_404(conv_id)
+        conv.events.append(
+            {
+                "type": "force_hint",
+                "meta": {
+                    "reason": reason or "professor_override",
+                    "hint_index": conv.hints_revealed,
+                    "hint_level": result.hint_level,
+                },
+                "timestamp": time.time(),
+            }
+        )
+        self.repo.save(conv)
+        return HintRevealResponse(
+            hint=result.hint,
+            hints_used=result.hints_used,
+            max_hints=result.max_hints,
+            hints_remaining=result.hints_remaining,
+            frustration_streak_reset=True,
+            forced=True,
+            hint_level=result.hint_level,
         )
 
     def add_feedback(self, conv_id: str, message_id: str, req: FeedbackRequest) -> FeedbackResponse:
