@@ -1,4 +1,3 @@
-"""Lightweight code similarity for professor-only review (not a plagiarism verdict)."""
 from __future__ import annotations
 
 import re
@@ -20,10 +19,6 @@ def best_solution_match(
     student_code: str,
     solution_pack: List[str],
 ) -> Dict[str, Optional[float]]:
-    """
-    Returns best Jaccard overlap vs solution_pack snippets.
-    Flag only — professors decide; never auto-fail students.
-    """
     if not student_code or not solution_pack:
         return {"best_score": None, "best_index": None, "flagged": False}
 
@@ -35,7 +30,6 @@ def best_solution_match(
             best_score = score
             best_index = i
 
-    # Heuristic threshold: high token overlap with a known solution.
     flagged = best_score >= 0.55
     return {
         "best_score": round(best_score, 4),

@@ -1,15 +1,16 @@
-"""JWT verification helpers for optional API authentication."""
 from typing import Any, Dict, Optional, Tuple
 
 import jwt
 
-from app.application.access import require_professor  # re-export for API callers
 from app.core.config import settings
+
+# OLD: from app.application.access import require_professor  # re-export for API callers
+# OLD: __all__ included "require_professor"
+# Removed because: unused; callers already import require_professor from app.application.access.
 
 __all__ = [
     "extract_bearer_token",
     "verify_access_token",
-    "require_professor",
     "client_ip_from_request",
 ]
 
@@ -25,25 +26,11 @@ def extract_bearer_token(authorization_header: Optional[str]) -> Optional[str]:
 
 
 def verify_access_token(token: str) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
-    """
-    Verify an HS256 JWT with AI_JWT_SECRET.
-    Returns (ok, claims, error_detail).
-    """
     secret = (settings.AI_JWT_SECRET or "").strip()
     if not secret:
         return False, None, "AI_JWT_SECRET is not configured."
 
     try:
-        # OLD:
-        # claims = jwt.decode(
-        #     token,
-        #     secret,
-        #     algorithms=["HS256"],
-        #     options={"require": ["exp"]},
-        # )
-        # Why: bind tokens to this service and require a stable subject for ownership.
-        # Wrong: only exp was required — no aud/iss; missing sub broke owner binding.
-        # Better: require exp+sub; optionally validate AI_JWT_AUDIENCE / AI_JWT_ISSUER when set.
         decode_kwargs: Dict[str, Any] = {
             "algorithms": ["HS256"],
             "options": {"require": ["exp", "sub"]},

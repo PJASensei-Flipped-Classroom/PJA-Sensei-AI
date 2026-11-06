@@ -31,16 +31,6 @@ class SessionService:
         goal_progress: Dict[str, GoalStatus] = {
             goal.id: "not_started" for goal in config.learning_context.goals
         }
-        # OLD:
-        # conv = Conversation(
-        #     id=conv_id,
-        #     config=config,
-        #     goal_progress=goal_progress,
-        #     prelab_completed=not config.pre_lab.enabled
-        # )
-        # Why: JWT-backed deploys need session ownership binding.
-        # Wrong: any valid token could use any known conversation_id (no owner_sub).
-        # Better: persist owner_sub/lab_id from JWT claims at create time for access checks.
         conv = Conversation(
             id=conv_id,
             config=config,
@@ -63,11 +53,6 @@ class SessionService:
         )
         return conv, preview
 
-    # OLD: unused helper that leaked repo._store (port bypass)
-    # def list_conversations(self) -> List[Dict[str, Any]]:
-    #     all_convs = getattr(self.repo, "_store", {}).values()
-    #     ...
-
     def list_conversations(self) -> List[Dict[str, Any]]:
         return [
             {
@@ -85,8 +70,10 @@ class SessionService:
             for c in self.repo.list_active()
         ]
 
-    def count_active(self) -> int:
-        return self.repo.count_active()
+    # OLD:
+    # def count_active(self) -> int:
+    #     return self.repo.count_active()
+    # Removed because: never called; health uses deps.repo.count_active() directly.
 
     def get_or_404(self, conv_id: str) -> Conversation:
         conv = self.repo.get(conv_id)
@@ -104,7 +91,6 @@ class SessionService:
         if self.rag is not None:
             self.rag.delete_conversation(conv_id)
             rag_cleaned = True
-        # OLD: always reported "rag_cleaned": True even when rag was None
 
         conv.is_deleted = True
         conv.deleted_at = time.time()
@@ -133,14 +119,6 @@ class SessionService:
         })
 
         streak_incremented = False
-        # OLD:
-        # if event_type in ("test_failed", "compile_error", "build_failed", "runtime_error"):
-        #     conv.frustration_streak += 1
-        # elif event_type in ("test_passed", "goal_completed"):
-        #     conv.frustration_streak = 0
-        # Why: hint unlock is gated on frustration_streak; farming /events unlocked hints in seconds.
-        # Wrong: every matching event incremented streak with no cooldown.
-        # Better: increment at most once per FRUSTRATION_EVENT_COOLDOWN_SECONDS; still append the event.
         frustration_types = ("test_failed", "compile_error", "build_failed", "runtime_error")
         reset_types = ("test_passed", "goal_completed")
         if event_type in frustration_types:
@@ -150,7 +128,6 @@ class SessionService:
                 conv.frustration_streak += 1
                 conv.last_frustration_at = now
                 streak_incremented = True
-            # Focus mode: soft tutoring window after real IDE failures.
             focus_secs = max(0, int(getattr(conv.config, "focus_mode_seconds", 0) or 0))
             if focus_secs > 0:
                 conv.focus_until = now + focus_secs
@@ -170,11 +147,6 @@ class SessionService:
                 },
             )
 
-        # OLD: return {
-        #     "status": "recorded",
-        #     "event_type": event_type,
-        #     "frustration_streak": conv.frustration_streak,
-        # }
         return {
             "status": "recorded",
             "event_type": event_type,
@@ -203,7 +175,6 @@ class SessionService:
         lab_score = conv.calculate_lab_score()
 
         if conv.config.language == "pl":
-            # OLD: f"... wynik {lab_score}% ..."  # lab_score is 0–10, not a percent
             summary_text = (
                 f"Podsumowanie sesji laboratoryjnej: wynik {lab_score}/10 "
                 f"(ukończone cele: {len(done_goals)}/{len(goal_entries)}). "
@@ -213,7 +184,6 @@ class SessionService:
             if pending_goals:
                 summary_text += f"Do dopracowania: {', '.join(pending_goals)}."
         else:
-            # OLD: f"... score {lab_score}% ..."
             summary_text = (
                 f"Lab session summary: score {lab_score}/10 "
                 f"(completed goals: {len(done_goals)}/{len(goal_entries)}). "
@@ -236,7 +206,6 @@ class SessionService:
         )
         summary_dict = summary_dto.model_dump()
         conv.summary = summary_dict
-        # Prepare Spring grade-sync envelope (stored + webhook; Spring will consume later).
         grade = build_grade_sync_payload(
             conv, trigger="session_summary", summary_text=summary_text.strip()
         )
@@ -270,7 +239,6 @@ class SessionService:
         return {"status": "recorded", "notes_count": len(conv.intervention_notes), "note": note}
 
     def observe(self, conv_id: str) -> Dict[str, Any]:
-        """Professor read-only snapshot (messages + notes + grade payload)."""
         conv = self.get_or_404(conv_id)
         return {
             "conversation_id": conv.id,
@@ -291,7 +259,6 @@ class SessionService:
         }
 
     def lab_dashboard(self, lab_id: Optional[str] = None) -> Dict[str, Any]:
-        """Aggregate active sessions for professor live view."""
         sessions = []
         for c in self.repo.list_active():
             if lab_id and c.lab_id != lab_id:

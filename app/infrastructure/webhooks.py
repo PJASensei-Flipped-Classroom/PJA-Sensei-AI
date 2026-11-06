@@ -1,11 +1,13 @@
 import logging
 import time
 from collections import deque
-from typing import Dict, Any, Optional, Callable, List, Deque
+from typing import Any, Callable, Deque, Dict, List, Optional
+
 import httpx
-from app.domain.ports import WebhookPort
-from app.core.config import settings
+
 from app.application.metrics import metrics
+from app.core.config import settings
+from app.domain.ports import WebhookPort
 
 logger = logging.getLogger(__name__)
 
@@ -13,11 +15,13 @@ logger = logging.getLogger(__name__)
 class HttpWebhookAdapter(WebhookPort):
     def __init__(self, sender: Optional[Callable[[str, Dict[str, Any]], None]] = None):
         self.sender = sender
-        self.sent_events: List[Dict[str, Any]] = []
+        # OLD: self.sent_events: List[Dict[str, Any]] = []
+        # Removed because: unbounded list grew forever; recent_events (bounded deque) is enough for /webhooks/recent.
         buf = max(1, int(getattr(settings, "WEBHOOK_EVENT_BUFFER_SIZE", 50) or 50))
         self.recent_events: Deque[Dict[str, Any]] = deque(maxlen=buf)
 
-    def _resolve_target_url(self, event_type: str) -> str:
+    @staticmethod
+    def _resolve_target_url(event_type: str) -> str:
         if event_type == "session_summary":
             return (
                 settings.SUMMARY_WEBHOOK_URL
@@ -43,7 +47,8 @@ class HttpWebhookAdapter(WebhookPort):
             target_url = self._resolve_target_url(event_type)
 
             record = {"url": target_url, "payload": envelope}
-            self.sent_events.append(record)
+            # OLD: self.sent_events.append(record)
+            # Removed because: duplicate of recent_events with no reader and no max length.
             self.recent_events.append(record)
 
             if self.sender is not None:

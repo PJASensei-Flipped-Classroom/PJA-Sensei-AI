@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.middleware import reset_rate_limit_buckets
-from app.api.routers.conversations import get_llm_port
+from app.api.deps import get_llm_port
 from app.core.config import settings
 from app.domain.ports import LlmPort, LlmResult
 from app.infrastructure.llm_errors import LlmRateLimitError

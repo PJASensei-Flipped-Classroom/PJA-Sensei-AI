@@ -44,6 +44,7 @@ def build_system_prompt(
         rag_section_en = f"\nLAB REFERENCE MATERIALS (RAG):\n{formatted_chunks}\n"
 
     # OLD: effective_mode = config.agent_behavior.mode
+    # Removed because: error-aware tutoring needs mode_override ("debug") when logs/diagnostics exist.
     effective_mode = mode_override or config.agent_behavior.mode
 
     if config.language == "pl":

@@ -1,9 +1,12 @@
 import json
+import logging
 import re
 from typing import Optional
 from pydantic import BaseModel
 from app.domain.ports import LlmPort
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 # Layer 1: hard regex patterns for Jailbreak / Prompt Injection (PL + EN)
 JAILBREAK_REGEXES = [
@@ -19,7 +22,7 @@ JAILBREAK_REGEXES = [
 
 # Layer 2A: role-separator / special-token spoofing
 ROLE_SPOOFING_RE = re.compile(
-    r"(<\|im_start\|>|<\|im_end\|>|<\|system\|>|\[INST\]|\[/INST\]|###\s*System:|SYSTEM\s+OVERRIDE)",
+    r"(<\|im_start\|>|<\|im_end\|>|<\|system\|>|\[INST]|\[/INST]|###\s*System:|SYSTEM\s+OVERRIDE)",
     re.IGNORECASE,
 )
 
@@ -29,21 +32,9 @@ SUSPICIOUS_BYPASS_RE = re.compile(
     re.IGNORECASE,
 )
 
-# University denylist: direct asks for a full graded solution (security + pedagogy)
-SOLUTION_GIVEAWAY_REGEXES = [
-    re.compile(
-        r"(napisz|podaj|wklej)\s+(mi\s+)?(całe|pełne|gotowe)\s+(rozwiązanie|zadanie|kod)",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        r"(write|give|paste)\s+(me\s+)?(the\s+)?(full|complete|entire|ready)\s+(solution|assignment|code)",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        r"(rozwiązanie\s+krok\s+po\s+kroku\s+z\s+pełnym\s+kodem|step\s+by\s+step\s+with\s+full\s+code)",
-        re.IGNORECASE,
-    ),
-]
+# OLD: SOLUTION_GIVEAWAY_REGEXES = [...]  (security-layer full-solution denylist)
+# Removed because: duplicated pedagogy/response patterns; giveaways now live in
+# app.application.giveaway_patterns and are rejected by PedagogyGates (message_id=rejected).
 
 BASE64_BLOB_RE = re.compile(r"\b[A-Za-z0-9+/]{64,}={0,2}\b")
 
@@ -89,7 +80,6 @@ class SecurityGuard:
                 ),
             )
         if BASE64_BLOB_RE.search(text):
-            # OLD: nested duplicate `if BASE64_BLOB_RE.search(text):`
             return SecurityVerdict(
                 blocked=True,
                 stage="heuristics",
@@ -111,25 +101,13 @@ class SecurityGuard:
                 ),
             )
 
-        for pattern in SOLUTION_GIVEAWAY_REGEXES:
-            if pattern.search(text):
-                return SecurityVerdict(
-                    blocked=True,
-                    stage="regex",
-                    reason=_sec_msg(
-                        language,
-                        "Wykryto żądanie pełnego rozwiązania zaliczeniowego.",
-                        "Detected a request for a complete graded solution.",
-                    ),
-                )
+        # OLD: for pattern in SOLUTION_GIVEAWAY_REGEXES: return SecurityVerdict(blocked=True, ...)
+        # Removed because: hard-block as security changed message_id to "blocked" and split
+        # giveaway policy across three modules; pedagogy owns giveaway rejections now.
 
         if SUSPICIOUS_BYPASS_RE.search(text):
             return self._verify_with_llm(text, language)
 
-        # OLD: return SecurityVerdict(blocked=False)
-        # Why: regex/heuristics alone miss paraphrased jailbreaks; optional LLM stage helps.
-        # Wrong: early return never asked SECURITY_MODEL unless SUSPICIOUS_BYPASS_RE hit.
-        # Better: when SECURITY_ALWAYS_CLASSIFY=true, run classifier on every remaining message (costly).
         if settings.SECURITY_ALWAYS_CLASSIFY:
             return self._verify_with_llm(text, language)
 
@@ -156,7 +134,6 @@ class SecurityGuard:
             res = self.llm.generate_json(
                 system_prompt=classifier_system,
                 messages=[{"role": "user", "content": text}],
-                # OLD: no model_override — always used MAIN_MODEL via adapter default
                 model_override=security_model,
             )
             data = json.loads(res.raw_content)
@@ -176,7 +153,10 @@ class SecurityGuard:
                     ),
                 )
             return SecurityVerdict(blocked=False, stage="llm")
-        except Exception:
+        # OLD: separate except for JSONDecodeError/... then a second identical Exception handler
+        # Removed because: both paths did the same fail-closed return; one handler is enough.
+        except Exception as exc:
+            logger.exception("Security classifier failed: %s", exc)
             if settings.SECURITY_FAIL_CLOSED:
                 return SecurityVerdict(
                     blocked=True,

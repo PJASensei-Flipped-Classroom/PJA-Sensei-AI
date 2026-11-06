@@ -4,23 +4,30 @@ import logging
 import math
 import re
 import socket
-from typing import List, Dict, Optional, Callable, Any, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import httpx
 
-from app.domain.ports import RagPort, RagChunk
-from app.domain.sensei import ReferenceMaterial
-from app.domain.exceptions import SsrfBlockedError
 from app.core.config import settings
+from app.domain.exceptions import SsrfBlockedError
+from app.domain.ports import RagChunk, RagPort
+from app.domain.sensei import ReferenceMaterial
 
 logger = logging.getLogger(__name__)
 
 try:
     import chromadb
+    from chromadb.errors import ChromaError
+
     HAS_CHROMADB = True
-except Exception:
+except ImportError:
+    chromadb = None  # type: ignore[assignment]
+    ChromaError = OSError  # type: ignore[misc,assignment]
     HAS_CHROMADB = False
+
+# Operational failures from optional Chroma / embedding paths (no stable narrow hierarchy when missing).
+_CHROMA_OP_ERRORS = (ChromaError, OSError, RuntimeError, ValueError, TypeError, AttributeError, KeyError)
 
 FORBIDDEN_HOSTNAMES = {
     "localhost",
@@ -67,7 +74,6 @@ def validate_safe_url(url: str) -> str:
     try:
         addr_info = socket.getaddrinfo(hostname, parsed.port or 80)
     except socket.gaierror as exc:
-        # OLD: except socket.gaierror: pass  # DNS failure incorrectly allowed the URL
         raise SsrfBlockedError(
             url, f"Cannot resolve hostname '{hostname}' (DNS lookup failed)"
         ) from exc
@@ -84,10 +90,6 @@ def validate_safe_url(url: str) -> str:
     return url.strip()
 
 def _strip_html(raw_html: str) -> str:
-    # OLD regex strip (kept for reference):
-    # text = re.sub(r"<(script|style).*?>.*?</\1>", " ", raw_html, flags=re.DOTALL | re.IGNORECASE)
-    # text = re.sub(r"<[^>]+>", " ", text)
-    # return re.sub(r"\s+", " ", text).strip()
     try:
         from bs4 import BeautifulSoup
 
@@ -95,14 +97,18 @@ def _strip_html(raw_html: str) -> str:
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
         return re.sub(r"\s+", " ", soup.get_text(separator=" ")).strip()
-    except Exception:
-        text = re.sub(r"<(script|style).*?>.*?</\1>", " ", raw_html or "", flags=re.DOTALL | re.IGNORECASE)
+    except (ImportError, TypeError, ValueError, AttributeError):
+        text = re.sub(
+            r"<(script|style).*?>.*?</\1>",
+            " ",
+            raw_html or "",
+            flags=re.DOTALL | re.IGNORECASE,
+        )
         text = re.sub(r"<[^>]+>", " ", text)
         return re.sub(r"\s+", " ", text).strip()
 
 
 def _extract_pdf_text(raw_bytes: bytes) -> str:
-    """Extract plain text from a PDF using pypdf."""
     from io import BytesIO
 
     from pypdf import PdfReader
@@ -117,19 +123,18 @@ def _extract_pdf_text(raw_bytes: bytes) -> str:
 
 
 def _decode_fetched_content(url: str, raw_bytes: bytes, content_type: str = "") -> str:
-    """Choose PDF vs HTML/text extraction based on Content-Type / URL suffix."""
     ct = (content_type or "").lower()
     looks_pdf = "application/pdf" in ct or url.lower().split("?", 1)[0].endswith(".pdf")
     if looks_pdf:
         try:
+            from pypdf.errors import PdfReadError
+        except ImportError:  # pragma: no cover
+            PdfReadError = ValueError  # type: ignore[misc,assignment]
+        try:
             pdf_text = _extract_pdf_text(raw_bytes)
             if pdf_text:
                 return pdf_text
-        # OLD: except Exception: pass
-        # Why: silent PDF failures looked like “empty material” with no ops signal.
-        # Wrong: swallowed all extract errors.
-        # Better: log warning, then fall through to text/HTML decode.
-        except Exception:
+        except (ImportError, PdfReadError, ValueError, TypeError, OSError, KeyError):
             logger.warning("PDF text extraction failed for url=%s", url, exc_info=True)
     text = raw_bytes.decode("utf-8", errors="replace")
     if "html" in ct or "<html" in text[:500].lower() or "<body" in text[:500].lower():
@@ -159,7 +164,7 @@ def _embed_text(text: str, dim: int = 64) -> List[float]:
         vec[0] = 1.0
         return vec
     for token in tokens:
-        h = int(hashlib.md5(token.encode("utf-8")).hexdigest(), 16)
+        h = int(hashlib.sha256(token.encode("utf-8")).hexdigest(), 16)
         idx = h % dim
         sign = 1.0 if ((h >> 8) & 1) == 0 else -1.0
         vec[idx] += sign
@@ -175,15 +180,16 @@ class ChromaRagAdapter(RagPort):
         self._fallback_store: Dict[str, List[Tuple[List[float], RagChunk]]] = {}
         self._healthy = False
 
-        if HAS_CHROMADB:
+        if HAS_CHROMADB and chromadb is not None:
             try:
                 self._chroma_client = chromadb.EphemeralClient()
                 self._healthy = True
-            except Exception:
+            except _CHROMA_OP_ERRORS:
+                logger.exception("Chroma init failed; using in-process fallback store")
                 self._chroma_client = None
-                # OLD: self._healthy = True  # reported healthy even when Chroma init failed
-                self._healthy = True  # fallback in-memory RAG still available
+                self._healthy = True
         else:
+            logger.warning("chromadb not installed; using hash-embedding fallback store")
             self._healthy = True
 
     def is_healthy(self) -> bool:
@@ -191,13 +197,10 @@ class ChromaRagAdapter(RagPort):
             try:
                 self._chroma_client.heartbeat()
                 return True
-            except Exception:
+            except _CHROMA_OP_ERRORS:
                 return False
         return self._healthy
     def _fetch_material_text(self, material: ReferenceMaterial):
-        # Inline content needs no HTTP fetch → skip DNS SSRF check (link is metadata only).
-        # OLD: always called validate_safe_url(material.link) first, which blocked offline
-        # tests when public hostnames could not be resolved in the sandbox.
         if material.content and material.content.strip():
             return f"{material.title}. {material.content.strip()}"
 
@@ -205,7 +208,6 @@ class ChromaRagAdapter(RagPort):
 
         if self.fetcher is not None:
             raw = self.fetcher(safe_url)
-            # fetcher may return str (HTML/text) or bytes (PDF)
             if isinstance(raw, (bytes, bytearray)):
                 body = _decode_fetched_content(safe_url, bytes(raw))
             else:
@@ -216,21 +218,9 @@ class ChromaRagAdapter(RagPort):
             with httpx.Client(timeout=settings.RAG_FETCH_TIMEOUT, follow_redirects=False) as client:
                 resp = client.get(safe_url)
                 if resp.status_code == 200 and resp.content:
-                    # OLD:
-                    # return f"{material.title}. {_strip_html(resp.text)}"
-                    # body = _decode_fetched_content(
-                    #     safe_url,
-                    #     resp.content,
-                    #     content_type=resp.headers.get("content-type", ""),
-                    # )
-                    # if body:
-                    #     return f"{material.title}. {body}"
-                    # Why: huge responses DoS RAM; HTML-only strip broke PDFs.
-                    # Wrong: no byte cap; always treated body as HTML text (or full PDF in memory).
-                    # Better: truncate to RAG_FETCH_MAX_BYTES, decode PDF vs HTML by content-type.
                     max_bytes = int(settings.RAG_FETCH_MAX_BYTES)
                     raw = resp.content[:max_bytes] if max_bytes > 0 else resp.content
-                    if max_bytes > 0 and len(resp.content) > max_bytes:
+                    if 0 < max_bytes < len(resp.content):
                         logger.warning(
                             "RAG fetch truncated url=%s from %s to %s bytes",
                             safe_url,
@@ -244,12 +234,7 @@ class ChromaRagAdapter(RagPort):
                     )
                     if body:
                         return f"{material.title}. {body}"
-        # OLD: except Exception:
-        #     pass
-        # Why: fetch/network failures were invisible in logs.
-        # Wrong: silent pass → title-only stub with no explanation.
-        # Better: log warning with stack, then fall back to title/url stub.
-        except Exception:
+        except (httpx.HTTPError, OSError, ValueError, TypeError):
             logger.warning("RAG fetch failed url=%s", safe_url, exc_info=True)
 
         return f"{material.title} ({safe_url})"
@@ -279,11 +264,7 @@ class ChromaRagAdapter(RagPort):
                     ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas
                 )
                 self._collections[conversation_id] = col_name
-            # OLD: except Exception: pass
-            # Why: Chroma upsert failures left operators blind while fallback still worked.
-            # Wrong: silent except hid infra problems.
-            # Better: log and continue with in-memory fallback store.
-            except Exception:
+            except _CHROMA_OP_ERRORS:
                 logger.warning(
                     "Chroma ingest failed conversation_id=%s; using fallback store",
                     conversation_id,
@@ -319,11 +300,7 @@ class ChromaRagAdapter(RagPort):
                         )
                 if results:
                     return results
-            # OLD: except Exception: pass
-            # Why: retrieve failures should be observable even when cosine fallback succeeds.
-            # Wrong: silent except.
-            # Better: log warning, then use _fallback_store.
-            except Exception:
+            except _CHROMA_OP_ERRORS:
                 logger.warning(
                     "Chroma retrieve failed conversation_id=%s; using fallback store",
                     conversation_id,
@@ -346,5 +323,10 @@ class ChromaRagAdapter(RagPort):
         if self._chroma_client is not None and col_name:
             try:
                 self._chroma_client.delete_collection(name=col_name)
-            except Exception:
-                pass
+            except _CHROMA_OP_ERRORS:
+                logger.warning(
+                    "Chroma delete_collection failed conversation_id=%s col=%s",
+                    conversation_id,
+                    col_name,
+                    exc_info=True,
+                )

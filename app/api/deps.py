@@ -1,4 +1,5 @@
-"""Composition root: shared adapters and FastAPI dependencies."""
+from typing import Optional
+
 from fastapi import Depends
 
 from app.application.chat_service import ChatService
@@ -15,7 +16,7 @@ from app.infrastructure.webhooks import HttpWebhookAdapter
 rag_adapter = ChromaRagAdapter()
 llm_cache = InMemoryLruCache(max_size=settings.CACHE_SIZE, ttl_seconds=settings.CACHE_TTL_SECONDS)
 llm_adapter = OpenAiCompatibleLlmAdapter()
-# In-memory only until a durable store is chosen with the Spring team.
+
 repo = InMemoryConversationRepository()
 webhook_adapter = HttpWebhookAdapter()
 
@@ -40,11 +41,24 @@ def get_cache_port() -> CachePort:
     return llm_cache
 
 
+# OLD: lifespan called get_session_service() with no args (Depends objects as rag/webhooks).
+# Removed because: build_session_service() wires real adapters for background purge.
+def build_session_service(
+    rag: Optional[RagPort] = None,
+    webhooks: Optional[WebhookPort] = None,
+) -> SessionService:
+    return SessionService(
+        repo=repo,
+        rag=rag if rag is not None else rag_adapter,
+        webhooks=webhooks if webhooks is not None else webhook_adapter,
+    )
+
+
 def get_session_service(
     rag: RagPort = Depends(get_rag_port),
     webhooks: WebhookPort = Depends(get_webhook_port),
 ) -> SessionService:
-    return SessionService(repo=repo, rag=rag, webhooks=webhooks)
+    return build_session_service(rag=rag, webhooks=webhooks)
 
 
 def get_chat_service(

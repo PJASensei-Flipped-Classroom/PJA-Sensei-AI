@@ -1,4 +1,3 @@
-"""Simple in-process metrics for health/ops demos."""
 from threading import Lock
 from typing import Dict
 

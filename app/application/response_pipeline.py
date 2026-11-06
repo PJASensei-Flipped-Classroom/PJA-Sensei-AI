@@ -1,8 +1,13 @@
 import json
 import re
-from typing import Dict, Any, List, Optional, Tuple
-from app.domain.conversation import Conversation, GoalStatus
+from typing import Any, Dict, List, Optional, Tuple
+
 from app.application.dto import GoalProgressEntryDTO, NextCheckpointDTO
+from app.application.giveaway_patterns import is_giveaway_request
+from app.domain.conversation import Conversation, GoalStatus
+
+# OLD: GIVEAWAY_REQUEST_RE = re.compile(r"(napisz\s+za\s+mnie|daj\s+gotow|...)")
+# Removed because: third copy of giveaway regexes; use shared is_giveaway_request().
 
 STATUS_RANK: Dict[GoalStatus, int] = {
     "not_started": 0,
@@ -17,22 +22,19 @@ PL_WORDS_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Wzbogacony słownik popularnych słów i spójników angielskich
 EN_WORDS_RE = re.compile(
     r"\b(the|and|you|should|this|that|your|with|from|have|what|where|because|please|check|code|is|are|a|an|for|on|in|to|it|of|based|can|will|as|by)\b",
     re.IGNORECASE,
 )
 
-GIVEAWAY_REQUEST_RE = re.compile(
-    r"(napisz\s+za\s+mnie|daj\s+gotow|cały\s+kod|gotowe\s+rozwiązanie|write\s+the\s+full\s+code|give\s+me\s+the\s+full\s+code)",
-    re.IGNORECASE,
-)
 CODE_BLOCK_RE = re.compile(r"```(?:[a-zA-Z0-9_+-]+)?\s*\n(.*?)```", re.DOTALL)
 
 
 class ResponsePipeline:
+    """Stateless post-processing helpers for LLM replies (kept as a class for DI)."""
 
-    def extract_json(self, raw_text: str) -> Tuple[Optional[Dict[str, Any]], bool]:
+    @staticmethod
+    def extract_json(raw_text: str) -> Tuple[Optional[Dict[str, Any]], bool]:
         if not raw_text or not raw_text.strip():
             return None, True
 
@@ -60,7 +62,8 @@ class ResponsePipeline:
 
         return None, True
 
-    def build_fallback_payload(self, raw_text: str, conv: Conversation) -> Dict[str, Any]:
+    @staticmethod
+    def build_fallback_payload(raw_text: str, conv: Conversation) -> Dict[str, Any]:
         clean_msg = (raw_text or "").strip()
         if not clean_msg or clean_msg.startswith("{"):
             clean_msg = (
@@ -93,7 +96,8 @@ class ResponsePipeline:
             "_fallback_used": True,
         }
 
-    def has_language_drift(self, answer: str, expected_language: str) -> bool:
+    @staticmethod
+    def has_language_drift(answer: str, expected_language: str) -> bool:
         if not answer or len(answer.strip()) < 12:
             return False
 
@@ -104,24 +108,18 @@ class ResponsePipeline:
         pl_score = pl_diacritics * 2 + pl_words
         en_score = en_words
 
-        # OLD debug noise (left for reference):
-        # print(f"\n[DEBUG DRIFT] Oczekiwany język sesji: '{expected_language}'")
-        # print(f"[DEBUG DRIFT] Punkty PL: {pl_score} | Punkty EN: {en_score}")
-
         if expected_language == "pl":
             is_drift = en_score >= 2 and pl_score <= 1
-            # OLD: print(f"[DEBUG DRIFT] Wykryto drift: {is_drift}")
             return is_drift
 
         if expected_language == "en":
             is_drift = pl_score >= 2 and en_score <= 1
-            # OLD: print(f"[DEBUG DRIFT] Wykryto drift: {is_drift}")
             return is_drift
 
         return False
 
+    @staticmethod
     def apply_code_penalty(
-        self,
         answer: str,
         question: str,
         prompt_score: int,
@@ -134,7 +132,7 @@ class ResponsePipeline:
                 has_large_code_block = True
                 break
 
-        asked_for_giveaway = bool(GIVEAWAY_REQUEST_RE.search(question or ""))
+        asked_for_giveaway = is_giveaway_request(question or "")
 
         if has_large_code_block or asked_for_giveaway:
             penalty_applied = True
@@ -144,8 +142,9 @@ class ResponsePipeline:
 
         return max(1, min(10, prompt_score)), penalty_applied
 
+    @staticmethod
     def normalize_goals(
-        self, conv: Conversation, raw_goals: Any
+        conv: Conversation, raw_goals: Any
     ) -> List[GoalProgressEntryDTO]:
         valid_statuses = {"not_started", "in_progress", "done"}
         desc_to_id = {
@@ -182,7 +181,8 @@ class ResponsePipeline:
             for g in conv.config.learning_context.goals
         ]
 
-    def evaluate_checkpoints(self, conv: Conversation) -> Optional[NextCheckpointDTO]:
+    @staticmethod
+    def evaluate_checkpoints(conv: Conversation) -> Optional[NextCheckpointDTO]:
         newly_unlocked = None
         for checkpoint in conv.config.checkpoints:
             if conv.goal_progress.get(checkpoint.after_goal) == "done":

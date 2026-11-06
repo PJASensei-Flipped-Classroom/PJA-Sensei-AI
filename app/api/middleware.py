@@ -11,28 +11,6 @@ from app.api.auth import client_ip_from_request, extract_bearer_token, verify_ac
 from app.application.metrics import metrics
 from app.core.config import settings
 
-
-# OLD — broad public surface even with JWT on:
-# _AUTH_OPEN_PREFIXES = (
-#     "/health",
-#     "/health_check",
-#     "/metrics",
-#     "/webhooks",
-#     "/docs",
-#     "/redoc",
-#     "/openapi.json",
-#     "/scenarios",
-# )
-# _AUTH_OPEN_EXACT = {"/", "/favicon.ico"}
-# def _is_auth_open_path(path: str) -> bool:
-#     if path in _AUTH_OPEN_EXACT:
-#         return True
-#     return any(path == prefix or path.startswith(prefix + "/") for prefix in _AUTH_OPEN_PREFIXES)
-# Why: metrics, webhook buffer, OpenAPI, and lab UI leak ops data / attack maps if public.
-# Wrong: JWT “on” still left those paths unauthenticated.
-# Better: only health probes always open; UI/docs via AI_EXPOSE_* flags; metrics need JWT(+professor).
-
-# Always public (load balancer / k8s probes).
 _AUTH_OPEN_PREFIXES = (
     "/health",
     "/health_check",
@@ -40,7 +18,6 @@ _AUTH_OPEN_PREFIXES = (
 
 _AUTH_OPEN_EXACT = {"/favicon.ico"}
 
-# Paths subject to inbound IP rate limiting.
 _RATE_LIMITED_PREFIXES = ("/conversations", "/config", "/validate-config")
 
 
@@ -49,10 +26,8 @@ def _is_auth_open_path(path: str) -> bool:
         return True
     if any(path == prefix or path.startswith(prefix + "/") for prefix in _AUTH_OPEN_PREFIXES):
         return True
-    # Dev/lab tester UI — only when explicitly exposed.
     if settings.AI_EXPOSE_UI and (path == "/" or path.startswith("/scenarios")):
         return True
-    # OpenAPI — only when explicitly exposed.
     if settings.AI_EXPOSE_DOCS and path in {"/docs", "/redoc", "/openapi.json"}:
         return True
     return False
@@ -65,8 +40,6 @@ def _is_rate_limited_path(path: str) -> bool:
 class RequestIdMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        # OLD: dual header lookup was redundant (Starlette is case-insensitive)
-        # incoming_id = request.headers.get("X-Request-Id") or request.headers.get("x-request-id")
         incoming_id = request.headers.get("X-Request-Id")
         request_id = incoming_id.strip() if (incoming_id and incoming_id.strip()) else str(uuid.uuid4())
         request.state.request_id = request_id
@@ -80,8 +53,6 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
 
 
 class JwtAuthMiddleware(BaseHTTPMiddleware):
-    """Optional Bearer JWT gate controlled by AI_AUTH_ENABLED."""
-
     async def dispatch(self, request: Request, call_next) -> Response:
         if not settings.AI_AUTH_ENABLED:
             return await call_next(request)
@@ -113,7 +84,6 @@ class JwtAuthMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-# Module-level store so tests can reset without rebuilding the app.
 _rate_limit_hits: Dict[str, Deque[float]] = defaultdict(deque)
 _RATE_LIMIT_WINDOW_SECONDS = 60.0
 
@@ -123,12 +93,9 @@ def reset_rate_limit_buckets() -> None:
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """
-    Inbound per-IP sliding window using RATE_LIMIT_PER_MINUTE.
-    Exceeding the limit returns intentional HTTP 429 with Retry-After.
-    """
 
-    def _prune(self, bucket: Deque[float], now: float) -> None:
+    @staticmethod
+    def _prune(bucket: Deque[float], now: float) -> None:
         cutoff = now - _RATE_LIMIT_WINDOW_SECONDS
         while bucket and bucket[0] < cutoff:
             bucket.popleft()
@@ -142,7 +109,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ip = client_ip_from_request(client_host, request.headers.get("X-Forwarded-For"))
         now = time.monotonic()
         bucket = _rate_limit_hits[ip]
-        self._prune(bucket, now)
+        RateLimitMiddleware._prune(bucket, now)
 
         if len(bucket) >= limit:
             retry_after = max(1, int(_RATE_LIMIT_WINDOW_SECONDS - (now - bucket[0])) + 1)

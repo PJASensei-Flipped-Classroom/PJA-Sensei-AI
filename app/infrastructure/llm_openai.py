@@ -1,9 +1,11 @@
-from typing import List, Dict, Optional, Iterator
+from typing import Any, Dict, Iterator, List, Optional, cast
+
 from openai import OpenAI
 
-from app.infrastructure.llm_errors import execute_with_retry_and_fallback
-from app.domain.ports import LlmPort, LlmResult
 from app.core.config import settings
+from app.domain.ports import LlmPort, LlmResult
+from app.infrastructure.llm_errors import execute_with_retry_and_fallback
+
 
 class OpenAiCompatibleLlmAdapter(LlmPort):
     def __init__(self):
@@ -12,7 +14,7 @@ class OpenAiCompatibleLlmAdapter(LlmPort):
         self.model = settings.MAIN_MODEL.strip()
         self.fallback_model = (settings.MAIN_MODEL_FALLBACK or "").strip() or None
         self.max_retries = settings.LLM_MAX_RETRIES
-        self._client = None
+        self._client: Optional[OpenAI] = None
 
         if self.is_configured():
             self._client = OpenAI(
@@ -23,21 +25,26 @@ class OpenAiCompatibleLlmAdapter(LlmPort):
     def is_configured(self) -> bool:
         return bool(self.base_url and self.api_key and self.model)
 
-    def generate_json(self, system_prompt: str, messages: List[Dict[str, str]], model_override: Optional[str] = None) -> LlmResult:
+    def generate_json(
+        self,
+        system_prompt: str,
+        messages: List[Dict[str, str]],
+        model_override: Optional[str] = None,
+    ) -> LlmResult:
         if not self._client:
             raise RuntimeError("Klient LLM nie jest skonfigurowany.")
+        client = self._client
 
-        full_messages = [{"role": "system", "content": system_prompt}] + messages
+        full_messages: Any = [{"role": "system", "content": system_prompt}] + messages
         target_primary = model_override or self.model
 
         def _call(chosen_model: Optional[str]) -> LlmResult:
             active_model = chosen_model or target_primary
-            response = self._client.chat.completions.create(
-                # OLD: model=self.model,  # ignored fallback / active_model on 429
-                model=active_model,
+            response = client.chat.completions.create(
+                model=cast(Any, active_model),
                 messages=full_messages,
                 temperature=0.2,
-                response_format={"type": "json_object"},
+                response_format=cast(Any, {"type": "json_object"}),
             )
 
             choice = response.choices[0].message.content or "{}"
@@ -53,6 +60,7 @@ class OpenAiCompatibleLlmAdapter(LlmPort):
                     "completion_tokens": usage.completion_tokens if usage else 0,
                 },
             )
+
         return execute_with_retry_and_fallback(
             fn=_call,
             primary_model=target_primary,
@@ -61,24 +69,25 @@ class OpenAiCompatibleLlmAdapter(LlmPort):
         )
 
     def stream_json(
-            self,
-            system_prompt: str,
-            messages: List[Dict[str, str]],
-            model_override: Optional[str] = None,
+        self,
+        system_prompt: str,
+        messages: List[Dict[str, str]],
+        model_override: Optional[str] = None,
     ) -> Iterator[str]:
         if not self._client:
             raise RuntimeError("Klient LLM nie jest skonfigurowany.")
+        client = self._client
 
-        full_messages = [{"role": "system", "content": system_prompt}] + messages
+        full_messages: Any = [{"role": "system", "content": system_prompt}] + messages
         target_primary = model_override or self.model
 
         def _open_stream(chosen_model: Optional[str]):
             active_model = chosen_model or target_primary
-            return self._client.chat.completions.create(
-                model=active_model,
+            return client.chat.completions.create(
+                model=cast(Any, active_model),
                 messages=full_messages,
                 temperature=0.2,
-                response_format={"type": "json_object"},
+                response_format=cast(Any, {"type": "json_object"}),
                 stream=True,
             )
 

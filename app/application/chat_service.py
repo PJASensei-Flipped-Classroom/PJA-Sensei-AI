@@ -14,10 +14,12 @@ from app.domain.ports import (
 from app.domain.exceptions import UnknownMessage, TokenBudgetExceeded, HintRevealForbidden
 from app.application.session_service import SessionService
 from app.application.prompts import build_system_prompt, build_user_prompt
-from app.application.response_pipeline import ResponsePipeline, GIVEAWAY_REQUEST_RE
+# OLD: from app.application.response_pipeline import ResponsePipeline, GIVEAWAY_REQUEST_RE
+# Removed because: giveaway detection moved to shared giveaway_patterns.is_giveaway_request.
+from app.application.giveaway_patterns import is_giveaway_request
+from app.application.response_pipeline import ResponsePipeline
 from app.application.security import SecurityGuard
 from app.application.pedagogy_gates import PedagogyGates
-# OLD: from app.infrastructure.cache_memory import build_cache_key  # hexagonal leak
 from app.application.cache_keys import build_cache_key
 from app.core.config import settings
 from app.application.dto import (
@@ -129,7 +131,7 @@ class ChatService:
             lab_score=conv.calculate_lab_score(),
             next_checkpoint=next_cp,
             model="gate",
-            debug_info=debug_info,
+            debug_info=debug_info if settings.AI_EXPOSE_DEBUG else None,
         )
 
         if req.client_message_id:
@@ -183,8 +185,6 @@ class ChatService:
 
         ped_verdict = self.pedagogy_gates.evaluate(conv.config, req.question, code_ctx)
         if ped_verdict.rejected:
-            # OLD: conv.frustration_streak += 1
-            # Focus mode: still punish giveaways; soften other pedagogy rejects.
             if ped_verdict.reason_code == "giveaway_request" or not conv.in_focus_mode():
                 conv.frustration_streak += 1
             rejected_resp = self._build_gate_response(
@@ -224,8 +224,6 @@ class ChatService:
                 if source_entry not in rag_sources:
                     rag_sources.append(source_entry)
 
-        # Feature 2: error-aware tutoring — force debug mode when logs/diagnostics present.
-        # OLD: system_prompt = build_system_prompt(conv.config, conv.goal_progress, rag_chunks=rag_chunks)
         mode_override = None
         if (
             getattr(conv.config, "auto_debug_on_errors", True)
@@ -321,10 +319,8 @@ class ChatService:
             penalty_applied=raw_penalty,
         )
 
-        # Feature 6: focus mode softens non-giveaway penalties.
-        giveaway_q = bool(GIVEAWAY_REQUEST_RE.search(req.question or ""))
+        giveaway_q = is_giveaway_request(req.question or "")
         if conv.in_focus_mode() and penalty_applied and not giveaway_q:
-            # OLD: keep penalty_applied as computed
             penalty_applied = False
 
         prompt_score = 10 if (conv.all_goals_done() and not penalty_applied) else adjusted_score
@@ -342,7 +338,6 @@ class ChatService:
             else conv.config.agent_behavior.mode
         )
 
-        # Feature 3: checkpoint celebration + reflective nudge when goals advance.
         checkpoint_celebration = None
         if new_done_count > prev_done_count:
             conv.frustration_streak = 0
@@ -358,16 +353,18 @@ class ChatService:
                 )
             answer_text = f"{checkpoint_celebration}\n\n{answer_text}"
             if next_cp and next_cp.unlocked and next_cp.hint:
-                # Reflect then point at newly unlocked checkpoint hint (conceptual, not full solution).
                 suggested_next_step = next_cp.hint
-        # OLD: elif penalty_applied or prompt_score <= 4 or has_errors:
-        #          conv.frustration_streak += 1
-        elif conv.in_focus_mode() and not giveaway_q:
-            pass  # soft window: do not grow frustration for low scores / errors
-        elif penalty_applied or prompt_score <= 4 or has_errors:
+        # OLD:
+        # elif conv.in_focus_mode() and not giveaway_q:
+        #     pass
+        # elif penalty_applied or prompt_score <= 4 or has_errors:
+        #     conv.frustration_streak += 1
+        # Removed because: empty pass branch was a no-op; folded into one condition below.
+        elif not (conv.in_focus_mode() and not giveaway_q) and (
+            penalty_applied or prompt_score <= 4 or has_errors
+        ):
             conv.frustration_streak += 1
 
-        # Feature 4: concept glossary card from RAG when question looks definitional.
         concept_card = None
         m = _CONCEPT_Q_RE.search(req.question or "")
         if m and sources:
@@ -433,7 +430,7 @@ class ChatService:
             lab_score=lab_score,
             next_checkpoint=next_cp,
             model=used_model,
-            debug_info=debug_info,
+            debug_info=debug_info if settings.AI_EXPOSE_DEBUG else None,
             tutoring_mode=tutoring_mode,
             checkpoint_celebration=checkpoint_celebration,
             concept_card=concept_card,
@@ -548,8 +545,6 @@ class ChatService:
                 max_hints=max_hints,
             )
 
-        # OLD: available_hints = list(conv.config.hints)
-        # Feature 9: prefer hint_ladder when present.
         available_hints = conv.config.resolved_hint_texts()
         available_levels = conv.config.resolved_hint_levels()
         for cp in conv.config.checkpoints:
@@ -597,11 +592,9 @@ class ChatService:
         custom_hint: Optional[str] = None,
         hint_level: Optional[str] = None,
     ) -> HintRevealResponse:
-        """Professor override: reveal next hint without frustration streak check."""
         conv = self.session_svc.ensure_prelab_passed(conv_id)
         max_hints = conv.config.max_hints
 
-        # Feature 11: custom intervention hint text from professor.
         if custom_hint and custom_hint.strip():
             text = custom_hint.strip()
             level = hint_level or "concept"
@@ -641,7 +634,6 @@ class ChatService:
                 max_hints=max_hints,
             )
 
-        # Temporarily satisfy streak so reveal_hint path stays single source of truth
         conv.frustration_streak = max(conv.frustration_streak, conv.config.frustration_threshold)
         self.repo.save(conv)
         result = self.reveal_hint(conv_id)

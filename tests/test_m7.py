@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.domain.ports import LlmPort, LlmResult
 from app.infrastructure.webhooks import HttpWebhookAdapter
-from app.api.routers.conversations import (
+from app.api.deps import (
     get_llm_port,
     get_webhook_port,
     get_rag_port,

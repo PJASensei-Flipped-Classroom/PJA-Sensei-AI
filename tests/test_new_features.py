@@ -5,10 +5,10 @@ from typing import Dict, List, Optional
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.api.routers.conversations import get_llm_port
+from app.api.deps import get_llm_port
 from app.domain.ports import LlmPort, LlmResult
 from app.infrastructure.webhooks import HttpWebhookAdapter
-from app.api.routers.conversations import get_webhook_port
+from app.api.deps import get_webhook_port
 
 client = TestClient(app)
 

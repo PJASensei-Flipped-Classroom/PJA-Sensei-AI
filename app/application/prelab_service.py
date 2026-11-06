@@ -19,7 +19,6 @@ def _keyword_hit(keyword: str, answer: str) -> bool:
     kw = keyword.strip().lower()
     if not kw:
         return False
-    # Word-boundary match; escape regex metacharacters in keywords.
     return re.search(rf"\b{re.escape(kw)}\b", answer, flags=re.IGNORECASE) is not None
 
 
@@ -27,11 +26,8 @@ class PrelabService:
     def __init__(self, repo: ConversationRepository):
         self.repo = repo
 
-    def get_status(self, conv: Conversation) -> PrelabStatusResponse:
-        # OLD getattr/legacy path (kept for reference):
-        # prelab_cfg = getattr(conv.config, "pre_lab", None) or getattr(conv.config, "preLab", None)
-        # enabled = bool(prelab_cfg and getattr(prelab_cfg, "enabled", False))
-        # ... SingleQuestion / camelCase expectedKeywords fallbacks ...
+    @staticmethod
+    def get_status(conv: Conversation) -> PrelabStatusResponse:
         prelab_cfg = conv.config.pre_lab
         enabled = bool(prelab_cfg.enabled)
 
@@ -57,7 +53,8 @@ class PrelabService:
         return PrelabStatusResponse(
             enabled=enabled,
             passed=conv.prelab_completed,
-            completed=conv.prelab_completed,
+            # OLD: completed=conv.prelab_completed,
+            # Removed because: duplicate of passed; kept a single status field.
             questions=questions,
             attempts=attempts,
             max_attempts=max_attempts,
@@ -66,7 +63,6 @@ class PrelabService:
         )
 
     def submit(self, conv: Conversation, req: PrelabSubmitRequest) -> Dict[str, Any]:
-        # OLD: getattr(conv.config, "pre_lab", None) or getattr(conv.config, "preLab", None)
         prelab_cfg = conv.config.pre_lab
         enabled = bool(prelab_cfg.enabled)
         lang = conv.config.language
@@ -104,12 +100,6 @@ class PrelabService:
             return payload
 
         conv.prelab_attempts = attempts + 1
-
-        # OLD legacy single-question shape:
-        # cfg_questions = getattr(prelab_cfg, "questions", [])
-        # if not cfg_questions and getattr(prelab_cfg, "question", None):
-        #     class SingleQuestion: ...
-        #     cfg_questions = [SingleQuestion()]
         cfg_questions = list(prelab_cfg.questions)
 
         answers_dict: Dict[str, str] = {
@@ -121,19 +111,12 @@ class PrelabService:
         for q in cfg_questions:
             q_id = q.id
             user_answer = answers_dict.get(q_id, "")
-            # OLD: expected = getattr(q, "expected_keywords", []) or getattr(q, "expectedKeywords", [])
             expected = q.expected_keywords
 
             if not expected:
                 if not user_answer:
                     failed_ids.append(q_id)
                 continue
-
-            # OLD: substring match (e.g. "Rest" inside "Forest")
-            # has_match = any(str(kw).strip().lower() in user_answer for kw in expected)
-            # Why: students could pass prelab with unrelated words that merely contain the keyword.
-            # Wrong: `kw in answer` is substring, not token match.
-            # Better: word-boundary regex (`_keyword_hit`) so "Forest" ≠ "Rest".
             has_match = any(_keyword_hit(str(kw), user_answer) for kw in expected)
             if not has_match:
                 failed_ids.append(q_id)

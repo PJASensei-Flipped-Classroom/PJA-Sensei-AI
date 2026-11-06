@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, Field, ConfigDict, field_validator, model_validator
 
 from app.domain.sensei import (
     CodeContext,
@@ -12,31 +12,14 @@ from app.domain.sensei import (
 
 
 class ApiModel(BaseModel):
-    """Accept camelCase aliases on input; serialize with Python field names (snake_case)."""
-
     model_config = ConfigDict(
         populate_by_name=True,
         extra="ignore",
-        # Keep response JSON snake_case for existing clients/tests.
-        ser_json_by_alias=False,
+        serialize_by_alias=False,
     )
 
 
 class CodeContextDTO(ApiModel):
-    """IDE code context. Accepts currentCode / codeSnippet and file name aliases."""
-
-    # OLD: current_code: Optional[str] = Field(default=None, alias="currentCode")
-    # OLD: code_snippet: Optional[str] = Field(default=None, alias="codeSnippet")
-    # OLD: current_file_name: Optional[str] = Field(default=None, alias="currentFileName")
-    # OLD: file_path: Optional[str] = Field(default=None, alias="filePath")
-    # OLD: selection: Optional[str] = None
-    # OLD: selected_text: Optional[str] = Field(default=None, alias="selectedText")
-    # OLD: error_logs: Optional[str] = Field(default=None, alias="errorLogs")
-    # OLD: diagnostics: List[str] = Field(default_factory=list)
-    # OLD: open_files: List[str] = Field(default_factory=list, alias="openFiles")
-    # Why: API boundary must reject oversized IDE payloads before they hit the LLM/session store.
-    # Wrong: any size was accepted → memory + prompt-cost abuse.
-    # Better: Field(max_length=...) aligned with domain caps → HTTP 422 on abuse.
     current_code: Optional[str] = Field(
         default=None, alias="currentCode", max_length=MAX_CODE_CONTEXT_CHARS
     )
@@ -84,7 +67,8 @@ class PrelabQuestionDTO(ApiModel):
 class PrelabStatusResponse(ApiModel):
     enabled: bool = False
     passed: bool = False
-    completed: bool = False
+    # OLD: completed: bool = False
+    # Removed because: always mirrored passed/prelab_completed; clients use passed.
     questions: List[PrelabQuestionDTO] = Field(default_factory=list)
     attempts: int = 0
     max_attempts: Optional[int] = None
@@ -104,10 +88,6 @@ class PrelabSubmitResponse(ApiModel):
 
 class PrelabAnswerItem(ApiModel):
     id: str = "q1"
-    # OLD: answer: str
-    # Why: prelab answers could be huge strings with no pedagogical value.
-    # Wrong: uncapped answer field.
-    # Better: same char cap as chat questions.
     answer: str = Field(max_length=MAX_QUESTION_CHARS)
 
     @field_validator("answer", mode="before")
@@ -139,19 +119,10 @@ class ConfigValidationRequest(ApiModel):
 
 
 class ConversationStartRequest(ApiModel):
-    # OLD: config: Dict[str, Any]
-    # Why: invalid SenseiConfig (e.g. empty prelab keywords) used to fail deep inside the service as 500.
-    # Wrong: Dict skipped FastAPI/Pydantic request validation.
-    # Better: type as SenseiConfig → HTTP 422 with field errors at the edge.
     config: SenseiConfig
 
 
 class MessageRequest(ApiModel):
-    # OLD: question: str
-    # OLD: client_message_id: Optional[str] = Field(default=None, alias="clientMessageId")
-    # Why: unbounded questions / ids inflate prompts and storage.
-    # Wrong: only “non-empty” was checked on question; no length caps.
-    # Better: max_length rejects abuse with 422.
     question: str = Field(max_length=MAX_QUESTION_CHARS)
     code_context: Optional[CodeContextDTO] = Field(default=None, alias="codeContext")
     client_message_id: Optional[str] = Field(default=None, alias="clientMessageId", max_length=200)
@@ -172,7 +143,11 @@ class GoalProgressEntryDTO(ApiModel):
 class NextCheckpointDTO(ApiModel):
     id: str
     hint: Optional[str] = None
-    after_goal: Optional[str] = Field(default=None, alias="afterGoal")
+    # AliasChoices keeps Python ctor as after_goal (IDE-friendly) while accepting afterGoal from JSON.
+    after_goal: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("after_goal", "afterGoal"),
+    )
     unlocked: bool = False
 
 
@@ -190,7 +165,6 @@ class MessageResponse(ApiModel):
     next_checkpoint: Optional[NextCheckpointDTO] = None
     model: str = "default"
     debug_info: Optional[Dict[str, Any]] = None
-    # NEW feature fields (optional for backward-compatible clients)
     tutoring_mode: Optional[str] = None
     checkpoint_celebration: Optional[str] = None
     concept_card: Optional[Dict[str, Any]] = None
@@ -198,7 +172,6 @@ class MessageResponse(ApiModel):
 
 
 class EventRequest(ApiModel):
-    # OLD: type: str
     type: str = Field(max_length=100)
     meta: Optional[Dict[str, Any]] = None
 
@@ -215,7 +188,6 @@ class HintRevealResponse(ApiModel):
 
 class FeedbackRequest(ApiModel):
     rating: int = Field(..., ge=1, le=5)
-    # OLD: comment: Optional[str] = None
     comment: Optional[str] = Field(default=None, max_length=2000)
 
 

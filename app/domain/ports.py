@@ -39,7 +39,6 @@ class ConversationRepository(ABC):
 
 class LlmPort(ABC):
     @abstractmethod
-    # OLD: def generate_json(self, system_prompt: str, messages: List[Dict[str, str]]) -> LlmResult:
     def generate_json(
         self,
         system_prompt: str,

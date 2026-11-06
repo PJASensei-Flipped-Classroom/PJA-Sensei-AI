@@ -37,5 +37,3 @@ class InMemoryConversationRepository(ConversationRepository):
 
     def count_active(self) -> int:
         return sum(1 for c in self._store.values() if not c.is_deleted)
-
-    # OLD: def count(self) -> int: return len(self._store)

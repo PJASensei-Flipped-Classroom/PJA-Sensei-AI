@@ -3,11 +3,6 @@ from collections import OrderedDict
 from typing import Optional, Tuple
 from app.domain.ports import CachePort, LlmResult
 
-# OLD: build_cache_key lived here; moved to application layer for hexagonal boundaries.
-# def build_cache_key(system_prompt: str, messages: List[Dict[str, str]], model: str = "default") -> str:
-#     ...
-from app.application.cache_keys import build_cache_key  # re-export for older imports/tests
-
 class InMemoryLruCache(CachePort):
     def __init__(self, max_size: int =128, ttl_seconds: int = 3600):
         self.max_size = max(1, max_size)

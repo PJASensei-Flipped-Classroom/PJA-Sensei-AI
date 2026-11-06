@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from openai import APIConnectionError
 
 from app.api.middleware import reset_rate_limit_buckets
-from app.api.routers.conversations import get_llm_port
+from app.api.deps import get_llm_port
 from app.core.config import settings
 from app.domain.ports import LlmPort, LlmResult
 from app.domain.sensei import SenseiConfig
@@ -173,7 +173,7 @@ def test_default_token_budget_not_unlimited():
 def test_schema_validate_finds_file_off_cwd(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     res = client.post(
-        "/config/validate",
+        "/validate-config",
         json={"config": MINIMAL},
     )
     assert res.status_code == 200

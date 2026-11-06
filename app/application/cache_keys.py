@@ -1,4 +1,3 @@
-"""Canonical cache-key helpers kept in the application layer (no infra import)."""
 import hashlib
 import json
 from typing import Dict, List

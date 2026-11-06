@@ -1,4 +1,3 @@
-"""Simulate a student path against SenseiConfig without calling the LLM."""
 from __future__ import annotations
 
 from typing import Any, Dict, List
@@ -115,7 +114,6 @@ def run_config_dry_run(config: SenseiConfig) -> Dict[str, Any]:
         }
     )
 
-    # SSRF may fail in offline sandboxes — don't fail whole dry-run on DNS.
     critical_ok = all(s["ok"] for s in steps if s["id"] != "ssrf_materials")
     return {
         "valid": critical_ok,

@@ -1,4 +1,3 @@
-"""Build Spring-ready grade sync payloads (prepared now; POST later by Spring)."""
 from __future__ import annotations
 
 import time
@@ -15,10 +14,6 @@ def build_grade_sync_payload(
     trigger: str,
     summary_text: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """
-    Stable contract for the future Spring Boot backend.
-    AI stores/emits this; Spring will pull or receive via webhook later.
-    """
     penalties = sum(
         1
         for m in conv.messages

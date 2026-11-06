@@ -5,10 +5,6 @@ from fastapi.responses import HTMLResponse
 router = APIRouter(tags=["ui"])
 STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
 
-# OLD: return HTMLResponse(content=...) with default caching
-# Why: browsers can keep an old scenarios.html; S4 fix never loads → false FAIL.
-# Wrong: stale JS fires two /events with no 16s wait.
-# Better: no-store so / and /scenarios always pick up static edits.
 _NO_STORE = {"Cache-Control": "no-store, max-age=0"}
 
 

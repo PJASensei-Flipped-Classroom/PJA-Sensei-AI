@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from app.api import deps
+from app.api.deps import get_webhook_port
 from app.application.access import require_professor
-from app.api.routers import conversations
 from app.application.metrics import metrics
 from app.core.config import settings
+from app.domain.ports import WebhookPort
 
 router = APIRouter(tags=["Health"])
 
@@ -18,7 +19,7 @@ def health(response: Response):
     llm_configured = deps.get_llm_port().is_configured()
     chroma_ok = deps.get_rag_port().is_healthy()
     cache_size = deps.get_cache_port().size()
-    active_convs = conversations.repo.count_active()
+    active_convs = deps.repo.count_active()
 
     if not llm_configured:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
@@ -33,8 +34,6 @@ def health(response: Response):
 
 
 def _require_ops_access(request: Request) -> None:
-    """Metrics / webhook buffer: JWT already required by middleware when auth on;
-    additionally restrict to professor roles."""
     if not settings.AI_AUTH_ENABLED:
         return
     claims = getattr(request.state, "jwt_claims", None)
@@ -46,37 +45,18 @@ def _require_ops_access(request: Request) -> None:
                 "detail": "Professor role required for metrics/webhooks.",
             },
         )
-
-
-# OLD (no Request / professor gate — public when JWT middleware left /metrics open):
-# @router.get("/metrics")
-# def metrics_json():
-#     snap = metrics.snapshot()
-#     snap["active_conversations"] = conversations.repo.count_active()
-#     return snap
-# @router.get("/metrics/prometheus")
-# def prometheus_metrics():
-#     ...
-# @router.get("/webhooks/recent")
-# def recent_webhooks(limit: int = 20):
-#     adapter = conversations.webhook_adapter
-#     return {"events": adapter.recent(limit=limit), "count": len(adapter.recent(limit=0))}
-# Why: counters and recent webhook payloads are ops data.
-# Wrong: anyone who could reach the host could scrape them.
-# Better: require JWT when auth on, and professor role via _require_ops_access.
-
 @router.get("/metrics")
 def metrics_json(request: Request):
     _require_ops_access(request)
     snap = metrics.snapshot()
-    snap["active_conversations"] = conversations.repo.count_active()
+    snap["active_conversations"] = deps.repo.count_active()
     return snap
 
 @router.get("/metrics/prometheus")
 def prometheus_metrics(request: Request):
     _require_ops_access(request)
     snap = metrics.snapshot()
-    active = conversations.repo.count_active()
+    active = deps.repo.count_active()
     metrics_data = (
         "# TYPE pja_sensei_requests_total counter\n"
         f"pja_sensei_requests_total {snap['requests_total']}\n"
@@ -93,7 +73,14 @@ def prometheus_metrics(request: Request):
 
 
 @router.get("/webhooks/recent")
-def recent_webhooks(request: Request, limit: int = 20):
+def recent_webhooks(
+    request: Request,
+    limit: int = 20,
+    webhooks: WebhookPort = Depends(get_webhook_port),
+):
     _require_ops_access(request)
-    adapter = conversations.webhook_adapter
-    return {"events": adapter.recent(limit=limit), "count": len(adapter.recent(limit=0))}
+    recent_fn = getattr(webhooks, "recent", None)
+    if not callable(recent_fn):
+        return {"events": [], "count": 0}
+    events = recent_fn(limit=limit)
+    return {"events": events, "count": len(recent_fn(limit=0))}

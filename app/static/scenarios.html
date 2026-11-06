@@ -47,10 +47,8 @@
 
   <div class="card">
     <h3>S4: Frustration streak → Hints</h3>
-    <!-- OLD: Reveal zablokowany, potem zdarzenia IDE z polem type, potem hint odblokowany. -->
-    <!-- Why: FRUSTRATION_EVENT_COOLDOWN_SECONDS (default 15) blocks back-to-back streak increments. -->
-    <!-- Wrong: firing two /events immediately left streak at 1 → S4 FAIL in the browser. -->
-    <!-- Better: wait for cooldown between IDE events (pytest sets cooldown=0). -->
+    <!-- OLD: fired two /events back-to-back expecting streak 2 -->
+    <!-- Removed because: FRUSTRATION_EVENT_COOLDOWN_SECONDS blocks rapid increments; wait ~15s between events. -->
     <p>Reveal zablokowany, potem zdarzenia IDE z polem <code>type</code> (z ~15&nbsp;s cooldown anty-farming), potem hint odblokowany.</p>
     <button onclick="runOne('s4')">Uruchom S4</button>
   </div>
@@ -304,9 +302,7 @@
       assertEqual(e1.json.frustration_streak, 1, 'streak after first error');
 
       // OLD: immediate second /events call (assumed streak → 2)
-      // Why: server increments streak at most once per FRUSTRATION_EVENT_COOLDOWN_SECONDS (15s).
-      // Wrong: e2 within the window keeps streak at 1 → false S4 failure.
-      // Better: wait slightly past default cooldown, then assert streak 2 / streak_incremented.
+      // Removed because: server increments streak at most once per FRUSTRATION_EVENT_COOLDOWN_SECONDS.
       const cooldownMs = 16000;
       logLine('INFO  waiting ' + (cooldownMs / 1000) + 's for frustration cooldown…', 'info');
       await sleep(cooldownMs);

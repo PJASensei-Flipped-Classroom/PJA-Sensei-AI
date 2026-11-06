@@ -14,7 +14,7 @@ from app.infrastructure.rag_chroma import (
     _decode_fetched_content,
     _extract_pdf_text,
 )
-from app.api.routers.conversations import get_llm_port, get_cache_port, get_rag_port
+from app.api.deps import get_llm_port, get_cache_port, get_rag_port
 
 client = TestClient(app)
 
